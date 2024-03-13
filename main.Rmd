@@ -1,6 +1,6 @@
 # CAMspiracy Analyses
 
-##### Preparation
+### Preparation
 
 Set the directory of location of this script as the current directory.
 ```{r wd}
@@ -11,7 +11,7 @@ graphics.off()
 
 ```
 
-##### Define data. 
+##### Define data 
 
 ```{r data}
 CAMdataset <- "CAMspiracy_data_fixed.txt"
@@ -22,7 +22,7 @@ consider_Protocol <- TRUE
 
 ```
 
-##### Load packages.
+##### Load packages 
 
 ```{r library, warning=FALSE}
 library(shiny)
@@ -87,7 +87,7 @@ library(ggcorrplot)
 
 ```
 
-##### Load functions. 
+##### Load functions 
 
 ```{r functions_CAMapp}
 setwd("functions_CAMapp")
@@ -102,7 +102,7 @@ rm(i)
 
 ```
 
-##### Load data. 
+##### Load data 
 
 ```{r data, warning=FALSE}
 setwd("../data")
@@ -136,7 +136,7 @@ setwd("..")
 
 ```
 
-##### Create CAM files, draw CAMs. 
+### Create CAM files, draw CAMs 
 
 Create CAM single files (nodes, connectors, merged)
 
@@ -162,5 +162,54 @@ if(consider_Protocol){
 
 ```
 
-#### Draw CAMs. 
+##### Draw CAMs 
+
+```{r draw_CAMs}
+CAMdrawn <- draw_CAM(dat_merged = CAMfiles[[3]],
+                     dat_nodes = CAMfiles[[1]],ids_CAMs = "all",
+                     plot_CAM = FALSE,
+                     useCoordinates = FALSE,
+                     relvertexsize = 3,
+                     reledgesize = 1)
+
+plot(CAMdrawn[[1]], edge.arrow.size = .7,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size = 10, vertex.label.cex = .9)
+
+
+
+
+tmp_micro <- c("Climate Change")
+
+tmp_Indicators <- compute_indicatorsCAM(drawn_CAM = CAMdrawn,
+                                        micro_degree =  tmp_micro,
+                                        micro_valence = tmp_micro,
+                                        micro_centr_clo = tmp_micro,
+                                        micro_transitivity = tmp_micro,
+                                        largestClique = FALSE)
+
+```
+
+##### Create Word list
+
+```{r wordlist}
+tmp_text <- str_remove_all(string = CAMfiles[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist <- create_wordlist(
+  dat_nodes = CAMfiles[[1]],
+  dat_merged = CAMfiles[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = TRUE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+```
 
