@@ -1,0 +1,166 @@
+# CAMspiracy Analyses
+
+##### Preparation
+
+Set the directory of location of this script as the current directory.
+```{r wd}
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+rm(list=ls(all=TRUE))
+graphics.off()
+
+```
+
+##### Define data. 
+
+```{r data}
+CAMdataset <- "CAMspiracy_data_fixed.txt"
+
+protocolDataset <- "protocol_fixed_15.txt" #  # protocol.txt
+
+consider_Protocol <- TRUE
+
+```
+
+##### Load packages.
+
+```{r library, warning=FALSE}
+library(shiny)
+
+# library(shinyWidgets)
+library(shinyjs)
+
+library(shinyvalidate)
+
+# library(shinycssloaders) %>% withSpinner(color="#0dc5c1")
+
+library(tidyverse)
+library(lubridate)
+
+library(magrittr)
+
+library(rjson) # write JSON files
+library(jsonlite) # read JSON files
+
+
+
+library(igraph)
+
+library(sortable)
+
+library(vroom)
+#library(xlsx)
+
+
+library(irr)
+
+
+library(stargazer)
+
+
+library(kableExtra) # APA 7 tables
+
+## for heatmap
+library(stats)
+library(heatmaply)
+library(plotly)
+library(RColorBrewer)
+
+
+library(tm)
+library(stopwords) # old function for spell checking
+
+library(visNetwork)
+library(wordcloud)
+
+
+library(moments)
+
+library(psych)
+library(rempsyc) # APA tables with nice_table()
+library(flextable) # dependency of rempsyc
+library(officer) # landscape mode for docx export
+
+library(Cairo) # save CAMs as .png file
+
+library(ggcorrplot)
+
+```
+
+##### Load functions. 
+
+```{r functions_CAMapp}
+setwd("functions_CAMapp")
+dir()
+
+
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+rm(i)
+
+```
+
+##### Load data. 
+
+```{r data, warning=FALSE}
+setwd("../data")
+
+read_file(CAMdataset) %>%
+  # ... split it into lines ...
+  str_split('\n') %>% first() %>%
+  # ... filter empty rows ...
+  discard(function(x) x == '') -> dat_CAM
+# 
+# 
+raw_CAM <- list()
+for(i in 1:length(dat_CAM)){
+  raw_CAM[[i]] <- jsonlite::fromJSON(txt = dat_CAM[[i]])
+}
+rm(i)
+
+### if protocol considered
+if(consider_Protocol){
+  text <- readLines(protocolDataset, warn = FALSE)
+  text <- readLines(textConnection(text, encoding="UTF-8"), encoding="UTF-8")
+  
+  if (testIfJson(file = text)) {
+    protocol <- rjson::fromJSON(file = protocolDataset)
+  } else{
+    print("Invalid protocol uploaded")
+  }
+}
+
+setwd("..")
+
+```
+
+##### Create CAM files, draw CAMs. 
+
+Create CAM single files (nodes, connectors, merged)
+
+```{r create_CAM_files}
+CAMfiles <- create_CAMfiles(datCAM = raw_CAM, reDeleted = TRUE)
+
+```
+
+Consider protocol.
+
+```{r }
+if(consider_Protocol){
+  CAMfiles[[1]] <- CAMfiles[[1]][CAMfiles[[1]]$CAM %in% protocol$currentCAMs,]
+  CAMfiles[[2]] <- CAMfiles[[2]][CAMfiles[[2]]$CAM %in% protocol$currentCAMs,]
+  CAMfiles[[3]] <- CAMfiles[[3]][CAMfiles[[3]]$CAM.x %in% protocol$currentCAMs,]
+  
+  
+  tmp_out <- overwriteTextNodes(protocolDat = protocol,
+                                nodesDat = CAMfiles[[1]])
+  CAMfiles[[1]] <- tmp_out[[1]]
+  tmp_out[[2]]
+}
+
+```
+
+#### Draw CAMs. 
+
