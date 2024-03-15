@@ -85,6 +85,12 @@ library(Cairo) # save CAMs as .png file
 
 library(ggcorrplot)
 
+
+
+library(CliquePercolation)
+
+library(qgraph)
+
 ```
 
 ##### Load functions 
@@ -210,6 +216,77 @@ CAMwordlist <- create_wordlist(
 dat_nodes <- CAMfiles[[1]]
 dat_nodes$text <-   dat_nodes$text_summarized
 sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+```
+
+#### Still Missing:
+At this point, we need to create weight matrices. For each group (high vs. low climate change conspiracy belief) we need a separate matrix. 
+
+
+#### Test Area. Caution: Please be aware of falling objects! Don't forgert your safety helmet! 
+
+Tutorial: https://cran.r-project.org/web/packages/CliquePercolation/vignettes/CliquePercolation.html
+
+Informative paper: \n Lange, J., (2021). CliquePercolation: An R Package for conducting and visualizing results of the clique percolation network community detection algorithm. Journal of Open Source Software, 6(62), 3210, https://doi.org/10.21105/joss.03210
+
+
+* k-cliques = fully connected networks with _k_ nodes. The smallest possible k would be k=3. Otherwise, the cliques would be only edges.
+* I = For weighted networks, the algorithm has just one intermediate additional step. Specifically, after identifying the k-cliques, they are considered further only if their Intensity exceeds a specified threshold I. The Intensity of a k-clique is defined as the geometric mean of the edge weights.
+
+
+```{r cp}
+
+# W <- Matrix::forceSymmetric(W) # Some kind of matrix (adjacency or weight matrix that is symmetric)
+W <- qgraph::qgraph(W, theme = "colorblind", layout = "spring", cut = 0.4) # Just for visualization 
+
+### To run the clique percolation algorithm for weighted networks, we initially need to optimize k and I.
+
+thresholds <- cpThreshold(W, method = "weighted", k.range = c(3,4),
+                          I.range = c(seq(0.40, 0.01, by = -0.005)),
+                          threshold = c("largest.components.ratio","chi")) # This function may need lots of time to run
+
+##################### Supplementary Analysis: Permutation Test #####################
+
+### Lange (2021): A permutation test, which repeatedly randomly shuffles the edges in the network and recalculates entropy can point out which entropy values are higher than already expected by chance.
+
+threshold <- cpThreshold(W,
+  method = "weighted",
+  k.range = c(3, 4),
+  I.range = seq(0.3, 0.09,-0.01),
+  threshold = "entropy"
+)
+
+thresholds.permute <- cpPermuteEntropy(W, cpThreshold.object = threshold, seed = 4186)
+
+# -> returning the combinations of k and I that are more surprising than chance
+
+########################################## 
+
+### Run the clique percolation method.
+
+###### Additionally, we enter the optimal k and I values determined via cpThreshold. 
+
+cpk3I.35 <- cpAlgorithm(W, k = 3, method = "weighted", I = 0.35)
+cpk4I.27 <- cpAlgorithm(W, k = 4, method = "weighted", I = 0.27)
+
+### Using summary, it is possible to get more detailed information about the communities, shared nodes, and isolated nodes.
+
+summary(cpk3I.35)
+
+### To look at the community size distribution.
+
+cpCommunitySizeDistribution(cpk3I.35$list.of.communities.numbers)
+
+### To actually test whether the distribution for k=3 fits a power-law (i.e., are k=3 and I=.35  the optimal parameters for clique percolation?)
+
+fit_pl_k3I.35 <- cpCommunitySizeDistribution(cpk3I.35$list.of.communities.numbers, test.power.law = TRUE)
+
+### Plotting the solution of the clique percolation algorithm in another network, such that a node represents a community, and the edges between nodes represent the number of nodes that two communities share (i.e., the community graph).
+
+commnetwork <- cpCommunityGraph(cpk3I.35$list.of.communities.numbers,
+                                node.size.method = "proportional",
+                                max.node.size = 20,
+                                theme = "colorblind", layout = "spring", repulsion = 0.4)
 
 ```
 
