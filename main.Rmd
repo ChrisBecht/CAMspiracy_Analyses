@@ -3,6 +3,7 @@
 ### Preparation
 
 Set the directory of location of this script as the current directory.
+
 ```{r wd}
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
@@ -11,7 +12,7 @@ graphics.off()
 
 ```
 
-##### Define data 
+##### Define data
 
 ```{r data}
 CAMdataset <- "CAMspiracy_data_fixed.txt"
@@ -22,7 +23,7 @@ consider_Protocol <- TRUE
 
 ```
 
-##### Load packages 
+##### Load packages
 
 ```{r library, warning=FALSE}
 library(shiny)
@@ -93,7 +94,7 @@ library(qgraph)
 
 ```
 
-##### Load functions 
+##### Load functions
 
 ```{r functions_CAMapp}
 setwd("functions_CAMapp")
@@ -108,7 +109,7 @@ rm(i)
 
 ```
 
-##### Load data 
+##### Load data
 
 ```{r data, warning=FALSE}
 setwd("../data")
@@ -142,7 +143,7 @@ setwd("..")
 
 ```
 
-### Create CAM files, draw CAMs 
+### Create CAM files, draw CAMs
 
 Create CAM single files (nodes, connectors, merged)
 
@@ -168,7 +169,7 @@ if(consider_Protocol){
 
 ```
 
-##### Draw CAMs 
+##### Draw CAMs
 
 ```{r draw_CAMs}
 CAMdrawn <- draw_CAM(dat_merged = CAMfiles[[3]],
@@ -219,20 +220,24 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 
 ```
 
-#### Still Missing:
-At this point, we need to create weight matrices. For each group (high vs. low climate change conspiracy belief) we need a separate matrix. 
+#### Still Missing: A bridge between CAMfiles and CliquePercolation
 
+At this point, we need to create adjacency matrices. For each group (high vs. low climate change conspiracy belief) we need a separate matrix in order to determine differences. However, with this type of matrix we have a huge loss of information compared to a weight matrix. Since the aggregated CAM is an unweighted graph, I cannot think of an elegant way to deal with this problem.
 
-#### Test Area. Caution: Please be aware of falling objects! Don't forgert your safety helmet! 
+```{r matrix}
+# Work in Progress
 
-Tutorial: https://cran.r-project.org/web/packages/CliquePercolation/vignettes/CliquePercolation.html
+```
 
-Informative paper: \n Lange, J., (2021). CliquePercolation: An R Package for conducting and visualizing results of the clique percolation network community detection algorithm. Journal of Open Source Software, 6(62), 3210, https://doi.org/10.21105/joss.03210
+#### Test Area. Caution: Please be aware of falling objects! Don't forget your safety helmet!
 
+Tutorial: <https://cran.r-project.org/web/packages/CliquePercolation/vignettes/CliquePercolation.html>
 
-* k-cliques = fully connected networks with _k_ nodes. The smallest possible k would be k=3. Otherwise, the cliques would be only edges.
-* I = For weighted networks, the algorithm has just one intermediate additional step. Specifically, after identifying the k-cliques, they are considered further only if their Intensity exceeds a specified threshold I. The Intensity of a k-clique is defined as the geometric mean of the edge weights.
+Informative paper: \
+Lange, J., (2021). CliquePercolation: An R Package for conducting and visualizing results of the clique percolation network community detection algorithm. Journal of Open Source Software, 6(62), 3210, <https://doi.org/10.21105/joss.03210>
 
+-   *k*-cliques = fully connected networks with *k* nodes. The smallest possible k would be *k* = 3. Otherwise, the cliques would be only edges.
+-   *I* = For weighted networks, the algorithm has just one intermediate additional step. Specifically, after identifying the k-cliques, they are considered further only if their Intensity exceeds a specified threshold I. The Intensity of a k-clique is defined as the geometric mean of the edge weights.
 
 ```{r cp}
 
@@ -289,4 +294,3 @@ commnetwork <- cpCommunityGraph(cpk3I.35$list.of.communities.numbers,
                                 theme = "colorblind", layout = "spring", repulsion = 0.4)
 
 ```
-
