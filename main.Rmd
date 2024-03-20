@@ -154,13 +154,13 @@ CAMfiles <- create_CAMfiles(datCAM = raw_CAM, reDeleted = TRUE)
 
 Consider protocol.
 
-```{r }
+```{r protocol}
 if(consider_Protocol){
   CAMfiles[[1]] <- CAMfiles[[1]][CAMfiles[[1]]$CAM %in% protocol$currentCAMs,]
   CAMfiles[[2]] <- CAMfiles[[2]][CAMfiles[[2]]$CAM %in% protocol$currentCAMs,]
   CAMfiles[[3]] <- CAMfiles[[3]][CAMfiles[[3]]$CAM.x %in% protocol$currentCAMs,]
-  
-  
+
+
   tmp_out <- overwriteTextNodes(protocolDat = protocol,
                                 nodesDat = CAMfiles[[1]])
   CAMfiles[[1]] <- tmp_out[[1]]
@@ -169,7 +169,7 @@ if(consider_Protocol){
 
 ```
 
-##### Draw CAMs
+Draw CAMs
 
 ```{r draw_CAMs}
 CAMdrawn <- draw_CAM(dat_merged = CAMfiles[[3]],
@@ -225,7 +225,85 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 At this point, we need to create adjacency matrices. For each group (high vs. low climate change conspiracy belief) we need a separate matrix in order to determine differences. However, with this type of matrix we have a huge loss of information compared to a weight matrix. Since the aggregated CAM is an unweighted graph, I cannot think of an elegant way to deal with this problem.
 
 ```{r matrix}
-# Work in Progress
+dat_merged <- CAMfiles[[3]]
+dat_nodes <- CAMfiles[[1]]
+# ids_CAMs <- NULL
+ids_CAMs <- "all"
+
+
+## check for identical IDs
+if(!all(dat_merged$CAM.x %in% dat_nodes$CAM)) {
+  cat("Your IDs of the two dataset you specified are not perfectly matching: \n")
+  stop("> please respecify the \"dat_merged\" AND / OR \"dat_nodes\" argument")
+}
+
+if(!all(ids_CAMs %in% dat_nodes$CAM)) {
+  print("aggregate_CAMs: using participant CAM ids")
+  dat_merged$CAM.x <- dat_merged$participantCAM.x
+  dat_nodes$CAM <-   dat_nodes$participantCAM
+}
+
+## check ids_CAMs argument + create ids_CAMs
+if(length(ids_CAMs) == 1 && ids_CAMs == "all"){
+  ids_CAMs <- unique(dat_merged$CAM.x)
+}else if(is.character(ids_CAMs) && !all(ids_CAMs %in% unique(dat_merged$CAM.x))){
+  cat("Your specified ids are:", ids_CAMs, ", which is / are not matching the ids of the dataset (seperated by '//'):" ,"\n")
+  cat(paste0(unique(dat_merged$CAM.x), collapse = " // "), "\n")
+  stop("> Redefine ids")
+}
+
+
+## create subsets:
+sel_dat_nodes <- dat_nodes[dat_nodes$CAM %in% ids_CAMs, ]
+sel_dat_nodes$value[sel_dat_nodes$value==10] <- 0
+
+
+## redraw CAMs
+sel_drawn_CAM <- draw_CAM(
+  dat_merged = dat_merged,
+  dat_nodes = dat_nodes,
+  ids_CAMs = ids_CAMs,
+  plot_CAM = FALSE,
+  relvertexsize = 5,
+  reledgesize = 1
+)
+
+if (any(colnames(sel_dat_nodes) == "text_summarized")) {
+  print("text_summarized column identified")
+  sel_dat_nodes$text_backup <- sel_dat_nodes$text
+  sel_dat_nodes$text <- sel_dat_nodes$text_summarized
+}
+
+
+
+adjmat <- matrix(data = 0, nrow = length(unique(sel_dat_nodes$text)),
+                 ncol = length(unique(sel_dat_nodes$text)))
+
+rownames(adjmat) <- unique(sel_dat_nodes$text)
+colnames(adjmat) <- unique(sel_dat_nodes$text)
+
+
+for(i in 1:length(sel_drawn_CAM)) {
+  ## add 1 to the diagonal
+  diag(adjmat[rownames(adjmat) %in% V(sel_drawn_CAM[[i]])$label, colnames(adjmat) %in% V(sel_drawn_CAM[[i]])$label]) <-
+    diag(adjmat[rownames(adjmat) %in% V(sel_drawn_CAM[[i]])$label, colnames(adjmat) %in% V(sel_drawn_CAM[[i]])$label]) + 1
+  
+  ## add 1 if edges are connected
+  tmp_labels <- cbind(V(sel_drawn_CAM[[i]])$name, V(sel_drawn_CAM[[i]])$label)
+  tmp_edges <- as_edgelist(sel_drawn_CAM[[i]])
+  
+  for (j in 1:nrow(tmp_labels)) {
+    tmp_edges[, 1][tmp_edges[, 1] %in% tmp_labels[j, 1]] <-
+      tmp_labels[j, 2]
+    tmp_edges[, 2][tmp_edges[, 2] %in% tmp_labels[j, 1]] <-
+      tmp_labels[j, 2]
+  }
+  
+  for (k in 1:nrow(tmp_edges)) {
+    adjmat[rownames(adjmat) == tmp_edges[k, 1], colnames(adjmat) == tmp_edges[k, 2]] <-
+      adjmat[rownames(adjmat) == tmp_edges[k, 1], colnames(adjmat) == tmp_edges[k, 2]] + 1
+  }
+}
 
 ```
 
@@ -241,7 +319,7 @@ Lange, J., (2021). CliquePercolation: An R Package for conducting and visualizin
 
 ```{r cp}
 
-# W <- Matrix::forceSymmetric(W) # Some kind of matrix (adjacency or weight matrix that is symmetric)
+W <- Matrix::forceSymmetric(adjmat) # Some kind of matrix (adjacency or weight matrix that is symmetric)
 W <- qgraph::qgraph(W, theme = "colorblind", layout = "spring", cut = 0.4) # Just for visualization 
 
 ### To run the clique percolation algorithm for weighted networks, we initially need to optimize k and I.
@@ -294,3 +372,4 @@ commnetwork <- cpCommunityGraph(cpk3I.35$list.of.communities.numbers,
                                 theme = "colorblind", layout = "spring", repulsion = 0.4)
 
 ```
+
