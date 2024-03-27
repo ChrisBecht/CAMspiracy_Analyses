@@ -1,0 +1,1128 @@
+---
+title: "Main File for t1 Segementation Study (USA, Germany samples)"
+author: "Julius Fenn"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    html-math-method: katex
+---
+
+```{r}
+#| echo: false
+#| warning: false
+
+# sets the directory of location of this script as the current directory
+# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+########################################
+# load packages
+########################################
+require(pacman)
+p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
+       'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
+       'lavaan', 
+       'regsem', 'MplusAutomation')
+
+########################################
+# load data
+########################################
+##### JATOS file
+setwd("data")
+# dir()
+suppressMessages(read_file('jatos_results_data_20231127130832.txt') %>%
+  # ... split it into lines ...
+  str_split('\n') %>% first() %>%
+  # ... filter empty rows ...
+  discard(function(x) x == '') %>%
+  # ... parse JSON into a data.frame
+  map_dfr(fromJSON, flatten=TRUE)) -> dat
+
+
+## Republicans
+suppressMessages(read_file('jatos_results_data_20231127130931_Republicans.txt') %>%
+  # ... split it into lines ...
+  str_split('\n') %>% first() %>%
+  # ... filter empty rows ...
+  discard(function(x) x == '') %>%
+  # ... parse JSON into a data.frame
+  map_dfr(fromJSON, flatten=TRUE)) -> dat_Republican
+
+  ## Germany
+suppressMessages(read_file('jatos_results_data_20231127131018_Germany.txt') %>%
+  # ... split it into lines ...
+  str_split('\n') %>% first() %>%
+  # ... filter empty rows ...
+  discard(function(x) x == '') %>%
+  # ... parse JSON into a data.frame
+  map_dfr(fromJSON, flatten=TRUE)) -> dat_Germany
+
+
+##### prolific file
+#> socio-demographic data
+prolific <- read.csv(file = "prolific_export_6560bd631f35feab8a3d13c8.csv", header = TRUE)
+prolific$U.s..political.affiliation <- NULL
+prolific_Republican <- read.csv(file = "prolific_export_65620efdd4432eb81c6a1206_Republicans.csv", header = TRUE)
+prolific_Republican$U.s..political.affiliation <- NULL
+prolific_Germany <- read.csv(file = "prolific_export_656235b32d4f1e21cfc7e892_Germany.csv", header = TRUE)
+
+prolific <- rbind(prolific, prolific_Republican, prolific_Germany)
+
+setwd("..")
+
+########################################
+# load functions
+########################################
+setwd("../../functions")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+rm(i)
+```
+
+# Notes
+
+Remark: "dat" at first is the data set of N=150 americans who have the political affilication "Democrat"; in opposition to "dat_Republican"
+
+
+# prepare data
+
+## set up data.frame
+
+```{r}
+########################################
+# create counter variable for both data sets
+########################################
+## for Democrats
+dat$ID <- NA
+dat$politicalParty <- NA
+dat$country <- NA
+
+
+tmp_IDcounter <- 0
+for(i in 1:nrow(dat)){
+  if(!is.na(dat$sender[i]) && dat$sender[i] == "Greetings"){
+    # tmp <- dat$prolific_pid[i]
+    tmp_IDcounter = tmp_IDcounter + 1
+    dat$politicalParty[i] <- "Democrat" ## add political affiliation
+    dat$country[i] <- "USA" ## add country
+  }
+  dat$ID[i] <- tmp_IDcounter
+}
+
+
+## for Republicans
+dat_Republican$ID <- NA
+dat_Republican$politicalParty <- NA
+dat_Republican$country <- NA
+
+
+# continue tmp_IDcounter
+for(i in 1:nrow(dat_Republican)){
+  if(!is.na(dat_Republican$sender[i]) && dat_Republican$sender[i] == "Greetings"){
+    # tmp <- dat$prolific_pid[i]
+    tmp_IDcounter = tmp_IDcounter + 1
+    dat_Republican$politicalParty[i] <- "Republican" ## add political affiliation
+    dat_Republican$country[i] <- "USA" ## add country
+  }
+  dat_Republican$ID[i] <- tmp_IDcounter
+}
+
+
+## Germany
+dat_Germany$ID <- NA
+dat_Germany$politicalParty <- NA
+dat_Germany$country <- NA
+
+# continue tmp_IDcounter
+for(i in 1:nrow(dat_Germany)){
+  if(!is.na(dat_Germany$sender[i]) && dat_Germany$sender[i] == "Greetings"){
+    # tmp <- dat$prolific_pid[i]
+    tmp_IDcounter = tmp_IDcounter + 1
+    # dat_Germany$politicalParty[i] <- NA ## no political affiliation
+      dat_Germany$country[i] <- "Germany" ## add country
+  }
+  dat_Germany$ID[i] <- tmp_IDcounter
+}
+rm(tmp_IDcounter)
+
+
+
+dat <- dat[, str_subset(string = colnames(dat), pattern = "^\\.\\.", negate = TRUE)]
+dat_Republican <- dat_Republican[, str_subset(string = colnames(dat_Republican), pattern = "^\\.\\.", negate = TRUE)]
+dat_Germany <- dat_Germany[, str_subset(string = colnames(dat_Germany), pattern = "^\\.\\.", negate = TRUE)]
+
+##########
+# merge two data sets
+##########
+dim(dat)
+dat <- rbind(dat, dat_Republican, dat_Germany)
+dim(dat)
+
+########################################
+# keep only complete data sets
+########################################
+sum(table(dat$ID) != max(table(dat$ID)))
+sum(table(dat$ID) == max(table(dat$ID)))
+dat <- dat[dat$ID %in% names(table(dat$ID))[table(dat$ID) == max(table(dat$ID))],]
+
+########################################
+# json (from JATOS) to 2D data.frame
+########################################
+tmp_notNumeric <- str_subset(string = colnames(dat), pattern = "^meta|^R")
+tmp_notNumeric <- str_subset(string = tmp_notNumeric, pattern = "labjs|location", negate = TRUE)
+
+tmp_numeric <- str_subset(string = colnames(dat), pattern = "^affImgAffect|^CRKQ|^CCSQ|^CMQ|^GCB")
+
+
+vec_ques <- c("PROLIFIC_PID",
+                "dummy_informedconsent",
+                "commCheck",
+                tmp_notNumeric,
+                tmp_numeric,
+                "feedback_critic",
+                "politicalParty",
+                "country")
+
+vec_notNumeric = c("PROLIFIC_PID",
+                   tmp_notNumeric,
+                   "feedback_critic",
+                   "politicalParty",
+                   "country")
+
+questionnaire <- questionnairetype(dataset = dat, 
+                                        listvars = vec_ques, 
+                                        notNumeric = vec_notNumeric)
+```
+
+
+## get reaction times for single components
+
+Plot time taken (in minutes) by participants for single components of experiment:
+
+```{r prepare_data3, message = FALSE}
+dat_duration <- data.frame(duration = NA, sender = NA, ID = NA, PROLIFIC_PID = NA)
+
+for(i in 1:length(unique(dat$ID))){
+
+  tmp_PID <- dat$PROLIFIC_PID[dat$ID ==  unique(dat$ID)[i] & !is.na(dat$PROLIFIC_PID)]
+  tmp <- data.frame(duration = dat$duration[dat$ID == unique(dat$ID)[i]] / 1000,
+                    sender = dat$sender[dat$ID == unique(dat$ID)[i]])
+
+  tmp <- tmp[str_detect(string = tmp$sender, pattern = "Sequence", negate = TRUE),]
+  tmp <- tmp[!is.na(tmp$sender),]
+  # tmp <- tmp[!is.na(tmp$duration),]
+
+  sub_tmp <- tmp[13:46,]
+  tmp[13:46,] <- sub_tmp[order(sub_tmp$sender),]
+
+  if(all(is.na(dat_duration))){
+    dat_duration <- data.frame(duration = tmp$duration,
+                              sender = tmp$sender,
+                              ID = rep(i, times=nrow(tmp)),
+                              PROLIFIC_PID = rep(tmp_PID, times=nrow(tmp)))
+
+
+  }else{
+    dat_duration <- rbind(dat_duration,  data.frame(duration = tmp$duration,
+                                                    sender = tmp$sender,
+                                                    ID = rep(i, times=nrow(tmp)),
+                                                    PROLIFIC_PID = rep(tmp_PID, times=nrow(tmp))))
+  }
+}
+
+## remove empty sender 
+dat_duration <- dat_duration[!is.na(dat_duration$sender), ]
+
+## save as .xlsx
+write.xlsx2(x = dat_duration, file = "outputs/para_duration_singleComponents.xlsx")
+
+#### plot
+dat_duration$ID <- factor(dat_duration$ID)
+p <- dat_duration %>%
+  ggplot(aes(x=sender, y=duration, color=PROLIFIC_PID)) +
+  geom_point() +
+  geom_jitter(width=0.15)+
+  theme(axis.text.x = element_text(angle = 90)) + theme(legend.position="none")
+p
+
+## save ggplot as PDF
+ggsave(filename = "outputs/durations_components.pdf", p)
+
+
+# Calculate the mean duration in seconds for each sender and sort by mean duration
+tmp <- dat_duration %>%
+  group_by(sender) %>%
+  summarise(N = n(), mean_duration = mean(duration, na.rm = TRUE)) %>%
+  arrange(desc(mean_duration))
+DT::datatable(tmp, options = list(pageLength = 5)) 
+```
+
+
+
+### add prolific data to questionnaire
+
+Add duration in minutes
+
+```{r}
+questionnaire$total_min <- NA
+for(p in unique(questionnaire$PROLIFIC_PID)){
+  tmp <- dat_duration$duration[dat_duration$PROLIFIC_PID == p]
+  questionnaire$total_min[questionnaire$PROLIFIC_PID == p] <-   sum(tmp, na.rm = TRUE) / 60
+}
+```
+
+
+Add Prolific data to data set:
+
+```{r}
+prolific <- prolific[prolific$Participant.id %in% questionnaire$PROLIFIC_PID,]
+prolific <- prolific %>%
+  arrange(sapply(Participant.id, function(y) which(y == questionnaire$PROLIFIC_PID)))
+
+
+if(nrow(prolific) == nrow(questionnaire)){
+  print("prolific data sucessfully added")
+  
+  questionnaire$socio_age <- prolific$Age
+  questionnaire$socio_sex <- prolific$Sex
+  questionnaire$socio_ethnicity <- prolific$Ethnicity.simplified
+  questionnaire$socio_student <- prolific$Student.status
+  questionnaire$socio_employment <- prolific$Employment.status
+  questionnaire$total_min_prolific <- prolific$Time.taken / 60
+  ## all time outs to NA
+  questionnaire$total_min_prolific[questionnaire$total_min_prolific > 3000] <- NA
+
+  questionnaire[questionnaire == "DATA_EXPIRED"] <- NA
+  questionnaire[questionnaire == ""] <- NA
+  
+  questionnaire$socio_age <- as.numeric(questionnaire$socio_age)
+}
+
+## plot reaction times to see if a person timed out
+plot(questionnaire$total_min, questionnaire$total_min_prolific)
+
+
+## save raw questionnaire
+write.xlsx2(x = questionnaire, file = "outputs/questionnaire_raw.xlsx")
+```
+
+
+## clean data (if needed)
+
+*add code here if needed*
+
+# describe data 
+
+## sample description
+
+```{r}
+## socio demographics (nominal variables)
+table(questionnaire$socio_sex)
+table(questionnaire$socio_ethnicity)
+table(questionnaire$socio_student)
+table(questionnaire$socio_employment)
+table(questionnaire$politicalParty) # political party
+table(questionnaire$country) # country
+
+
+## socio demographics (numeric variables)
+psych::describe(questionnaire[, c("socio_age")])
+
+
+# Calculate mean and standard deviation
+mu <- mean(questionnaire$socio_age, na.rm = TRUE)
+sigma <- sd(questionnaire$socio_age, na.rm = TRUE)
+# Create the histogram with normal distribution overlay
+ggplot(questionnaire, aes(x = socio_age)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1, fill = "dodgerblue3", color = "white") +
+  stat_function(fun = dnorm, args = list(mean = mu, sd = sigma), color = "red") +
+  labs(x = "Mean Affection Imagery", y = "Density") +
+  theme_apa() +
+  theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept = mean(questionnaire$socio_age, na.rm = TRUE), col = "red")
+```
+
+
+### get feedback
+
+```{r}
+tmp_dat <- questionnaire[questionnaire$feedback_critic != "" & !is.na(questionnaire$feedback_critic), c("politicalParty", "country", "feedback_critic")]
+DT::datatable(tmp_dat, options = list(pageLength = 5)) 
+```
+
+## Affective Imagery
+
+In the following, the associations to "Climate Change" are listed, whereby a person can state a maximum of 5 associations (*cognitive component*), these are evaluated afterwards regarding their affect (*affective component*). 
+
+```{r}
+DT::datatable(questionnaire[str_subset(string = colnames(questionnaire), pattern = "^R")], options = list(pageLength = 5))
+```
+
+The respective ratings:
+
+```{r}
+DT::datatable(questionnaire[str_subset(string = colnames(questionnaire), pattern = "^affImgAffect")], options = list(pageLength = 5))    
+```
+
+In the histogram I have shown the average value of this affect of the mentioned associations, thereby *the scale ranges from 1-7, has a mean value of 4*:
+
+```{r}
+#| warning: false
+questionnaire$mean_affImg  <- questionnaire %>%
+  select(matches("^affImgAffect")) %>%
+  rowMeans(na.rm = TRUE)
+
+# Calculate mean and standard deviation
+mu <- mean(questionnaire$mean_affImg, na.rm = TRUE)
+sigma <- sd(questionnaire$mean_affImg, na.rm = TRUE)
+
+# Create the histogram with normal distribution overlay
+ggplot(questionnaire, aes(x = mean_affImg)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1, fill = "dodgerblue3", color = "white") +
+  stat_function(fun = dnorm, args = list(mean = mu, sd = sigma), color = "red") +
+  labs(x = "Mean Affection Imagery", y = "Density") +
+  theme_apa() +
+  theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept = mean(questionnaire$mean_affImg, na.rm = TRUE), col = "red")
+```
+
+
+## Scales
+
+```{r}
+########################################
+# number of items for each scale
+########################################
+sum(str_detect(string = colnames(questionnaire), pattern = "^GCB"))
+sum(str_detect(string = colnames(questionnaire), pattern = "^CMQ"))
+sum(str_detect(string = colnames(questionnaire), pattern = "^CRKQ"))
+sum(str_detect(string = colnames(questionnaire), pattern = "^CCSQ"))
+
+########################################
+# reverse code all items
+########################################
+#> see negative correlation between single items
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^GCB")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "GCB scale")
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CMQ")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "CMQ scale")
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CRKQ")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "CRKQ scale")
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CCSQ")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "CCSQ scale")
+
+
+#########
+# reverse code > CRKQ
+#########
+summary(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CRKQ.*r$")])
+tmp_vars <- str_subset(string = colnames(questionnaire), pattern = "^CRKQ.*r$")
+
+for(v in tmp_vars){
+  questionnaire[[v]] <- 7 - questionnaire[[v]]
+}
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CRKQ")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "CRKQ scale")
+#########
+# reverse code > CCSQ
+#########
+summary(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CCSQ.*r$")])
+tmp_vars <- str_subset(string = colnames(questionnaire), pattern = "^CCSQ.*r$")
+
+for(v in tmp_vars){
+  questionnaire[[v]] <- 7 - questionnaire[[v]]
+}
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^CCSQ")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "CCSQ scale")
+
+########################################
+# compute mean variables OVERALL (!)
+########################################
+### overall mean variables
+questionnaire$mean_GCB  <- questionnaire %>%
+  select(matches("^GCB")) %>%
+  rowMeans(na.rm = TRUE)
+
+questionnaire$mean_CMQ  <- questionnaire %>%
+  select(matches("^CMQ")) %>%
+  rowMeans(na.rm = TRUE)
+
+questionnaire$mean_CRKQ  <- questionnaire %>%
+  select(matches("^CRKQ")) %>%
+  select(ends_with(c("s", "fop", "fopr"))) %>%
+  rowMeans(na.rm = TRUE)
+
+questionnaire$mean_CCSQ  <- questionnaire %>%
+  select(matches("^CCSQ")) %>%
+  rowMeans(na.rm = TRUE)
+
+
+
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^mean")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "mean scales")
+```
+
+
+
+# analyze data 
+
+
+## EFA
+
+
+### overall
+
+```{r}
+parallelAnalysis_overall <- dimensionalityTest(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire)
+
+EFA_overall <- explorativeFactorAnalysis(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire, nfac = 3, showCronbach = TRUE)
+
+EFA_overall[[1]]
+EFA_overall[[1]]$loadings
+```
+
+
+### overall seperated by countries
+
+seperated by Germany and USA
+
+```{r}
+########################################
+# build subsets
+########################################
+questionnaire_Germany <- questionnaire %>%
+  filter(country == "Germany")
+
+questionnaire_USA <- questionnaire %>%
+  filter(country == "USA")
+
+
+########################################
+# Germany
+########################################
+parallelAnalysis_overall_Germany <- dimensionalityTest(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire_Germany)
+
+EFA_overall_Germany <- explorativeFactorAnalysis(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire, nfac = 3, showCronbach = TRUE)
+
+EFA_overall_Germany[[1]]
+EFA_overall_Germany[[1]]$loadings
+
+########################################
+# USA
+########################################
+parallelAnalysis_overall_USA <- dimensionalityTest(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire_USA)
+
+EFA_overall_USA <- explorativeFactorAnalysis(label = "Overall", regEx = "^GCB|^CMQ|^CRKQ|^CCSQ", dataset = questionnaire, nfac = 3, showCronbach = TRUE)
+
+EFA_overall_USA[[1]]
+EFA_overall_USA[[1]]$loadings
+```
+
+
+**USA**
+
+## CFA
+
+the self-written function "CFAstats" has the following functionalities: 
+* showPlots = get correlation plot and run self-written function "getDescriptives"
+* computeEFA = compute parallel analysis and EFA (apply two self-written functions, see section EFA)
+* computeCFA = apply lavaan package using "MLR" estimator to compute CFA (no residual correlations are specified)
+* computeCFAMplus = apply package using "MLR" estimator to compute CFA (no residual correlations are specified), possible here to compute CI for McDonald's Omega
+
+
+### CMQ
+
+```{r}
+CFA_CMQ <- CFAstats(dataset = questionnaire,
+                           regularExp = "^CMQ",
+                           labelLatent = "CMQ",
+                           showPlots = TRUE, computeEFA = FALSE, computeCFA = TRUE, computeCFAMplus = FALSE)
+```
+#### correlated residuals
+
+```{r}
+questionnaire_changedNames <- questionnaire
+
+########################################
+# test for correlated residuals between single items
+########################################
+regEx <- "^CMQ"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx); tmp_vars
+
+
+out_SyntaxCorrelatedResiduals <- getCorrelatedResidualsSyntax(vec_variables = tmp_vars,
+                                                             labelLatentLabel = "CMQ", verbose = FALSE)
+
+fit <- sem(out_SyntaxCorrelatedResiduals, questionnaire_changedNames, fixed.x=FALSE)
+semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+
+fit_regsem <- cv_regsem(model = fit, n.lambda = 40, jump=0.02,
+                        pars_pen = 
+                          paste0("v", 1:sum(parameterEstimates(fit)$label != "")),
+                        type = "enet", verbose = FALSE)
+summary(fit_regsem)
+plot(fit_regsem)
+# head(fit_regsem$fits,10)
+fit_regsem$final_pars
+
+########################################
+# fit adjusted model
+########################################
+model_lavaan(vars = tmp_vars, labelLatentVar = "CMQ", verbose = FALSE)
+
+mod_lavaan <- "
+CMQ =~ CMQ02 + CMQ03 + CMQ01 + CMQ04 + CMQ05
+
+#correlated residuls:
+CMQ02 ~~ CMQ01
+"
+
+### MLR estimator
+fit <- cfa(mod_lavaan, data = questionnaire_changedNames, estimator = "MLR")
+# summary(fit, standardized = TRUE)
+# semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+round(fitmeasures(fit,
+                  fit.measures =c("aic", "bic", "logl", "pvalue",
+                                  "rmsea", "rmsea.ci.lower", "rmsea.ci.upper",
+                                  "srmr", "cfi", "tli")), digits = 3)
+# head(modificationindices(fit, sort=T)) ## also possible to check out modification indices
+
+### get factor scores
+tmp_fc <- lavPredict(fit, method = "Bartlett")
+questionnaire$fc_CMQ <- tmp_fc
+```
+
+
+#### compare factor scores and mean scores
+
+normally they are highly correlated if items are relatively similar in their loading coefficients
+
+```{r}
+plot(questionnaire$fc_CMQ, questionnaire$mean_CMQ)
+cor(questionnaire$fc_CMQ, questionnaire$mean_CMQ)
+```
+
+
+
+### GCB
+
+no one factor solution -> theoretically driven split according to single sub-dimensions
+
+```{r}
+table(str_remove(string = str_subset(string = colnames(questionnaire), pattern = "^GCB"), pattern = "^GCB-[:digit:]*"))
+
+CFA_GCB <- CFAstats(dataset = questionnaire,
+                           regularExp = "^GCB",
+                           labelLatent = "GCB",
+                           showPlots = TRUE, computeEFA = FALSE, computeCFA = TRUE, computeCFAMplus = FALSE)
+# head(modificationindices(CFA_GCB[[3]], sort=T)) ## also possible to check out modification indices
+
+########################################
+# CFA first order
+########################################
+### get syntax
+regEx <- "^GCB.*ci$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "GCBci", verbose = FALSE)
+
+regEx <- "^GCB.*et$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "GCBet", verbose = FALSE)
+
+regEx <- "^GCB.*gm$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "GCBgm", verbose = FALSE)
+
+regEx <- "^GCB.*mg$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "GCBmg", verbose = FALSE)
+
+regEx <- "^GCB.*pw$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CMQpw", verbose = FALSE)
+
+
+### fit model
+mod_lavaan <- "
+GCBci =~ GCB03ci + GCB02ci + GCB01ci
+GCBet =~ GCB03et + GCB01et + GCB02et
+GCBgm =~ GCB03gm + GCB01gm + GCB02gm
+GCBmg =~ GCB03mg + GCB02mg + GCB01mg
+GCBpw =~ GCB03pw + GCB01pw + GCB02pw
+
+#correlated residuls:
+"
+
+### MLR estimator
+fit <- cfa(mod_lavaan, data = questionnaire_changedNames, estimator = "MLR")
+# summary(fit, standardized = TRUE)
+semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+round(fitmeasures(fit,
+                  fit.measures =c("aic", "bic", "logl", "pvalue",
+                                  "rmsea", "rmsea.ci.lower", "rmsea.ci.upper",
+                                  "srmr", "cfi", "tli")), digits = 3)
+
+### get factor scores
+tmp_fc <- lavPredict(fit, method = "Bartlett")
+questionnaire$fc_GCBci <- tmp_fc[,1]
+questionnaire$fc_GCBet <- tmp_fc[,2]
+questionnaire$fc_GCBgm <- tmp_fc[,3]
+questionnaire$fc_GCBmg <- tmp_fc[,4]
+questionnaire$fc_GCBpw <- tmp_fc[,5]
+```
+
+
+
+
+### CRKQ
+
+no one factor solution -> theoretically driven split according to single sub-dimensions
+
+```{r}
+table(str_remove(string = str_subset(string = colnames(questionnaire), pattern = "^CRKQ"), pattern = "^CRKQ-[:digit:]*"))
+
+CFA_CRKQ <- CFAstats(dataset = questionnaire,
+                           regularExp = "^CRKQ",
+                           labelLatent = "CRKQ",
+                           showPlots = TRUE, computeEFA = FALSE, computeCFA = TRUE, computeCFAMplus = FALSE)
+# head(modificationindices(CFA_GCB[[3]], sort=T)) ## also possible to check out modification indices
+
+
+
+
+########################################
+# CFA first order
+########################################
+### get syntax
+regEx <- "^CRKQ.*ccc$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CRKQccc", verbose = FALSE)
+
+regEx <- "^CRKQ.*fop$|^CRKQ.*fopr$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CRKQfop", verbose = FALSE)
+
+regEx <- "^CRKQ.*s$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CRKQs", verbose = FALSE)
+
+
+
+### fit model
+mod_lavaan <- "
+CRKQccc =~ CRKQ03ccc + CRKQ02ccc + CRKQ04ccc + CRKQ01ccc
+CRKQfop =~ CRKQ05fopr + CRKQ02fop + CRKQ03fopr + CRKQ04fopr + CRKQ01fop
+CRKQs =~ CRKQ05s + CRKQ04s + CRKQ03s + CRKQ02s + CRKQ01s + CRKQ07s + CRKQ06s
+
+#correlated residuls:
+CRKQ02fop ~~ CRKQ01fop
+"
+
+### MLR estimator
+fit <- cfa(mod_lavaan, data = questionnaire_changedNames, estimator = "MLR")
+# summary(fit, standardized = TRUE)
+semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+round(fitmeasures(fit,
+                  fit.measures =c("aic", "bic", "logl", "pvalue",
+                                  "rmsea", "rmsea.ci.lower", "rmsea.ci.upper",
+                                  "srmr", "cfi", "tli")), digits = 3)
+# head(modificationindices(fit, sort=T)) ## also possible to check out modification indices
+
+### get factor scores
+tmp_fc <- lavPredict(fit, method = "Bartlett")
+questionnaire$fc_CRKQccc <- tmp_fc[,1]
+questionnaire$fc_CRKQfop <- tmp_fc[,2]
+questionnaire$fc_CRKQs <- tmp_fc[,3]
+```
+
+
+
+### CCSQ
+
+no one factor solution -> theoretically driven split according to single sub-dimensions (only slight misfit)
+
+a first order factor model indicates that factors are strongly correlated - extracting only factor scores for an overall factor (see below)
+
+```{r}
+table(str_remove(string = str_subset(string = colnames(questionnaire), pattern = "^CCSQ"), pattern = "^CCSQ-[:digit:]*"))
+
+CFA_CRKQ <- CFAstats(dataset = questionnaire,
+                           regularExp = "^CCSQ",
+                           labelLatent = "CCSQ",
+                           showPlots = TRUE, computeEFA = FALSE, computeCFA = TRUE, computeCFAMplus = FALSE)
+head(modificationindices(CFA_CRKQ[[3]], sort=T)) ## also possible to check out modification indices
+
+
+########################################
+# CFA first order
+########################################
+### get syntax
+regEx <- "^CCSQ.*as$|^CCSQ.*asr$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CCSQas", verbose = FALSE)
+
+regEx <- "^CCSQ.*is$|^CCSQ.*isr$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CCSQis", verbose = FALSE)
+
+regEx <- "^CCSQ.*rs"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CCSQrs", verbose = FALSE)
+
+regEx <- "^CCSQ.*ts$|^CCSQ.*tsr$"
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+names(questionnaire_changedNames)[names(questionnaire_changedNames) %in% tmp_vars] <- str_remove_all(string = tmp_vars, pattern = "-")
+tmp_vars <- str_subset(string = colnames(questionnaire_changedNames), pattern = regEx)
+model_lavaan(vars = tmp_vars, labelLatentVar = "CCSQts", verbose = FALSE)
+
+
+
+### fit model
+mod_lavaan <- "
+CCSQas =~ CCSQ02asr + CCSQ01as + CCSQ03as
+CCSQis =~ CCSQ01isr + CCSQ03isr + CCSQ02is
+CCSQrs =~ CCSQ03rs + CCSQ02rs + CCSQ01rs
+CCSQts =~ CCSQ03ts + CCSQ01ts + CCSQ02tsr
+
+
+#correlated residuls:
+"
+
+### MLR estimator
+fit <- cfa(mod_lavaan, data = questionnaire_changedNames, estimator = "MLR")
+# summary(fit, standardized = TRUE)
+semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+round(fitmeasures(fit,
+                  fit.measures =c("aic", "bic", "logl", "pvalue",
+                                  "rmsea", "rmsea.ci.lower", "rmsea.ci.upper",
+                                  "srmr", "cfi", "tli")), digits = 3)
+# head(modificationindices(fit, sort=T)) ## also possible to check out modification indices
+
+########################################
+# CFA one factor solution
+########################################
+### fit model
+mod_lavaan <- "
+CCSQ =~ CCSQ02asr + CCSQ01as + CCSQ03as + CCSQ01isr + CCSQ03isr + CCSQ02is + CCSQ03rs + CCSQ02rs + CCSQ01rs + CCSQ03ts + CCSQ01ts + CCSQ02tsr
+
+
+#correlated residuls:
+CCSQ01isr ~~ CCSQ03isr
+CCSQ03as ~~  CCSQ03ts
+CCSQ02rs ~~  CCSQ01rs
+"
+
+### MLR estimator
+fit <- cfa(mod_lavaan, data = questionnaire_changedNames, estimator = "MLR")
+semPlot::semPaths(object = fit, what = "std", edge.label.cex = 0.5)
+round(fitmeasures(fit,
+                  fit.measures =c("aic", "bic", "logl", "pvalue",
+                                  "rmsea", "rmsea.ci.lower", "rmsea.ci.upper",
+                                  "srmr", "cfi", "tli")), digits = 3)
+# head(modificationindices(fit, sort=T)) ## also possible to check out modification indices
+
+
+### get factor scores
+tmp_fc <- lavPredict(fit, method = "Bartlett")
+questionnaire$fc_CCSQ <- tmp_fc[,1]
+```
+
+
+
+## measurment invariance
+
+*in the future*
+
+
+
+## latent class analysis
+
+Compute an LCA over computed factor scores of single scales, except "fc_CRKQccc" and "fc_CRKQfop"
+
+```{r}
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^fc")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "factor scores of scales")
+```
+
+**run LCA**
+
+```{r}
+runMplus = FALSE # define !
+
+if(runMplus){
+  LCArunsDef = 6 # define !
+  setwd("outputs/LCA")
+
+  tmp_vars <- str_subset(string = colnames(questionnaire), pattern = "fc_")
+  tmp_vars <- tmp_vars[!tmp_vars %in% c("fc_CRKQccc", "fc_CRKQfop")]
+  
+  LCA_dat <- questionnaire[, c("PROLIFIC_PID", tmp_vars)]
+  LCA_dat <- as.data.frame(as.matrix(LCA_dat))
+  
+  LCA_dat[,2:9] <- lapply(LCA_dat[,2:9],as.numeric)
+  # prepareMplusData(df = LCA_dat, filename = "test.dat")
+
+
+  l = 1
+  list_LCA <- list()
+  for(i in 2:LCArunsDef){
+    print(i)
+
+    numClasses <- i
+
+    LCA_conspiracy  <- mplusObject(
+
+      TITLE = paste0("Latent Class Analysis", " c=", numClasses),
+
+      VARIABLE =paste0("
+  usevariables = fc_CMQ fc_GCBci fc_GCBet fc_GCBgm fc_GCBmg fc_GCBpw fc_CRKQs fc_CCSQ;
+
+  classes      = c(", numClasses, ")"),
+
+  ANALYSIS =
+    "
+    Type=mixture; ! LCA analysis
+    STARTS= 500 100;
+    !LRTstarts=0 0 300 20;
+  ",
+
+  PLOT =
+    "
+    type = plot3;
+    series is fc_CMQ (1) fc_GCBci (2) fc_GCBet (3) fc_GCBgm (4) 
+              fc_GCBmg (5) fc_GCBpw (6) fc_CRKQs (7) fc_CCSQ (8);
+  ",
+
+  SAVEDATA = paste0("file = lca_", numClasses, ".txt ;
+    save = cprob;
+    format = free;
+  "),
+
+  OUTPUT = "tech11 tech14;", rdata = LCA_dat)
+
+
+    list_LCA[[l]] <- mplusModeler(LCA_conspiracy,
+                                         modelout = paste0("lca_", numClasses, ".inp"),
+                                         run = 1L)
+
+    l = l + 1
+  }
+
+  setwd("..")
+  # comment out to avoid overwriting LCA outputs
+  # saveRDS(list_LCA, file="list_LCA.RData")
+
+  saveRDS(list_LCA, file="outputs/list_LCA.RData")
+
+}else{
+  list_LCA <- readRDS("outputs/list_LCA.RData" )
+}
+```
+
+
+**get fit statistics of LCA**
+
+```{r}
+getLCAfitstatistics(listMplusOutput = list_LCA)
+```
+add to questionnaire
+
+
+```{r}
+questionnaire$classes_conspiracy <- read.table(file = "outputs/lca_3.txt")$V12
+
+
+## save final questionnaire
+dim(questionnaire)
+write.xlsx2(x = questionnaire, file = "outputs/questionnaire_final.xlsx")
+
+
+
+
+### some descriptives
+table(questionnaire$classes_conspiracy, questionnaire$country)
+table(questionnaire$classes_conspiracy, questionnaire$politicalParty)
+
+
+ggbetweenstats(
+  data = questionnaire,
+  x = classes_conspiracy,
+  y = mean_CMQ
+)
+```
+draw randomly 35 Persons for each country with high low conspiracy beliefs, assuming a drop-out of about 16.6%
+
+```{r}
+table(questionnaire$classes_conspiracy, questionnaire$country)
+
+
+set.seed(12345)
+## low and Germany
+tmp_ids <- questionnaire$PROLIFIC_PID[questionnaire$country == "Germany" & questionnaire$classes_conspiracy == 1]
+tmp_dat <- data.frame(country = "Germany", classes_conspiracy = 1, ID = sample(x = tmp_ids, size = 35, replace = FALSE))
+## high and Germany
+tmp_ids <- questionnaire$PROLIFIC_PID[questionnaire$country == "Germany" & questionnaire$classes_conspiracy == 3]
+tmp_dat_out <- rbind(tmp_dat,
+                     data.frame(country = "Germany", classes_conspiracy = 3, ID = sample(x = tmp_ids, size = 35, replace = FALSE)))
+
+## low and USA
+tmp_ids <- questionnaire$PROLIFIC_PID[questionnaire$country == "USA" & questionnaire$classes_conspiracy == 1]
+tmp_dat_out <- rbind(tmp_dat_out,
+                     data.frame(country = "USA", classes_conspiracy = 1, ID = sample(x = tmp_ids, size = 35, replace = FALSE)))
+## high and USA
+tmp_ids <- questionnaire$PROLIFIC_PID[questionnaire$country == "USA" & questionnaire$classes_conspiracy == 3]
+tmp_dat_out <- rbind(tmp_dat_out,
+                     data.frame(country = "USA", classes_conspiracy = 3, ID = sample(x = tmp_ids, size = 35, replace = FALSE)))
+
+
+table(tmp_dat_out$classes_conspiracy, tmp_dat_out$country)
+length(unique(tmp_dat_out$ID)) == nrow(tmp_dat_out)
+
+
+## save final IDs for t2
+write.xlsx2(x = tmp_dat_out, file = "outputs/IDs_t2.xlsx")
+
+```
+```{r}
+### add participants 
+
+usedIDs <- read.xlsx2(file = "outputs/IDs_t2_coloured.xlsx", sheetIndex = 1)
+
+
+table(questionnaire$classes_conspiracy, questionnaire$country)
+
+
+additionalParticipants <- 20
+
+set.seed(55555)
+## low and Germany
+tmp_dat <- questionnaire[questionnaire$country == "Germany" & questionnaire$classes_conspiracy == 1, ]
+tmp_ids <- tmp_dat$PROLIFIC_PID[! tmp_dat$PROLIFIC_PID %in% usedIDs$ID]
+tmp_dat_out <- data.frame(country = "Germany", classes_conspiracy = 1, ID = sample(x = tmp_ids, size = additionalParticipants, replace = FALSE))
+## high and Germany
+tmp_dat <- questionnaire[questionnaire$country == "Germany" & questionnaire$classes_conspiracy == 3, ] # max 25
+tmp_ids <- tmp_dat$PROLIFIC_PID[! tmp_dat$PROLIFIC_PID %in% usedIDs$ID]
+tmp_dat_IDs <- rbind(tmp_dat_out,
+                     data.frame(country = "Germany", classes_conspiracy = 3, 
+                                ID = sample(x = tmp_ids, size = additionalParticipants, replace = FALSE)))
+
+## low and USA
+tmp_dat <- questionnaire[questionnaire$country == "USA" & questionnaire$classes_conspiracy == 1, ]
+tmp_ids <- tmp_dat$PROLIFIC_PID[! tmp_dat$PROLIFIC_PID %in% usedIDs$ID]
+tmp_dat_IDs <- rbind(tmp_dat_IDs,
+                     data.frame(country = "USA", classes_conspiracy = 1, ID = sample(x = tmp_ids, size = additionalParticipants, replace = FALSE)))
+
+
+
+
+## high and USA
+tmp_dat <- questionnaire[questionnaire$country == "USA" & questionnaire$classes_conspiracy == 3, ]
+tmp_ids <- tmp_dat$PROLIFIC_PID[! tmp_dat$PROLIFIC_PID %in% usedIDs$ID]
+tmp_dat_IDs <- rbind(tmp_dat_IDs,
+                     data.frame(country = "USA", classes_conspiracy = 3, ID = sample(x = tmp_ids, size = additionalParticipants, replace = FALSE)))
+
+
+table(tmp_dat_IDs$classes_conspiracy, tmp_dat_IDs$country)
+length(unique(tmp_dat_IDs$ID)) == nrow(tmp_dat_IDs)
+
+
+## save final IDs for t2
+write.xlsx2(x = tmp_dat_IDs, file = "outputs/IDs_t2_additional.xlsx")
+```
+
+
+## group comparisons
+
+
+### Descriptives
+
+```{r}
+questionnaire$countryParty <- questionnaire$politicalParty
+questionnaire$countryParty[is.na(questionnaire$countryParty)] <- "Germany"
+table(questionnaire$countryParty)
+tmp <- questionnaire[, c(str_subset(string = colnames(questionnaire), pattern = "mean_"), "countryParty")] 
+
+psych::describe(tmp ~ countryParty)
+```
+
+
+### Hypothesis Tests
+
+```{r}
+# questionnaire$fc_CMQ <- as.numeric(questionnaire$fc_CMQ)
+# ggbetweenstats(
+#   data = questionnaire,
+#   x = politicalParty,
+#   y = fc_CMQ
+# )
+
+ggbetweenstats(
+  data = questionnaire,
+  x = countryParty,
+  y = mean_CMQ
+)
+
+ggbetweenstats(
+  data = questionnaire,
+  x = politicalParty,
+  y = mean_CMQ
+)
+```
+
+## correlational analyses
+
+```{r}
+#> see negative correlation between single items
+psych::cor.plot(r = cor(questionnaire[, str_detect(string = colnames(questionnaire),
+                                                   pattern = "^fc_")], 
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "Factor Scores Scales")
+```
+

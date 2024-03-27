@@ -1,0 +1,1 @@
+{"idCAM":"cea72552-9aed-47c6-8d37-a06376d08632","creator":"6ed76ca5-ee92-4b66-addf-77a466d33b22","projectCAM":"CAMspiracy t2 USA CAM","defocusCAM":null,"date":1702247754694,"nodes":[],"connectors":[],"currentID":null,"currentNode":null,"hasSelectedNode":false,"currentConnector":null,"hasSelectedConnector":false,"readyToMove":false,"isIncoming":false}

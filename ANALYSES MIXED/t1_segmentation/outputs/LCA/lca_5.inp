@@ -1,0 +1,31 @@
+TITLE:
+Latent Class Analysis c=5
+DATA:
+FILE = "lca_2_4ad31f235f6d7fe22415ea8403398921.dat";
+ 
+VARIABLE:
+NAMES = fc_CMQ fc_GCBci fc_GCBet fc_GCBgm fc_GCBmg fc_GCBpw fc_CRKQs fc_CCSQ; 
+ MISSING=.;
+ 
+  usevariables = fc_CMQ fc_GCBci fc_GCBet fc_GCBgm fc_GCBmg fc_GCBpw fc_CRKQs fc_CCSQ;
+
+  classes      = c(5)
+ANALYSIS:
+
+    Type=mixture; ! LCA analysis
+    STARTS= 500 100;
+    !LRTstarts=0 0 300 20;
+  
+OUTPUT:
+tech11 tech14;
+SAVEDATA:
+file = lca_5.txt ;
+    save = cprob;
+    format = free;
+  
+PLOT:
+
+    type = plot3;
+    series is fc_CMQ (1) fc_GCBci (2) fc_GCBet (3) fc_GCBgm (4) 
+              fc_GCBmg (5) fc_GCBpw (6) fc_CRKQs (7) fc_CCSQ (8);
+  
