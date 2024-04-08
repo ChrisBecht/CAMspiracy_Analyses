@@ -126,21 +126,21 @@ psych::cor.plot(r = cor(questionnaire_CAM_USA[, str_detect(string = colnames(que
 
 ggbetweenstats(
   data = t12_questionnaireCAMs,
-  x = country.x,
+  x = classes_conspiracy,
   y = mean_valence_macro
 )
 
 
 ggbetweenstats(
   data = t12_questionnaireCAMs,
-  x = country.x,
-  y = mean_affImg
+  x = classes_conspiracy,
+  y = mean_CMQ
 )
 
 ggbetweenstats(
-  data = questionnaireCAMs,
-  x = country,
-  y = num_nodes_macro
+  data = t12_questionnaireCAMs,
+  x = classes_conspiracy,
+  y = mean_RiskPerception
 )
 
 ggbetweenstats(
