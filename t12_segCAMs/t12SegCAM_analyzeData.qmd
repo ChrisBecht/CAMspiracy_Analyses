@@ -1,0 +1,160 @@
+---
+title: "Analyze Merged Files from t1, t2"
+author: "Julius Fenn, Christophe"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    html-math-method: katex
+---
+
+
+# Notes
+
+```{r}
+## global variables: 
+```
+
+
+
+# load merged pre-processed data
+
+```{r}
+#| echo: true
+#| warning: false
+
+# sets the directory of location of this script as the current directory
+# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+# load packages
+require(pacman)
+# regsem not needed!
+p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
+       'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
+       'lavaan', 'igraph',
+       'regsem', 'MplusAutomation')
+
+
+# load data
+setwd("outputs")
+t12_questionnaireCAMs <- readRDS(file = "t12_questionnaireCAMs.rds")
+CAMfiles <- readRDS(file = "CAMfiles.rds")
+CAMdrawn <- readRDS(file = "CAMdrawn.rds")
+
+
+# load functions
+setwd("../../functions")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+
+
+setwd("../functions_CAMapp")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+rm(i)
+```
+
+
+# analyze data
+
+## mixed !!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+# analyze data 
+
+## descriptives 
+
+```{r}
+table(questionnaireCAMs$country)
+```
+
+
+## correlation plots
+
+### to mean valence
+
+```{r, fig.width=14}
+psych::cor.plot(r = cor(t12_questionnaireCAMs[, str_detect(string = colnames(t12_questionnaireCAMs),
+                                                   pattern = "^mean_")],
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "Germany")
+```
+
+
+### to number of concepts
+
+
+```{r, fig.width=14}
+psych::cor.plot(r = cor(t12_questionnaireCAMs[, str_detect(string = colnames(t12_questionnaireCAMs),
+                                                   pattern = "^mean_[:alpha:]*$|^num_nodes")],
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "Germany")
+```
+
+
+
+### to latent parameters
+
+
+```{r, fig.width=14}
+psych::cor.plot(r = cor(questionnaire_CAM_Germany[, str_detect(string = colnames(questionnaire_CAM_Germany),
+                                                   pattern = "^mean_[:alpha:]*$|^density|^transitivity.*macro$|^centr.*macro$|^meanDistance|^assortativity.*macro$")],
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "Germany")
+
+
+psych::cor.plot(r = cor(questionnaire_CAM_USA[, str_detect(string = colnames(questionnaire_CAM_USA),
+                                                   pattern = "^mean_[:alpha:]*$|^density|^transitivity.*macro$|^centr.*macro$|^meanDistance|^assortativity.*macro$")],
+                                                   use = "pairwise.complete.obs"),
+                                                   upper = FALSE, xlas = 2, main = "USA")
+```
+
+
+
+
+## mean differences
+
+```{r}
+# questionnaireCAMs$countryParty <- NA
+# questionnaireCAMs$CAM_ID %in% questionnaire_t1$PROLIFIC_PID
+# questionnaire_t1$politicalParty
+
+ggbetweenstats(
+  data = t12_questionnaireCAMs,
+  x = classes_conspiracy,
+  y = mean_valence_macro
+)
+
+
+ggbetweenstats(
+  data = t12_questionnaireCAMs,
+  x = classes_conspiracy,
+  y = mean_CMQ
+)
+
+ggbetweenstats(
+  data = t12_questionnaireCAMs,
+  x = classes_conspiracy,
+  y = mean_RiskPerception
+)
+
+ggbetweenstats(
+  data = questionnaireCAMs,
+  x = country,
+  y = mean_BiosphericValues
+)
+
+
+ggbetweenstats(
+  data = questionnaireCAMs,
+  x = country,
+  y = mean_PolicyItems
+)
+```
+

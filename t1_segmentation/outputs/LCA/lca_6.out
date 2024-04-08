@@ -1,0 +1,610 @@
+Mplus VERSION 8.6
+MUTHEN & MUTHEN
+12/04/2023   5:55 PM
+
+INPUT INSTRUCTIONS
+
+  TITLE:
+  Latent Class Analysis c=6
+  DATA:
+  FILE = "lca_2_4ad31f235f6d7fe22415ea8403398921.dat";
+
+  VARIABLE:
+  NAMES = fc_CMQ fc_GCBci fc_GCBet fc_GCBgm fc_GCBmg fc_GCBpw fc_CRKQs fc_CCSQ;
+   MISSING=.;
+
+    usevariables = fc_CMQ fc_GCBci fc_GCBet fc_GCBgm fc_GCBmg fc_GCBpw fc_CRKQs fc_CCSQ;
+
+    classes      = c(6)
+  ANALYSIS:
+
+      Type=mixture; ! LCA analysis
+      STARTS= 500 100;
+      !LRTstarts=0 0 300 20;
+
+  OUTPUT:
+  tech11 tech14;
+  SAVEDATA:
+  file = lca_6.txt ;
+      save = cprob;
+      format = free;
+
+  PLOT:
+
+      type = plot3;
+      series is fc_CMQ (1) fc_GCBci (2) fc_GCBet (3) fc_GCBgm (4)
+                fc_GCBmg (5) fc_GCBpw (6) fc_CRKQs (7) fc_CCSQ (8);
+
+
+
+
+*** WARNING in MODEL command
+  All variables are uncorrelated with all other variables within class.
+  Check that this is what is intended.
+   1 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+
+Latent Class Analysis c=6
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                         598
+
+Number of dependent variables                                    8
+Number of independent variables                                  0
+Number of continuous latent variables                            0
+Number of categorical latent variables                           1
+
+Observed dependent variables
+
+  Continuous
+   FC_CMQ      FC_GCBCI    FC_GCBET    FC_GCBGM    FC_GCBMG    FC_GCBPW
+   FC_CRKQS    FC_CCSQ
+
+Categorical latent variables
+   C
+
+
+Estimator                                                      MLR
+Information matrix                                        OBSERVED
+Optimization Specifications for the Quasi-Newton Algorithm for
+Continuous Outcomes
+  Maximum number of iterations                                 100
+  Convergence criterion                                  0.100D-05
+Optimization Specifications for the EM Algorithm
+  Maximum number of iterations                                 500
+  Convergence criteria
+    Loglikelihood change                                 0.100D-06
+    Relative loglikelihood change                        0.100D-06
+    Derivative                                           0.100D-05
+Optimization Specifications for the M step of the EM Algorithm for
+Categorical Latent variables
+  Number of M step iterations                                    1
+  M step convergence criterion                           0.100D-05
+  Basis for M step termination                           ITERATION
+Optimization Specifications for the M step of the EM Algorithm for
+Censored, Binary or Ordered Categorical (Ordinal), Unordered
+Categorical (Nominal) and Count Outcomes
+  Number of M step iterations                                    1
+  M step convergence criterion                           0.100D-05
+  Basis for M step termination                           ITERATION
+  Maximum value for logit thresholds                            15
+  Minimum value for logit thresholds                           -15
+  Minimum expected cell size for chi-square              0.100D-01
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+Optimization algorithm                                         EMA
+Random Starts Specifications
+  Number of initial stage random starts                        500
+  Number of final stage optimizations                          100
+  Number of initial stage iterations                            10
+  Initial stage convergence criterion                    0.100D+01
+  Random starts scale                                    0.500D+01
+  Random seed for generating random starts                       0
+
+Input data file(s)
+  lca_2_4ad31f235f6d7fe22415ea8403398921.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns             1
+     Number of y missing data patterns           1
+     Number of u missing data patterns           0
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT FOR Y
+
+
+           Covariance Coverage
+              FC_CMQ        FC_GCBCI      FC_GCBET      FC_GCBGM      FC_GCBMG
+              ________      ________      ________      ________      ________
+ FC_CMQ         1.000
+ FC_GCBCI       1.000         1.000
+ FC_GCBET       1.000         1.000         1.000
+ FC_GCBGM       1.000         1.000         1.000         1.000
+ FC_GCBMG       1.000         1.000         1.000         1.000         1.000
+ FC_GCBPW       1.000         1.000         1.000         1.000         1.000
+ FC_CRKQS       1.000         1.000         1.000         1.000         1.000
+ FC_CCSQ        1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              FC_GCBPW      FC_CRKQS      FC_CCSQ
+              ________      ________      ________
+ FC_GCBPW       1.000
+ FC_CRKQS       1.000         1.000
+ FC_CCSQ        1.000         1.000         1.000
+
+
+
+UNIVARIATE SAMPLE STATISTICS
+
+
+     UNIVARIATE HIGHER-ORDER MOMENT DESCRIPTIVE STATISTICS
+
+         Variable/         Mean/     Skewness/   Minimum/ % with                Percentiles
+        Sample Size      Variance    Kurtosis    Maximum  Min/Max      20%/60%    40%/80%    Median
+
+     FC_CMQ                0.000       0.127      -3.252    1.51%      -1.851     -0.568      0.079
+             598.000       3.233      -0.854       3.724    1.67%       0.572      1.566
+     FC_GCBCI              0.000       0.012      -1.898    6.52%      -1.072     -0.286      0.053
+             598.000       1.209      -0.886       2.220    3.01%       0.296      1.082
+     FC_GCBET              0.000       0.769      -1.049   30.27%      -1.049     -0.474     -0.122
+             598.000       1.085      -0.461       2.810    1.17%      -0.084      0.881
+     FC_GCBGM              0.000       0.317      -1.511   19.57%      -1.193     -0.505     -0.173
+             598.000       1.437      -1.086       2.511    2.51%       0.477      1.188
+     FC_GCBMG              0.000       0.412      -1.414   25.25%      -1.414     -0.493     -0.358
+             598.000       1.517      -1.080       2.640    3.01%       0.277      1.291
+     FC_GCBPW              0.000       0.546      -1.269   22.74%      -1.269     -0.541     -0.245
+             598.000       1.232      -0.799       2.828    1.17%       0.130      1.115
+     FC_CRKQS              0.000       0.950      -1.492    5.02%      -1.178     -0.662     -0.407
+             598.000       1.695      -0.065       3.339    1.51%      -0.012      1.103
+     FC_CCSQ               0.000       1.216      -1.488    6.86%      -1.223     -0.774     -0.407
+             598.000       2.084       0.735       4.365    0.33%      -0.105      1.033
+
+RANDOM STARTS RESULTS RANKED FROM THE BEST TO THE WORST LOGLIKELIHOOD VALUES
+
+Final stage loglikelihood values at local maxima, seeds, and initial stage start numbers:
+
+           -5754.694  948615           140
+           -5754.694  621542           375
+           -5754.694  316165           299
+           -5754.694  520177           262
+           -5754.694  824126           287
+           -5754.694  456213           160
+           -5754.694  392766           331
+           -5754.694  722748           346
+           -5754.694  856536           144
+           -5754.694  963053           43
+           -5754.694  170954           86
+           -5754.694  761633           50
+           -5754.694  342019           301
+           -5754.694  966014           37
+           -5754.694  772131           407
+           -5754.694  411615           171
+           -5754.694  39136            226
+           -5754.694  602797           336
+           -5754.694  267983           228
+           -5754.694  783110           72
+           -5754.694  366533           484
+           -5754.694  76974            16
+           -5754.694  188498           258
+           -5754.694  418686           338
+           -5754.694  69413            472
+           -5754.694  246261           38
+           -5754.694  823392           479
+           -5754.694  746978           410
+           -5754.694  665121           417
+           -5754.694  848890           95
+           -5754.694  27071            15
+           -5754.694  485483           498
+           -5754.694  654136           167
+           -5754.694  576596           99
+           -5754.694  226322           478
+           -5754.694  350608           334
+           -5754.694  736574           414
+           -5754.694  392751           480
+           -5754.694  292884           103
+           -5754.694  438144           271
+           -5754.694  618000           190
+           -5754.694  399508           415
+           -5754.694  175199           247
+           -5754.694  782821           272
+           -5754.694  496881           192
+           -5754.694  152496           123
+           -5754.694  349263           263
+           -5754.694  802682           419
+           -5754.694  131856           90
+           -5754.694  313407           132
+           -5754.694  315029           471
+
+49 perturbed starting value run(s) did not converge or were rejected in the third stage.
+
+
+
+THE BEST LOGLIKELIHOOD VALUE HAS BEEN REPLICATED.  RERUN WITH AT LEAST TWICE THE
+RANDOM STARTS TO CHECK THAT THE BEST LOGLIKELIHOOD IS STILL OBTAINED AND REPLICATED.
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       61
+
+Loglikelihood
+
+          H0 Value                       -5754.694
+          H0 Scaling Correction Factor      1.3533
+            for MLR
+
+Information Criteria
+
+          Akaike (AIC)                   11631.388
+          Bayesian (BIC)                 11899.397
+          Sample-Size Adjusted BIC       11705.739
+            (n* = (n + 2) / 24)
+
+
+
+FINAL CLASS COUNTS AND PROPORTIONS FOR THE LATENT CLASSES
+BASED ON THE ESTIMATED MODEL
+
+    Latent
+   Classes
+
+       1        180.52937          0.30189
+       2         24.75384          0.04139
+       3         65.04449          0.10877
+       4        164.46647          0.27503
+       5        116.69433          0.19514
+       6         46.51150          0.07778
+
+
+FINAL CLASS COUNTS AND PROPORTIONS FOR THE LATENT CLASSES
+BASED ON ESTIMATED POSTERIOR PROBABILITIES
+
+    Latent
+   Classes
+
+       1        180.52937          0.30189
+       2         24.75384          0.04139
+       3         65.04449          0.10877
+       4        164.46647          0.27503
+       5        116.69433          0.19514
+       6         46.51150          0.07778
+
+
+FINAL CLASS COUNTS AND PROPORTIONS FOR THE LATENT CLASSES
+BASED ON THEIR MOST LIKELY LATENT CLASS MEMBERSHIP
+
+Class Counts and Proportions
+
+    Latent
+   Classes
+
+       1              182          0.30435
+       2               25          0.04181
+       3               67          0.11204
+       4              161          0.26923
+       5              117          0.19565
+       6               46          0.07692
+
+
+CLASSIFICATION QUALITY
+
+     Entropy                         0.927
+
+
+Average Latent Class Probabilities for Most Likely Latent Class Membership (Row)
+by Latent Class (Column)
+
+           1        2        3        4        5        6
+
+    1   0.955    0.000    0.000    0.045    0.000    0.000
+    2   0.003    0.967    0.012    0.019    0.000    0.000
+    3   0.000    0.001    0.917    0.022    0.036    0.024
+    4   0.042    0.003    0.004    0.934    0.017    0.000
+    5   0.000    0.000    0.010    0.033    0.951    0.006
+    6   0.000    0.000    0.031    0.000    0.006    0.962
+
+
+Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+           1        2        3        4        5        6
+
+    1   0.963    0.000    0.000    0.037    0.000    0.000
+    2   0.003    0.976    0.003    0.019    0.000    0.000
+    3   0.000    0.004    0.945    0.010    0.018    0.022
+    4   0.050    0.003    0.009    0.915    0.024    0.000
+    5   0.000    0.000    0.021    0.023    0.953    0.003
+    6   0.000    0.000    0.034    0.000    0.014    0.952
+
+
+Logits for the Classification Probabilities for the Most Likely Latent Class Membership (Column)
+by Latent Class (Row)
+
+              1        2        3        4        5        6
+
+    1     13.777    6.114    0.000   10.519    0.000    0.000
+    2      7.886   13.791    7.876    9.827    0.000    0.000
+    3    -10.007   -1.600    3.752   -0.765   -0.208    0.000
+    4     10.813    7.943    9.111   13.726   10.073    0.000
+    5     -7.838   -7.838    2.093    2.225    5.929    0.000
+    6    -13.766  -13.766   -3.334  -13.766   -4.186    0.000
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+Latent Class 1
+
+ Means
+    FC_CMQ            -1.853      0.122    -15.174      0.000
+    FC_GCBCI          -1.153      0.074    -15.646      0.000
+    FC_GCBET          -0.828      0.037    -22.151      0.000
+    FC_GCBGM          -1.201      0.050    -23.899      0.000
+    FC_GCBMG          -1.233      0.040    -30.471      0.000
+    FC_GCBPW          -1.060      0.030    -35.305      0.000
+    FC_CRKQS          -0.927      0.048    -19.233      0.000
+    FC_CCSQ           -0.989      0.046    -21.312      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Latent Class 2
+
+ Means
+    FC_CMQ            -1.159      0.341     -3.396      0.001
+    FC_GCBCI          -0.823      0.158     -5.202      0.000
+    FC_GCBET          -0.680      0.116     -5.874      0.000
+    FC_GCBGM          -0.958      0.105     -9.112      0.000
+    FC_GCBMG          -0.925      0.128     -7.208      0.000
+    FC_GCBPW          -0.753      0.119     -6.336      0.000
+    FC_CRKQS           2.013      0.229      8.791      0.000
+    FC_CCSQ            2.429      0.329      7.392      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Latent Class 3
+
+ Means
+    FC_CMQ             0.847      0.143      5.914      0.000
+    FC_GCBCI           0.787      0.116      6.769      0.000
+    FC_GCBET           0.407      0.145      2.801      0.005
+    FC_GCBGM           0.714      0.114      6.278      0.000
+    FC_GCBMG           0.809      0.107      7.540      0.000
+    FC_GCBPW           0.746      0.111      6.691      0.000
+    FC_CRKQS           1.712      0.181      9.466      0.000
+    FC_CCSQ            1.851      0.208      8.898      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Latent Class 4
+
+ Means
+    FC_CMQ            -0.080      0.141     -0.565      0.572
+    FC_GCBCI          -0.022      0.103     -0.218      0.827
+    FC_GCBET          -0.214      0.097     -2.192      0.028
+    FC_GCBGM          -0.105      0.164     -0.638      0.524
+    FC_GCBMG          -0.268      0.112     -2.398      0.016
+    FC_GCBPW          -0.287      0.100     -2.865      0.004
+    FC_CRKQS          -0.406      0.075     -5.423      0.000
+    FC_CCSQ           -0.468      0.074     -6.303      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Latent Class 5
+
+ Means
+    FC_CMQ             1.715      0.154     11.116      0.000
+    FC_GCBCI           0.923      0.077     12.027      0.000
+    FC_GCBET           0.936      0.123      7.631      0.000
+    FC_GCBGM           1.087      0.077     14.207      0.000
+    FC_GCBMG           1.261      0.130      9.677      0.000
+    FC_GCBPW           1.059      0.129      8.230      0.000
+    FC_CRKQS          -0.335      0.096     -3.499      0.000
+    FC_CCSQ           -0.415      0.093     -4.471      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Latent Class 6
+
+ Means
+    FC_CMQ             2.607      0.226     11.536      0.000
+    FC_GCBCI           1.575      0.094     16.815      0.000
+    FC_GCBET           1.415      0.152      9.311      0.000
+    FC_GCBGM           1.815      0.104     17.387      0.000
+    FC_GCBMG           1.930      0.111     17.406      0.000
+    FC_GCBPW           1.830      0.120     15.222      0.000
+    FC_CRKQS           2.410      0.146     16.544      0.000
+    FC_CCSQ            2.656      0.242     10.954      0.000
+
+ Variances
+    FC_CMQ             0.958      0.074     13.020      0.000
+    FC_GCBCI           0.353      0.023     15.609      0.000
+    FC_GCBET           0.502      0.045     11.219      0.000
+    FC_GCBGM           0.418      0.040     10.395      0.000
+    FC_GCBMG           0.332      0.033     10.001      0.000
+    FC_GCBPW           0.307      0.027     11.381      0.000
+    FC_CRKQS           0.430      0.027     16.123      0.000
+    FC_CCSQ            0.530      0.036     14.553      0.000
+
+Categorical Latent Variables
+
+ Means
+    C#1                1.356      0.224      6.065      0.000
+    C#2               -0.631      0.295     -2.137      0.033
+    C#3                0.335      0.246      1.363      0.173
+    C#4                1.263      0.208      6.063      0.000
+    C#5                0.920      0.217      4.237      0.000
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.127E-02
+       (ratio of smallest to largest eigenvalue)
+
+
+TECHNICAL 11 OUTPUT
+
+     Random Starts Specifications for the k-1 Class Analysis Model
+        Number of initial stage random starts                 500
+        Number of final stage optimizations                   100
+
+
+
+     VUONG-LO-MENDELL-RUBIN LIKELIHOOD RATIO TEST FOR 5 (H0) VERSUS 6 CLASSES
+
+          H0 Loglikelihood Value                        -5890.506
+          2 Times the Loglikelihood Difference            271.624
+          Difference in the Number of Parameters                9
+          Mean                                           -103.593
+          Standard Deviation                              219.119
+          P-Value                                          0.0078
+
+     LO-MENDELL-RUBIN ADJUSTED LRT TEST
+
+          Value                                           266.985
+          P-Value                                          0.0084
+
+
+TECHNICAL 14 OUTPUT
+
+     Random Starts Specifications for the k-1 Class Analysis Model
+        Number of initial stage random starts                 500
+        Number of final stage optimizations                   100
+
+     Random Starts Specification for the k-1 Class Model for Generated Data
+        Number of initial stage random starts                   0
+        Number of final stage optimizations for the
+           initial stage random starts                          0
+     Random Starts Specification for the k Class Model for Generated Data
+        Number of initial stage random starts                  40
+        Number of final stage optimizations                     8
+     Number of bootstrap draws requested                   Varies
+
+
+     PARAMETRIC BOOTSTRAPPED LIKELIHOOD RATIO TEST FOR 5 (H0) VERSUS 6 CLASSES
+
+          H0 Loglikelihood Value                        -5890.506
+          2 Times the Loglikelihood Difference            271.624
+          Difference in the Number of Parameters                9
+          Approximate P-Value                              0.0000
+          Successful Bootstrap Draws                            5
+
+
+PLOT INFORMATION
+
+The following plots are available:
+
+  Histograms (sample values)
+  Scatterplots (sample values)
+  Sample means
+  Estimated means, medians, modes, and percentiles
+  Sample and estimated means
+  Observed individual values
+  Estimated means and observed individual values
+  Estimated overall and class-specific distributions
+
+SAVEDATA INFORMATION
+
+
+  Save file
+    lca_6.txt
+
+  Order of variables
+
+    FC_CMQ
+    FC_GCBCI
+    FC_GCBET
+    FC_GCBGM
+    FC_GCBMG
+    FC_GCBPW
+    FC_CRKQS
+    FC_CCSQ
+    CPROB1
+    CPROB2
+    CPROB3
+    CPROB4
+    CPROB5
+    CPROB6
+    C
+
+  Save file format           Free
+
+  Save file record length    10000
+
+  Save missing symbol        *
+
+
+     Beginning Time:  17:55:55
+        Ending Time:  17:56:44
+       Elapsed Time:  00:00:49
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2021 Muthen & Muthen
