@@ -28,6 +28,7 @@ format:
 
 # load packages
 require(pacman)
+# regsem not needed!
 p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
        'lavaan', 'igraph',
