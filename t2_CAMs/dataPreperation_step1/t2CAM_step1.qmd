@@ -4,7 +4,7 @@ author: "Julius Fenn"
 format:
   html:
     toc: true
-    toc-depth: 3
+    toc-depth: 4
     html-math-method: katex
 ---
 
@@ -40,6 +40,22 @@ p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
        'lavaan', 
        'regsem', 'MplusAutomation', 'igraph')
+
+
+########################################
+# load prolific
+########################################
+setwd("data")
+##### prolific file
+#> socio-demographic data
+prolific_Germany <- read.csv(file = "prolific_export_6575915db9c7c52953c7f84e.csv", header = TRUE)
+prolific_USA <- read.csv(file = "prolific_export_6575932415456e65f906d790.csv", header = TRUE)
+
+prolific <- rbind(prolific_Germany, prolific_USA)
+
+rm(prolific_Germany); rm(prolific_USA)
+setwd("..")
+
 
 ########################################
 # list data files
@@ -168,6 +184,9 @@ file.copy(from =  paste0(tmp_file_from, "/postCAM_USA.txt"), to = paste0(getwd()
 file.remove(paste0(tmp_file_from, "/CAMdata_USA.txt"))
 file.remove(paste0(tmp_file_from, "/preCAM_USA.txt"))
 file.remove(paste0(tmp_file_from, "/postCAM_USA.txt"))
+
+
+
 
 ########################################
 # load functions
@@ -332,7 +351,75 @@ dim(questionnaire_postCAM_Germany)
 
 questionnaire_Germany <- left_join(questionnaire_preCAM_Germany, questionnaire_postCAM_Germany, by="ID")
 dim(questionnaire_Germany)
+
+
+prolific_tmp <- prolific[prolific$Participant.id %in% questionnaire_Germany$PROLIFIC_PID,]
+prolific_tmp <- prolific_tmp %>%
+  arrange(sapply(Participant.id, function(y) which(y == questionnaire_Germany$PROLIFIC_PID)))
+
+
+if(nrow(prolific_tmp) == nrow(questionnaire_Germany)){
+  print("prolific_tmp data sucessfully added")
+  
+  questionnaire_Germany$total_min_prolific_t2 <- prolific_tmp$Time.taken / 60
+  ## all time outs to NA
+  questionnaire_Germany$total_min_prolific_t2[questionnaire_Germany$total_min_prolific_t2 > 3000] <- NA
+}
 ```
+
+#### get reaction times for single components post Germany
+
+```{r}
+dat_duration <- data.frame(duration = NA, sender = NA, ID = NA)
+dat <- dat_postCAM_Germany
+for(i in 1:length(unique(dat$ID))){
+
+  tmp_PID <- dat$PROLIFIC_PID[dat$ID ==  unique(dat$ID)[i] & !is.na(dat$PROLIFIC_PID)]
+  tmp <- data.frame(duration = dat$duration[dat$ID == unique(dat$ID)[i]] / 1000,
+                    sender = dat$sender[dat$ID == unique(dat$ID)[i]])
+
+  tmp <- tmp[str_detect(string = tmp$sender, pattern = "Sequence", negate = TRUE),]
+  tmp <- tmp[!is.na(tmp$sender),]
+  tmp <- tmp[!is.na(tmp$duration),]
+
+  # sub_tmp <- tmp[13:46,]
+  # tmp[13:46,] <- sub_tmp[order(sub_tmp$sender),]
+
+  if(all(is.na(dat_duration))){
+    dat_duration <- data.frame(duration = tmp$duration,
+                              sender = tmp$sender,
+                              ID = rep(i, times=nrow(tmp)))
+
+
+  }else{
+    dat_duration <- rbind(dat_duration,  data.frame(duration = tmp$duration,
+                                                    sender = tmp$sender,
+                                                    ID = rep(i, times=nrow(tmp))))
+  }
+}
+
+## remove empty sender 
+dat_duration <- dat_duration[!is.na(dat_duration$sender), ]
+
+## save as .xlsx
+write.xlsx2(x = dat_duration, file = "outputs/para_duration_singleComponents_Germany.xlsx")
+
+#### plot
+dat_duration$ID <- factor(dat_duration$ID)
+p <- dat_duration %>%
+  ggplot(aes(x=sender, y=duration, color=ID)) +
+  geom_point() +
+  geom_jitter(width=0.15)+
+  theme(axis.text.x = element_text(angle = 90)) + theme(legend.position="none")
+p
+
+
+## save ggplot as PDF
+ggsave(filename = "outputs/durations_components_Germany.pdf", p)
+```
+
+
+
 
 ### for USA
 
@@ -473,7 +560,72 @@ questionnaire_USA <- left_join(questionnaire_preCAM_USA, questionnaire_postCAM_U
 dim(questionnaire_USA)
 # questionnaire_USA <- na.omit(questionnaire_USA) # remove 2 missings !!!
 # dim(questionnaire_USA)
+
+
+
+prolific_tmp <- prolific[prolific$Participant.id %in% questionnaire_USA$PROLIFIC_PID,]
+prolific_tmp <- prolific_tmp %>%
+  arrange(sapply(Participant.id, function(y) which(y == questionnaire_USA$PROLIFIC_PID)))
+
+
+# questionnaire_USA[!questionnaire_USA$PROLIFIC_PID %in% prolific_tmp$Participant.id, ]
+
+questionnaire_USA$total_min_prolific_t2 <- NA
+questionnaire_USA$total_min_prolific_t2[questionnaire_USA$PROLIFIC_PID %in% prolific_tmp$Participant.id] <- prolific_tmp$Time.taken / 60
+questionnaire_USA$total_min_prolific_t2[questionnaire_USA$total_min_prolific_t2 > 3000] <- NA
 ```
+
+#### get reaction times for single components post Germany
+
+```{r}
+dat_duration <- data.frame(duration = NA, sender = NA, ID = NA)
+dat <- dat_postCAM_USA
+for(i in 1:length(unique(dat$ID))){
+
+  tmp_PID <- dat$PROLIFIC_PID[dat$ID ==  unique(dat$ID)[i] & !is.na(dat$PROLIFIC_PID)]
+  tmp <- data.frame(duration = dat$duration[dat$ID == unique(dat$ID)[i]] / 1000,
+                    sender = dat$sender[dat$ID == unique(dat$ID)[i]])
+
+  tmp <- tmp[str_detect(string = tmp$sender, pattern = "Sequence", negate = TRUE),]
+  tmp <- tmp[!is.na(tmp$sender),]
+  tmp <- tmp[!is.na(tmp$duration),]
+
+  # sub_tmp <- tmp[13:46,]
+  # tmp[13:46,] <- sub_tmp[order(sub_tmp$sender),]
+
+  if(all(is.na(dat_duration))){
+    dat_duration <- data.frame(duration = tmp$duration,
+                              sender = tmp$sender,
+                              ID = rep(i, times=nrow(tmp)))
+
+
+  }else{
+    dat_duration <- rbind(dat_duration,  data.frame(duration = tmp$duration,
+                                                    sender = tmp$sender,
+                                                    ID = rep(i, times=nrow(tmp))))
+  }
+}
+
+## remove empty sender 
+dat_duration <- dat_duration[!is.na(dat_duration$sender), ]
+
+## save as .xlsx
+write.xlsx2(x = dat_duration, file = "outputs/para_duration_singleComponents_USA.xlsx")
+
+#### plot
+dat_duration$ID <- factor(dat_duration$ID)
+p <- dat_duration %>%
+  ggplot(aes(x=sender, y=duration, color=ID)) +
+  geom_point() +
+  geom_jitter(width=0.15)+
+  theme(axis.text.x = element_text(angle = 90)) + theme(legend.position="none")
+p
+
+## save ggplot as PDF
+ggsave(filename = "outputs/durations_components_USA.pdf", p)
+```
+
+
 
 ### check current data for conspiracy / country group
 
@@ -1044,12 +1196,12 @@ tmp_dat <- questionnaire_CAM_USA[, c("PROLIFIC_PID", "ID")]
 write.xlsx2(x = tmp_dat, file = "outputs/PROLIFIC_PIDs_USA_Participated.xlsx")
 
 
-colnames(questionnaire_CAM_Germany)[75:78] <- colnames(questionnaire_CAM_USA)[75:78]
+colnames(questionnaire_CAM_Germany)[76:79] <- colnames(questionnaire_CAM_USA)[76:79]
 
 if(all(colnames(questionnaire_CAM_Germany) == colnames(questionnaire_CAM_USA))){
   print("questionnaires, CAM data sets can be merged!")
   questionnaireCAMs <- rbind(questionnaire_CAM_Germany, questionnaire_CAM_USA)
-  
+
   ## save file
   setwd("outputs")
   xlsx::write.xlsx2(x = questionnaireCAMs, file = "questionnaireCAMs.xlsx")

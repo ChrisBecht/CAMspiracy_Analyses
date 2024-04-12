@@ -179,7 +179,7 @@ DT::datatable(CAMwordlist, options = list(pageLength = 5))
 
 ```{r}
 ## remove network indicators
-t2_questionnaire <- t2_questionnaireCAMs[, -c(47:78)]
+t2_questionnaire <- t2_questionnaireCAMs[, -c(48:79)]
 ## remove deleted CAMs
 t2_questionnaire <- t2_questionnaire[t2_questionnaire$PROLIFIC_PID %in% CAM_nodes_clean$participantCAM,]
 
