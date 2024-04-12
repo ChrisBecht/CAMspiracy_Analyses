@@ -42,6 +42,9 @@ CAMfiles <- readRDS(file = "CAMfiles.rds")
 CAMdrawn <- readRDS(file = "CAMdrawn.rds")
 
 
+t12_questionnaireCAMs$total_min_prolific[t12_questionnaireCAMs$total_min_prolific > 1000] <- NA
+
+
 # load functions
 setwd("../../functions")
 for(i in 1:length(dir())){
@@ -59,6 +62,72 @@ rm(i)
 ```
 
 
+# split data
+
+
+### CAMs from Germany
+
+```{r}
+setwd("outputs")
+if(!file.exists("CAMs_Germany")){
+  dir.create("CAMs_Germany")
+}
+setwd("CAMs_Germany")
+
+
+CAMfiles_Germany <- CAMfiles
+
+## check is ID data set is complete
+if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
+    print("Error")
+}else{
+  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$country.x == "Germany"]
+  
+  ## keep only CAM data from Germany
+  CAMfiles_Germany[[1]] <- CAMfiles_Germany[[1]][CAMfiles_Germany[[1]]$participantCAM %in% tmp_ids,]
+  CAMfiles_Germany[[2]] <- CAMfiles_Germany[[2]][CAMfiles_Germany[[2]]$participantCAM %in% tmp_ids,]
+  CAMfiles_Germany[[3]] <- CAMfiles_Germany[[3]][CAMfiles_Germany[[3]]$participantCAM.x %in% tmp_ids,]
+  
+  ## save files ob subsets
+  vroom::vroom_write(x =  CAMfiles_Germany[[1]], file = "CAM_nodes_Germany.txt")
+  vroom::vroom_write(x =  CAMfiles_Germany[[2]], file = "CAM_connectors_Germany.txt")
+  vroom::vroom_write(x =  CAMfiles_Germany[[3]], file = "CAM_merged_Germany.txt")
+}
+```
+
+
+
+### CAMs from USA
+
+```{r}
+setwd("outputs")
+if(!file.exists("CAMs_USA")){
+  dir.create("CAMs_USA")
+}
+setwd("CAMs_USA")
+
+
+CAMfiles_USA <- CAMfiles
+
+## check is ID data set is complete
+if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
+    print("Error")
+}else{
+  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$country.x == "USA"]
+  
+  ## keep only CAM data from Germany
+  CAMfiles_USA[[1]] <- CAMfiles_USA[[1]][CAMfiles_USA[[1]]$participantCAM %in% tmp_ids,]
+  CAMfiles_USA[[2]] <- CAMfiles_USA[[2]][CAMfiles_USA[[2]]$participantCAM %in% tmp_ids,]
+  CAMfiles_USA[[3]] <- CAMfiles_USA[[3]][CAMfiles_USA[[3]]$participantCAM.x %in% tmp_ids,]
+  
+  ## save files ob subsets
+  vroom::vroom_write(x =  CAMfiles_USA[[1]], file = "CAM_nodes_USA.txt")
+  vroom::vroom_write(x =  CAMfiles_USA[[2]], file = "CAM_connectors_USA.txt")
+  vroom::vroom_write(x =  CAMfiles_USA[[3]], file = "CAM_merged_USA.txt")
+}
+```
+
+
 # analyze data
 
 ## mixed !!!!!!!!!!!!!!!!!!!!!!
@@ -71,7 +140,8 @@ rm(i)
 ## descriptives 
 
 ```{r}
-table(questionnaireCAMs$country)
+plot(t12_questionnaireCAMs$total_min_prolific, t12_questionnaireCAMs$total_min_prolific_t2)
+cor(t12_questionnaireCAMs$total_min_prolific, t12_questionnaireCAMs$total_min_prolific_t2, use = "pairwise")
 ```
 
 
