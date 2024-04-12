@@ -58,16 +58,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="t1CAM_step2_files/libs/clipboard/clipboard.min.js"></script>
-<script src="t1CAM_step2_files/libs/quarto-html/quarto.js"></script>
-<script src="t1CAM_step2_files/libs/quarto-html/popper.min.js"></script>
-<script src="t1CAM_step2_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="t1CAM_step2_files/libs/quarto-html/anchor.min.js"></script>
-<link href="t1CAM_step2_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="t1CAM_step2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="t1CAM_step2_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="t1CAM_step2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="t1CAM_step2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="t2CAM_step2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="t2CAM_step2_files/libs/quarto-html/quarto.js"></script>
+<script src="t2CAM_step2_files/libs/quarto-html/popper.min.js"></script>
+<script src="t2CAM_step2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="t2CAM_step2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="t2CAM_step2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="t2CAM_step2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="t2CAM_step2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="t2CAM_step2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="t2CAM_step2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -322,7 +322,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>dat_ids_consp<span class="sc">$</span>mean_CMQ <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(dat_ids_consp<span class="sc">$</span>mean_CMQ)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>(dat_ids_consp<span class="sc">$</span>mean_CMQ <span class="sc">~</span> dat_ids_consp<span class="sc">$</span>classes_conspiracy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># table(dat_ids_consp$classes_conspiracy, dat_ids_consp$country)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -443,19 +443,19 @@ processing 62 CAMs...
 <span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>     <span class="at">edge.weight=</span><span class="dv">2</span>, <span class="at">edge.width=</span>(<span class="fu">E</span>(g2)<span class="sc">$</span>weight<span class="sc">/</span><span class="dv">3</span>))</span>
 <span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-4.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-4.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-5.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-5.png" class="img-fluid" width="672"></p>
 </div>
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">make_ego_graph</span>(g, <span class="at">order =</span> <span class="dv">2</span>, <span class="st">"conspirative narration"</span>)</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(tmp[[<span class="dv">1</span>]], <span class="at">edge.arrow.size =</span> <span class="dv">0</span>,</span>
@@ -464,7 +464,7 @@ processing 62 CAMs...
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">vertex.label.cex =</span> .<span class="dv">9</span>, </span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">edge.weight=</span><span class="dv">2</span>, <span class="at">edge.width=</span>(<span class="fu">E</span>(g2)<span class="sc">$</span>weight<span class="sc">/</span><span class="dv">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-7-6.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-7-6.png" class="img-fluid" width="672"></p>
 </div>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tmp &lt;- CAMaggregated[[1]][rownames(CAMaggregated[[1]]) == "conspirative narration", ]</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># tmp[tmp != 0]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -521,19 +521,19 @@ processing 60 CAMs...
 <span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>     <span class="at">edge.weight=</span><span class="dv">2</span>, <span class="at">edge.width=</span>(<span class="fu">E</span>(g2)<span class="sc">$</span>weight<span class="sc">/</span><span class="dv">2</span>))</span>
 <span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-8-3.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-8-3.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-8-4.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-8-4.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-8-5.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-8-5.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <section id="t-tests" class="level3">
@@ -585,7 +585,7 @@ mean in group high  mean in group low
 </div>
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(<span class="fu">table</span>(tmp_nodes_lowHigh<span class="sc">$</span>value))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="t1CAM_step2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+<p><img src="t2CAM_step2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
 </div>
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(tmp_nodes_lowHigh<span class="sc">$</span>value, tmp_nodes_lowHigh<span class="sc">$</span>group)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
