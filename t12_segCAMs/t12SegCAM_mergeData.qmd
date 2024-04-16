@@ -1,6 +1,6 @@
 ---
 title: "Merge Files from t1, t2"
-author: "Julius Fenn"
+author: "Julius Fenn, Christophe Becht"
 format:
   html:
     toc: true
@@ -88,6 +88,24 @@ rm(CAM_data)
 ```
 
 
+## delete one person
+
+
+```{r}
+#| echo: true
+#| warning: false
+
+
+## remove deleted CAMs
+t2_questionnaireCAMs <- t2_questionnaireCAMs[t2_questionnaireCAMs$PROLIFIC_PID %in% CAM_nodes_clean$participantCAM,]
+
+## one person with missing data post CAMs
+# colSums(is.na(t2_questionnaireCAMs))
+t2_questionnaireCAMs[t2_questionnaireCAMs$PROLIFIC_PID == "63cedc8a97a0bb604736baea",]
+t2_questionnaireCAMs <- t2_questionnaireCAMs[t2_questionnaireCAMs$PROLIFIC_PID != "63cedc8a97a0bb604736baea",]
+```
+
+
 ## set up CAM data
 
 
@@ -103,6 +121,12 @@ CAMfiles <- create_CAMfiles(datCAM = CAM_data_list, reDeleted = TRUE)
 CAMfiles[[1]] <- CAMfiles[[1]][CAMfiles[[1]]$participantCAM %in% CAM_nodes_clean$participantCAM, ]
 CAMfiles[[2]] <- CAMfiles[[2]][CAMfiles[[2]]$participantCAM %in% CAM_nodes_clean$participantCAM, ]
 CAMfiles[[3]] <- CAMfiles[[3]][CAMfiles[[3]]$participantCAM.x %in% CAM_nodes_clean$participantCAM, ]
+
+## one person with missing data post CAMs
+CAMfiles[[1]] <- CAMfiles[[1]][!CAMfiles[[1]]$participantCAM %in% "63cedc8a97a0bb604736baea", ]
+CAMfiles[[2]] <- CAMfiles[[2]][!CAMfiles[[2]]$participantCAM %in% "63cedc8a97a0bb604736baea", ]
+CAMfiles[[3]] <- CAMfiles[[3]][!CAMfiles[[3]]$participantCAM.x %in% "63cedc8a97a0bb604736baea", ]
+
 
 
 if(all(CAMfiles[[1]]$id == CAM_nodes_clean$id)){
@@ -179,9 +203,8 @@ DT::datatable(CAMwordlist, options = list(pageLength = 5))
 
 ```{r}
 ## remove network indicators
+# colnames(t2_questionnaireCAMs[, c(48:79)])
 t2_questionnaire <- t2_questionnaireCAMs[, -c(48:79)]
-## remove deleted CAMs
-t2_questionnaire <- t2_questionnaire[t2_questionnaire$PROLIFIC_PID %in% CAM_nodes_clean$participantCAM,]
 
 if(all(t2_questionnaire$PROLIFIC_PID == networkIndicators$participantCAM)){
     print("all t2 data can be matched")

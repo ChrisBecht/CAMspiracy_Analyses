@@ -1,6 +1,6 @@
 ---
 title: "Analyze Merged Files from t1, t2"
-author: "Julius Fenn, Christophe"
+author: "Julius Fenn, Christophe Becht"
 format:
   html:
     toc: true
