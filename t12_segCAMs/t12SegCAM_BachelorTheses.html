@@ -83,10 +83,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#notes" id="toc-notes" class="nav-link active" data-scroll-target="#notes">Notes</a></li>
   <li><a href="#global-variables" id="toc-global-variables" class="nav-link" data-scroll-target="#global-variables">global variables</a></li>
   <li><a href="#load-merged-pre-processed-data" id="toc-load-merged-pre-processed-data" class="nav-link" data-scroll-target="#load-merged-pre-processed-data">load merged pre-processed data</a></li>
+  <li><a href="#laras-ba" id="toc-laras-ba" class="nav-link" data-scroll-target="#laras-ba">Laras BA</a>
+  <ul class="collapse">
+  <li><a href="#policy-scale" id="toc-policy-scale" class="nav-link" data-scroll-target="#policy-scale">policy scale</a></li>
+  </ul></li>
   <li><a href="#amelies-ba" id="toc-amelies-ba" class="nav-link" data-scroll-target="#amelies-ba">Amelies BA</a>
   <ul class="collapse">
   <li><a href="#split-into-cams-from-germany" id="toc-split-into-cams-from-germany" class="nav-link" data-scroll-target="#split-into-cams-from-germany">split into CAMs from Germany</a></li>
   <li><a href="#split-into-cams-from-germany-1" id="toc-split-into-cams-from-germany-1" class="nav-link" data-scroll-target="#split-into-cams-from-germany-1">split into CAMs from Germany</a></li>
+  </ul></li>
+  <li><a href="#magdalenas-ba" id="toc-magdalenas-ba" class="nav-link" data-scroll-target="#magdalenas-ba">Magdalenas BA</a>
+  <ul class="collapse">
+  <li><a href="#get-the-first-8-concepts-drawn-in-cams" id="toc-get-the-first-8-concepts-drawn-in-cams" class="nav-link" data-scroll-target="#get-the-first-8-concepts-drawn-in-cams">get the first 8 concepts drawn in CAMs</a></li>
+  <li><a href="#clean-affective-imagery" id="toc-clean-affective-imagery" class="nav-link" data-scroll-target="#clean-affective-imagery">clean affective imagery</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -166,66 +175,349 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="laras-ba" class="level1">
+<h1>Laras BA</h1>
+<section id="policy-scale" class="level2">
+<h2 class="anchored" data-anchor-id="policy-scale">policy scale</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>regEx <span class="ot">&lt;-</span> <span class="st">"^policyItems"</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>nameScale <span class="ot">&lt;-</span> <span class="st">"Policy Scale"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>nameVariable <span class="ot">&lt;-</span> <span class="st">"mean_PolicyItems"</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="do">### number of items</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">str_detect</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 8</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">### only keep values with no missing values</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> t12_questionnaireCAMs[, <span class="fu">c</span>(<span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx), <span class="st">"country.y"</span>)]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># tmp_dat &lt;- tmp_dat[!is.na(tmp_dat$country.y), ]</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> tmp_dat[tmp_dat<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"Germany"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(tmp_dat<span class="sc">$</span>country.y), ]</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"analyes for country/ies:</span><span class="sc">\n</span><span class="st">"</span>, <span class="fu">unique</span>(tmp_dat<span class="sc">$</span>country.y), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>analyes for country/ies:
+ Germany </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">### get correlation plot, descriptives, EFA, CFA</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">CFAstats</span>(<span class="at">dataset =</span> tmp_dat, <span class="at">regularExp =</span> regEx, <span class="at">labelLatent =</span> <span class="fu">str_remove</span>(<span class="at">string =</span> nameVariable, <span class="at">pattern =</span> <span class="st">"mean_"</span>), </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">showPlots =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeEFA =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFA =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFAMplus =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+descriptive statistics: 
+              Mean   SD Median CoeffofVariation Minimum Maximun Lower Quantile
+policyItems-1 6.35 1.33      7             0.21       1       7              1
+policyItems-2 3.55 2.10      3             0.59       1       7              1
+policyItems-3 5.32 1.87      6             0.35       1       7              1
+policyItems-4 4.08 2.36      5             0.58       1       7              1
+policyItems-5 5.85 1.79      7             0.31       1       7              1
+policyItems-6 2.69 1.82      2             0.68       1       7              1
+policyItems-7 4.14 2.23      4             0.54       1       7              1
+policyItems-8 5.32 1.84      6             0.34       1       7              1
+              Upper Quantile Skewness Kurtosis(-3) KS-Test
+policyItems-1              7    -2.53         6.46    0.00
+policyItems-2              7     0.16        -1.36    0.05
+policyItems-3              7    -1.07         0.17    0.00
+policyItems-4              7    -0.18        -1.62    0.00
+policyItems-5              7    -1.76         2.05    0.00
+policyItems-6              7     0.83        -0.47    0.00
+policyItems-7              7    -0.17        -1.43    0.02
+policyItems-8              7    -1.22         0.52    0.00
+
+
+variables under investigation:  policyItems1 policyItems2 policyItems3 policyItems4 policyItems5 policyItems6 policyItems7 policyItems8 
+
+Cronbachs Alpha: 0.82 </code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Parallel analysis suggests that the number of factors =  3  and the number of components =  1 
+PolicyItems 
+Number of components:  1 
+
+
+
+EFA factor loadings (1 factor solution): 
+
+Loadings:
+             MR1  
+policyItems1 0.771
+policyItems2 0.570
+policyItems3 0.844
+policyItems4 0.641
+policyItems5 0.916
+policyItems6 0.320
+policyItems7 0.555
+policyItems8 0.589
+
+                 MR1
+SS loadings    3.639
+Proportion Var 0.455
+CFA summary and fit statistics: 
+lavaan 0.6.16 ended normally after 30 iterations
+
+  Estimator                                         ML
+  Optimization method                           NLMINB
+  Number of model parameters                        16
+
+  Number of observations                            74
+
+Model Test User Model:
+                                              Standard      Scaled
+  Test Statistic                                53.054      42.438
+  Degrees of freedom                                20          20
+  P-value (Chi-square)                           0.000       0.002
+  Scaling correction factor                                  1.250
+    Yuan-Bentler correction (Mplus variant)                       
+
+Model Test Baseline Model:
+
+  Test statistic                               240.191     186.851
+  Degrees of freedom                                28          28
+  P-value                                        0.000       0.000
+  Scaling correction factor                                  1.285
+
+User Model versus Baseline Model:
+
+  Comparative Fit Index (CFI)                    0.844       0.859
+  Tucker-Lewis Index (TLI)                       0.782       0.802
+                                                                  
+  Robust Comparative Fit Index (CFI)                         0.863
+  Robust Tucker-Lewis Index (TLI)                            0.808
+
+Loglikelihood and Information Criteria:
+
+  Loglikelihood user model (H0)              -1119.900   -1119.900
+  Scaling correction factor                                  1.322
+      for the MLR correction                                      
+  Loglikelihood unrestricted model (H1)      -1093.373   -1093.373
+  Scaling correction factor                                  1.282
+      for the MLR correction                                      
+                                                                  
+  Akaike (AIC)                                2271.799    2271.799
+  Bayesian (BIC)                              2308.664    2308.664
+  Sample-size adjusted Bayesian (SABIC)       2258.242    2258.242
+
+Root Mean Square Error of Approximation:
+
+  RMSEA                                          0.149       0.123
+  90 Percent confidence interval - lower         0.101       0.077
+  90 Percent confidence interval - upper         0.199       0.169
+  P-value H_0: RMSEA &lt;= 0.050                    0.001       0.008
+  P-value H_0: RMSEA &gt;= 0.080                    0.989       0.938
+                                                                  
+  Robust RMSEA                                               0.138
+  90 Percent confidence interval - lower                     0.079
+  90 Percent confidence interval - upper                     0.195
+  P-value H_0: Robust RMSEA &lt;= 0.050                         0.011
+  P-value H_0: Robust RMSEA &gt;= 0.080                         0.948
+
+Standardized Root Mean Square Residual:
+
+  SRMR                                           0.104       0.104
+
+Parameter Estimates:
+
+  Standard errors                             Sandwich
+  Information bread                           Observed
+  Observed information based on                Hessian
+
+Latent Variables:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+  PolicyItems =~                                                        
+    policyItems1      1.000                               0.959    0.727
+    policyItems2      1.062    0.300    3.545    0.000    1.019    0.488
+    policyItems3      1.561    0.333    4.692    0.000    1.497    0.805
+    policyItems4      1.228    0.437    2.808    0.005    1.178    0.503
+    policyItems5      1.659    0.348    4.765    0.000    1.592    0.896
+    policyItems6      0.501    0.224    2.232    0.026    0.480    0.266
+    policyItems7      1.068    0.343    3.117    0.002    1.025    0.463
+    policyItems8      1.193    0.344    3.466    0.001    1.144    0.627
+
+Variances:
+                   Estimate  Std.Err  z-value  P(&gt;|z|)   Std.lv  Std.all
+   .policyItems1      0.821    0.275    2.990    0.003    0.821    0.472
+   .policyItems2      3.317    0.417    7.962    0.000    3.317    0.762
+   .policyItems3      1.221    0.340    3.593    0.000    1.221    0.353
+   .policyItems4      4.092    0.645    6.346    0.000    4.092    0.747
+   .policyItems5      0.620    0.281    2.208    0.027    0.620    0.196
+   .policyItems6      3.038    0.447    6.793    0.000    3.038    0.929
+   .policyItems7      3.850    0.512    7.526    0.000    3.850    0.786
+   .policyItems8      2.018    0.462    4.369    0.000    2.018    0.606
+    PolicyItems       0.920    0.431    2.137    0.033    1.000    1.000</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+CFA first 6 Modification Indices: 
+            lhs op          rhs     mi    epc sepc.lv sepc.all sepc.nox
+38 policyItems4 ~~ policyItems7 17.619  2.014   2.014    0.507    0.507
+28 policyItems2 ~~ policyItems6  9.116  1.141   1.141    0.359    0.359
+23 policyItems1 ~~ policyItems7  7.217 -0.612  -0.612   -0.344   -0.344
+36 policyItems4 ~~ policyItems5  4.761 -0.607  -0.607   -0.381   -0.381
+21 policyItems1 ~~ policyItems5  4.638  0.344   0.344    0.482    0.482
+44 policyItems6 ~~ policyItems8  4.299 -0.624  -0.624   -0.252   -0.252</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">###</span><span class="co"> variable mean</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># questionnaireCAMs[[nameVariable]]  &lt;- questionnaireCAMs %&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(matches(regEx)) %&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   rowMeans(na.rm = TRUE)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
 <section id="amelies-ba" class="level1">
 <h1>Amelies BA</h1>
 <section id="split-into-cams-from-germany" class="level2">
 <h2 class="anchored" data-anchor-id="split-into-cams-from-germany">split into CAMs from Germany</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Amelie"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"CAMs_Germany"</span>)){</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"CAMs_Germany"</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"CAMs_Germany"</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>CAMfiles_Germany <span class="ot">&lt;-</span> CAMfiles</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="do">## check is ID data set is complete</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">all</span>(CAMfiles_Germany[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID)){</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"Error"</span>)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>}<span class="cf">else</span>{</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  tmp_ids <span class="ot">&lt;-</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID[t12_questionnaireCAMs<span class="sc">$</span>country.x <span class="sc">==</span> <span class="st">"Germany"</span>]</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## keep only CAM data from Germany</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">1</span>]][CAMfiles_Germany[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">2</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">2</span>]][CAMfiles_Germany[[<span class="dv">2</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">3</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">3</span>]][CAMfiles_Germany[[<span class="dv">3</span>]]<span class="sc">$</span>participantCAM.x <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="do">## save files ob subsets</span></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">1</span>]], <span class="at">file =</span> <span class="st">"CAM_nodes_Germany.txt"</span>)</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">2</span>]], <span class="at">file =</span> <span class="st">"CAM_connectors_Germany.txt"</span>)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">3</span>]], <span class="at">file =</span> <span class="st">"CAM_merged_Germany.txt"</span>)</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Amelie"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"CAMs_Germany"</span>)){</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"CAMs_Germany"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"CAMs_Germany"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>CAMfiles_Germany <span class="ot">&lt;-</span> CAMfiles</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="do">## check is ID data set is complete</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">all</span>(CAMfiles_Germany[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID)){</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"Error"</span>)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>}<span class="cf">else</span>{</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  tmp_ids <span class="ot">&lt;-</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID[t12_questionnaireCAMs<span class="sc">$</span>country.x <span class="sc">==</span> <span class="st">"Germany"</span>]</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## keep only CAM data from Germany</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">1</span>]][CAMfiles_Germany[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">2</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">2</span>]][CAMfiles_Germany[[<span class="dv">2</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  CAMfiles_Germany[[<span class="dv">3</span>]] <span class="ot">&lt;-</span> CAMfiles_Germany[[<span class="dv">3</span>]][CAMfiles_Germany[[<span class="dv">3</span>]]<span class="sc">$</span>participantCAM.x <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="do">## save files ob subsets</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">1</span>]], <span class="at">file =</span> <span class="st">"CAM_nodes_Germany.txt"</span>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">2</span>]], <span class="at">file =</span> <span class="st">"CAM_connectors_Germany.txt"</span>)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_Germany[[<span class="dv">3</span>]], <span class="at">file =</span> <span class="st">"CAM_merged_Germany.txt"</span>)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="split-into-cams-from-germany-1" class="level2">
 <h2 class="anchored" data-anchor-id="split-into-cams-from-germany-1">split into CAMs from Germany</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Amelie"</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"CAMs_USA"</span>)){</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"CAMs_USA"</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"CAMs_USA"</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>CAMfiles_USA <span class="ot">&lt;-</span> CAMfiles</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="do">## check is ID data set is complete</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">all</span>(CAMfiles_USA[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID)){</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"Error"</span>)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}<span class="cf">else</span>{</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  tmp_ids <span class="ot">&lt;-</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID[t12_questionnaireCAMs<span class="sc">$</span>country.x <span class="sc">==</span> <span class="st">"USA"</span>]</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## keep only CAM data from Germany</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">1</span>]][CAMfiles_USA[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">2</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">2</span>]][CAMfiles_USA[[<span class="dv">2</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">3</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">3</span>]][CAMfiles_USA[[<span class="dv">3</span>]]<span class="sc">$</span>participantCAM.x <span class="sc">%in%</span> tmp_ids,]</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="do">## save files ob subsets</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">1</span>]], <span class="at">file =</span> <span class="st">"CAM_nodes_USA.txt"</span>)</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">2</span>]], <span class="at">file =</span> <span class="st">"CAM_connectors_USA.txt"</span>)</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">3</span>]], <span class="at">file =</span> <span class="st">"CAM_merged_USA.txt"</span>)</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Amelie"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"CAMs_USA"</span>)){</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"CAMs_USA"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"CAMs_USA"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>CAMfiles_USA <span class="ot">&lt;-</span> CAMfiles</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="do">## check is ID data set is complete</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">all</span>(CAMfiles_USA[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID)){</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="st">"Error"</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>}<span class="cf">else</span>{</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  tmp_ids <span class="ot">&lt;-</span> t12_questionnaireCAMs<span class="sc">$</span>PROLIFIC_PID[t12_questionnaireCAMs<span class="sc">$</span>country.x <span class="sc">==</span> <span class="st">"USA"</span>]</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## keep only CAM data from Germany</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">1</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">1</span>]][CAMfiles_USA[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">2</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">2</span>]][CAMfiles_USA[[<span class="dv">2</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  CAMfiles_USA[[<span class="dv">3</span>]] <span class="ot">&lt;-</span> CAMfiles_USA[[<span class="dv">3</span>]][CAMfiles_USA[[<span class="dv">3</span>]]<span class="sc">$</span>participantCAM.x <span class="sc">%in%</span> tmp_ids,]</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="do">## save files ob subsets</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">1</span>]], <span class="at">file =</span> <span class="st">"CAM_nodes_USA.txt"</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">2</span>]], <span class="at">file =</span> <span class="st">"CAM_connectors_USA.txt"</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  vroom<span class="sc">::</span><span class="fu">vroom_write</span>(<span class="at">x =</span>  CAMfiles_USA[[<span class="dv">3</span>]], <span class="at">file =</span> <span class="st">"CAM_merged_USA.txt"</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="magdalenas-ba" class="level1">
+<h1>Magdalenas BA</h1>
+<section id="get-the-first-8-concepts-drawn-in-cams" class="level2">
+<h2 class="anchored" data-anchor-id="get-the-first-8-concepts-drawn-in-cams">get the first 8 concepts drawn in CAMs</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="do">### only keep t2</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> t12_questionnaireCAMs[<span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y), ]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>affectiveImagery_CAMs <span class="ot">&lt;-</span> tmp_dat[, <span class="fu">c</span>(<span class="st">"PROLIFIC_PID"</span>, <span class="st">"country.y"</span>, <span class="st">"classes_conspiracy"</span>, <span class="st">"politicalParty"</span>, <span class="st">"socio_sex"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mean_affImg"</span>, <span class="st">"mean_valence_macro"</span>, <span class="st">"num_nodes_macro"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(tmp_dat), <span class="at">pattern =</span> <span class="st">"^R[:digit:]"</span>), </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sort</span>(<span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(tmp_dat), <span class="at">pattern =</span> <span class="st">"^affImg"</span>)))]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(affectiveImagery_CAMs<span class="sc">$</span>mean_affImg))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>affectiveImagery_CAMs[, <span class="fu">paste0</span>(<span class="st">"A"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>)] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(tmp_dat)){</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> CAMfiles[[<span class="dv">1</span>]][CAMfiles[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">==</span> tmp_dat<span class="sc">$</span>PROLIFIC_PID[i],]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> tmp_concepts<span class="sc">$</span>text[<span class="fu">order</span>(tmp_concepts<span class="sc">$</span>date, <span class="at">decreasing =</span> <span class="cn">FALSE</span>)][<span class="dv">2</span><span class="sc">:</span><span class="dv">9</span>]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  affectiveImagery_CAMs[i, <span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(affectiveImagery_CAMs), <span class="at">pattern =</span> <span class="st">"^A"</span>)] <span class="ot">&lt;-</span> tmp_concepts</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data"</span>)){</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data"</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data"</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .xlsx file</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>xlsx<span class="sc">::</span><span class="fu">write.xlsx2</span>(<span class="at">x =</span> affectiveImagery_CAMs, <span class="at">file =</span> <span class="st">"affectiveImagery_CAMs.xlsx"</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .csv file</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> affectiveImagery_CAMs, <span class="at">file =</span> <span class="st">"affectiveImagery_CAMs.csv"</span>)</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(affectiveImagery_CAMs, <span class="at">file =</span> <span class="st">"affectiveImagery_CAMs.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="clean-affective-imagery" class="level2">
+<h2 class="anchored" data-anchor-id="clean-affective-imagery">clean affective imagery</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>affectiveImagery <span class="ot">&lt;-</span> t12_questionnaireCAMs[, <span class="fu">c</span>(<span class="st">"PROLIFIC_PID"</span>, <span class="st">"country.y"</span>, <span class="st">"classes_conspiracy"</span>, <span class="st">"politicalParty"</span>, <span class="st">"socio_sex"</span>,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mean_affImg"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(tmp_dat), <span class="at">pattern =</span> <span class="st">"^R[:digit:]"</span>), </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sort</span>(<span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(tmp_dat), <span class="at">pattern =</span> <span class="st">"^affImg"</span>)))]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">is.na</span>(affectiveImagery<span class="sc">$</span>mean_affImg))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 14</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>tmp_vec <span class="ot">&lt;-</span> <span class="fu">unlist</span>(affectiveImagery[, <span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(tmp_dat), <span class="at">pattern =</span> <span class="st">"^R[:digit:]"</span>)])</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(tmp_vec)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 2990</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(tmp_vec))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1337</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(<span class="fu">table</span>(tmp_vec))[<span class="fu">table</span>(tmp_vec) <span class="sc">&gt;=</span> <span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Artensterben"      "bad"               "Bedrohung"        
+ [4] "CO2"               "dangerous"         "death"            
+ [7] "drought"           "Dürre"             "earth"            
+[10] "Erderwärmung"      "Erwärmung"         "Gefahr"           
+[13] "global"            "global warming"    "heat"             
+[16] "Hitze"             "hoax"              "hot"              
+[19] "Industrie"         "Katastrophe"       "menschengemacht"  
+[22] "Menschengemacht"   "Natur"             "natural"          
+[25] "Naturkatastrophen" "Politik"           "real"             
+[28] "scary"             "storms"            "Temperatur"       
+[31] "Umwelt"            "warm"              "weather"          </code></pre>
+</div>
 </div>
 </section>
 </section>

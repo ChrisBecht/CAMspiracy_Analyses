@@ -67,7 +67,6 @@ rm(i)
 ```
 
 
-
 # Laras BA
 
 ## policy scale
@@ -89,8 +88,8 @@ sum(str_detect(string = colnames(t12_questionnaireCAMs), pattern = regEx))
 tmp_dat <- t12_questionnaireCAMs[, c(str_subset(string = colnames(t12_questionnaireCAMs), pattern = regEx), "country.y")]
 
 # tmp_dat <- tmp_dat[!is.na(tmp_dat$country.y), ]
-tmp_dat <- tmp_dat[tmp_dat$country.y == "USA" & !is.na(tmp_dat$country.y), ]
-
+tmp_dat <- tmp_dat[tmp_dat$country.y == "Germany" & !is.na(tmp_dat$country.y), ]
+cat("analyes for country/ies:\n", unique(tmp_dat$country.y), "\n")
 
 ### get correlation plot, descriptives, EFA, CFA
 tmp <- CFAstats(dataset = tmp_dat, regularExp = regEx, labelLatent = str_remove(string = nameVariable, pattern = "mean_"), 
@@ -170,4 +169,68 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
   vroom::vroom_write(x =  CAMfiles_USA[[2]], file = "CAM_connectors_USA.txt")
   vroom::vroom_write(x =  CAMfiles_USA[[3]], file = "CAM_merged_USA.txt")
 }
+```
+
+# Magdalenas BA
+
+## get the first 8 concepts drawn in CAMs
+
+
+```{r}
+#| echo: true
+#| warning: false
+
+
+### only keep t2
+tmp_dat <- t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$country.y), ]
+
+
+affectiveImagery_CAMs <- tmp_dat[, c("PROLIFIC_PID", "country.y", "classes_conspiracy", "politicalParty", "socio_sex",
+  "mean_affImg", "mean_valence_macro", "num_nodes_macro",
+  str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]"), 
+  sort(str_subset(string = colnames(tmp_dat), pattern = "^affImg")))]
+sum(is.na(affectiveImagery_CAMs$mean_affImg))
+
+affectiveImagery_CAMs[, paste0("A", 1:8)] <- NA
+
+for(i in 1:nrow(tmp_dat)){
+  tmp_concepts <- CAMfiles[[1]][CAMfiles[[1]]$participantCAM == tmp_dat$PROLIFIC_PID[i],]
+  tmp_concepts <- tmp_concepts$text[order(tmp_concepts$date, decreasing = FALSE)][2:9]
+  
+  affectiveImagery_CAMs[i, str_subset(string = colnames(affectiveImagery_CAMs), pattern = "^A")] <- tmp_concepts
+}
+
+### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("data")){
+  dir.create("data")
+}
+setwd("data")
+
+## save as .xlsx file
+xlsx::write.xlsx2(x = affectiveImagery_CAMs, file = "affectiveImagery_CAMs.xlsx")
+## save as .csv file
+write.csv2(x = affectiveImagery_CAMs, file = "affectiveImagery_CAMs.csv")
+## save as R object
+saveRDS(affectiveImagery_CAMs, file = "affectiveImagery_CAMs.rds")
+```
+
+## clean affective imagery
+
+```{r}
+#| echo: true
+#| warning: false
+
+affectiveImagery <- t12_questionnaireCAMs[, c("PROLIFIC_PID", "country.y", "classes_conspiracy", "politicalParty", "socio_sex",
+  "mean_affImg",
+  str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]"), 
+  sort(str_subset(string = colnames(tmp_dat), pattern = "^affImg")))]
+sum(is.na(affectiveImagery$mean_affImg))
+
+
+
+tmp_vec <- unlist(affectiveImagery[, str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]")])
+length(tmp_vec)
+length(unique(tmp_vec))
+names(table(tmp_vec))[table(tmp_vec) >= 10]
 ```
