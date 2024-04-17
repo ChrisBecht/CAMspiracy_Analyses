@@ -129,6 +129,10 @@ CAMfiles[[3]] <- CAMfiles[[3]][!CAMfiles[[3]]$participantCAM.x %in% "63cedc8a97a
 
 
 
+CAM_nodes_clean <- CAM_nodes_clean[!CAM_nodes_clean$participantCAM %in% "63cedc8a97a0bb604736baea", ]
+
+
+
 if(all(CAMfiles[[1]]$id == CAM_nodes_clean$id)){
   CAMfiles[[1]]$text_summarized <- CAM_nodes_clean$text_summarized
 }
@@ -157,6 +161,18 @@ for(i in 1:nrow(CAMfiles[[1]])){
 }
 
 
+
+## clean data manually
+CAMfiles[[1]]$text_summarized <- str_trim(string = CAMfiles[[1]]$text_summarized, side = "both")
+
+str_subset(string = CAMfiles[[1]]$text_summarized, pattern = " _")
+CAMfiles[[1]]$text_summarized <- str_replace_all(string = CAMfiles[[1]]$text_summarized, pattern = " _", replacement = "_")
+str_subset(string = CAMfiles[[1]]$text_summarized, pattern = " _")
+
+
+
+
+CAMfiles[[1]]$text_summarized[CAMfiles[[1]]$text_summarized == "environmental damaging behavior_negative" | CAMfiles[[1]]$text_summarized == "environmentally damaging behavior_negative"] <- "environmental damaging behavior_negative"
 
 ########################################
 # draw CAMs
