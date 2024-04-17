@@ -202,10 +202,10 @@ for(i in 1:nrow(tmp_dat)){
 
 ### save data set
 setwd("outputs/BA_Magdalena")
-if(!file.exists("data")){
-  dir.create("data")
+if(!file.exists("data_AffImg_CAMs")){
+  dir.create("data_AffImg_CAMs")
 }
-setwd("data")
+setwd("data_AffImg_CAMs")
 
 ## save as .xlsx file
 xlsx::write.xlsx2(x = affectiveImagery_CAMs, file = "affectiveImagery_CAMs.xlsx")
@@ -217,20 +217,97 @@ saveRDS(affectiveImagery_CAMs, file = "affectiveImagery_CAMs.rds")
 
 ## clean affective imagery
 
+
+create relevant subset:
+
 ```{r}
 #| echo: true
 #| warning: false
 
-affectiveImagery <- t12_questionnaireCAMs[, c("PROLIFIC_PID", "country.y", "classes_conspiracy", "politicalParty", "socio_sex",
+affectiveImagery <- t12_questionnaireCAMs[, c("PROLIFIC_PID", "country.x", "classes_conspiracy", "politicalParty", "socio_sex",
   "mean_affImg",
   str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]"), 
   sort(str_subset(string = colnames(tmp_dat), pattern = "^affImg")))]
 sum(is.na(affectiveImagery$mean_affImg))
-
-
-
-tmp_vec <- unlist(affectiveImagery[, str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]")])
-length(tmp_vec)
-length(unique(tmp_vec))
-names(table(tmp_vec))[table(tmp_vec) >= 10]
 ```
+
+
+use approximate matching only for German:
+
+```{r}
+#| eval: false
+
+
+subset_affectiveImagery <- affectiveImagery[affectiveImagery$country.x == "Germany",]
+
+tmp_vec <- unlist(subset_affectiveImagery[, str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]")])
+tmp_vec <- tmp_vec[!is.na(tmp_vec)]
+
+applyApproximate <- data.frame(originalWord = tmp_vec, summarizedWord = tmp_vec)
+
+
+rm(subset_affectiveImagery); rm(tmp_vec)
+
+length(applyApproximate$originalWord)
+length(unique(applyApproximate$originalWord))
+names(table(applyApproximate$originalWord))[table(applyApproximate$originalWord) >= 10]
+
+
+
+readkey <- function()
+{
+  # cat ('\nPress [enter] to continue\n')
+  # cat('or write "aaa" in the console to terminate loop\n')
+
+  line <- readline()
+  if(line == "a123"){
+    cat("for loop terminated, please write down the last round where you have summarized words:",
+        i, "\n")
+    stop("process terminated")
+  }else{
+    return(line)
+  }
+}
+
+defineDistance = 2
+
+for(i in 1:nrow(applyApproximate)){
+  print(i)
+  
+  dist <- stringdist::stringdist(a = applyApproximate$originalWord[i], applyApproximate$originalWord)
+
+
+  
+if(!all(unique(applyApproximate$originalWord[dist <= defineDistance]) == applyApproximate$originalWord[i])){
+  
+  cat("\n if you want to summarize the followings words:\n")
+  print(unique(applyApproximate$originalWord[dist <= defineDistance]))
+  
+  cat('>>> provide a superordinate word, else write "c" (for continue) or write "a123" to stop the summary process')
+
+ 
+  out <- readkey() 
+  # print(out)
+  
+  if(out != "c"){
+      applyApproximate$summarizedWord[applyApproximate$summarizedWord %in% unique(applyApproximate$originalWord[dist <= defineDistance])] <- out
+  }
+}
+}
+
+
+### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("data")){
+  dir.create("data_AffImg")
+}
+setwd("data_AffImg")
+
+## save as .xlsx file
+xlsx::write.xlsx2(x = applyApproximate, file = "applyApproximate.xlsx")
+## save as .csv file
+write.csv2(x = applyApproximate, file = "applyApproximate.csv")
+## save as R object
+saveRDS(applyApproximate, file = "applyApproximate.rds")
+```
+
