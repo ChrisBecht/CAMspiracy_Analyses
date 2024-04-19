@@ -24,15 +24,15 @@ format:
 #| warning: false
 
 # sets the directory of location of this script as the current directory
-# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
 # load packages
 require(pacman)
-# regsem not needed!
+
 p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
        'lavaan', 'igraph',
-       'regsem', 'MplusAutomation')
+       'regsem', 'MplusAutomation', 'reticulate')
 
 
 # load data
@@ -59,14 +59,46 @@ for(i in 1:length(dir())){
   source(dir()[i], encoding = "utf-8")
 }
 rm(i)
+setwd("..")
 ```
 
 
+```{r protocol, include=FALSE}
+setwd("data")
+protocolDataset <- "protocol_fixed_15.txt" #  # protocol.txt
+
+consider_Protocol <- TRUE
+
+if(consider_Protocol){
+  text <- readLines(protocolDataset, warn = FALSE)
+  text <- readLines(textConnection(text, encoding="UTF-8"), encoding="UTF-8")
+  
+  if (testIfJson(file = text)) {
+    protocol <- rjson::fromJSON(file = protocolDataset)
+  } else{
+    print("Invalid protocol uploaded")
+  }
+}
+
+if(consider_Protocol){
+  CAMfiles[[1]] <- CAMfiles[[1]][CAMfiles[[1]]$CAM %in% protocol$currentCAMs,]
+  CAMfiles[[2]] <- CAMfiles[[2]][CAMfiles[[2]]$CAM %in% protocol$currentCAMs,]
+  CAMfiles[[3]] <- CAMfiles[[3]][CAMfiles[[3]]$CAM.x %in% protocol$currentCAMs,]
+
+
+  tmp_out <- overwriteTextNodes(protocolDat = protocol,
+                                nodesDat = CAMfiles[[1]])
+  CAMfiles[[1]] <- tmp_out[[1]]
+  tmp_out[[2]]
+}
+
+```
+
 # split data
 
+Data set is split according to country (Germany & USA) and persons with low (1) and high conspiracy (3). 
 
 ### CAMs from Germany
-
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_Germany")){
@@ -96,9 +128,7 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
 ```
 
 
-
 ### CAMs from USA
-
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_USA")){
@@ -115,7 +145,7 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 }else{
   tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$country.x == "USA"]
   
-  ## keep only CAM data from Germany
+  ## keep only CAM data from USA
   CAMfiles_USA[[1]] <- CAMfiles_USA[[1]][CAMfiles_USA[[1]]$participantCAM %in% tmp_ids,]
   CAMfiles_USA[[2]] <- CAMfiles_USA[[2]][CAMfiles_USA[[2]]$participantCAM %in% tmp_ids,]
   CAMfiles_USA[[3]] <- CAMfiles_USA[[3]][CAMfiles_USA[[3]]$participantCAM.x %in% tmp_ids,]
@@ -128,10 +158,253 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 ```
 
 
+
+## classes_conspiracy: 3 = high, 1 = low conspiracy
+
+### CAMs from high conspir belief
+```{r}
+setwd("outputs")
+if(!file.exists("CAMs_high")){
+  dir.create("CAMs_high")
+}
+setwd("CAMs_high")
+
+
+CAMfiles_high <- CAMfiles
+
+## check is ID data set is complete
+if(!all(CAMfiles_high[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
+    print("Error")
+}else{
+  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$classes_conspiracy == 3]
+  
+  ## keep only CAM data from high conspir
+  CAMfiles_high[[1]] <- CAMfiles_high[[1]][CAMfiles_high[[1]]$participantCAM %in% tmp_ids,]
+  CAMfiles_high[[2]] <- CAMfiles_high[[2]][CAMfiles_high[[2]]$participantCAM %in% tmp_ids,]
+  CAMfiles_high[[3]] <- CAMfiles_high[[3]][CAMfiles_high[[3]]$participantCAM.x %in% tmp_ids,]
+  
+  ## save files ob subsets
+  vroom::vroom_write(x =  CAMfiles_high[[1]], file = "CAM_nodes_high.txt")
+  vroom::vroom_write(x =  CAMfiles_high[[2]], file = "CAM_connectors_high.txt")
+  vroom::vroom_write(x =  CAMfiles_high[[3]], file = "CAM_merged_high.txt")
+}
+
+saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
+rm(tmp_ids)
+```
+
+
+#### Word list high conspir belief
+```{r wordlist}
+tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_high <- create_wordlist(
+  dat_nodes = CAMfiles_high[[1]],
+  dat_merged = CAMfiles_high[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = TRUE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_high[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+```
+
+
+### CAMs from low conspir belief
+```{r}
+setwd("outputs")
+if(!file.exists("CAMs_low")){
+  dir.create("CAMs_low")
+}
+setwd("CAMs_low")
+
+
+CAMfiles_low <- CAMfiles
+
+## check is ID data set is complete
+if(!all(CAMfiles_low[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
+    print("Error")
+}else{
+  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$classes_conspiracy == 1]
+  
+  ## keep only CAM data from low conspir
+  CAMfiles_low[[1]] <- CAMfiles_low[[1]][CAMfiles_low[[1]]$participantCAM %in% tmp_ids,]
+  CAMfiles_low[[2]] <- CAMfiles_low[[2]][CAMfiles_low[[2]]$participantCAM %in% tmp_ids,]
+  CAMfiles_low[[3]] <- CAMfiles_low[[3]][CAMfiles_low[[3]]$participantCAM.x %in% tmp_ids,]
+  
+  ## save files ob subsets
+  vroom::vroom_write(x =  CAMfiles_low[[1]], file = "CAM_nodes_low.txt")
+  vroom::vroom_write(x =  CAMfiles_low[[2]], file = "CAM_connectors_low.txt")
+  vroom::vroom_write(x =  CAMfiles_low[[3]], file = "CAM_merged_low.txt")
+}
+
+saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
+rm(tmp_ids)
+```
+
+
+#### Word list low conspir belief
+```{r wordlist}
+tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_low <- create_wordlist(
+  dat_nodes = CAMfiles_low[[1]],
+  dat_merged = CAMfiles_low[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = TRUE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_low[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+```
+
+
 # analyze data
 
 ## mixed !!!!!!!!!!!!!!!!!!!!!!
 
+```{python test}
+print("hello world")
+```
+
+### Leiden algorithm with pruning (Gibson and Mucha, 2022)
+
+Community detection based on the Leiden algorithm, similar to Louvain.
+Repeatedly run with a host of different gamma and omega parameters.
+The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning) to keep only stable and modularity-optimal partitions.
+
+Konzepte durch Kategorien ersetzen
+mit aggregierten CAMs vs. mit individuellen
+
+Datenaufbereitung: 
+Algo selbst: 
+https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd  ab Z. ca. 200 - 360
+
+Doku: 
+https://modularitypruning.readthedocs.io/en/latest/index.html
+
+```{python Algo}
+import numpy as np
+import igraph as ig
+from modularitypruning import prune_to_multilayer_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas_omegas
+from modularitypruning.champ_utilities import CHAMP_3D
+from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
+from modularitypruning.plotting import plot_2d_domains_with_estimates
+import matplotlib.pyplot as plt
+
+import scipy.io
+import os
+
+#import subprocess
+#import sys
+#
+#subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
+
+np.set_printoptions(threshold=np.inf)
+
+CAMaggregated = scipy.io.loadmat("partII_CAMs/outputs/01_dataPreperation/final/CAMaggregated_adj_matrices.mat")
+adj_matrices = list(CAMaggregated["multigraph_adj_matrices_list"][0,0])
+
+num_layers = len(adj_matrices)
+n_per_layer = 33
+
+# nodes   0..32 are layer0
+# nodes  33..65 are layer1
+# ...
+
+# layer_vec holds the layer membership of each node
+# e.g. layer_vec[5] = 2 means that node 5 resides in layer 2 (the third layer)
+layer_vec = [i // n_per_layer for i in range(n_per_layer * num_layers)]
+interlayer_edges = [(n_per_layer * layer + v, n_per_layer * layer + v + n_per_layer)
+                    for layer in range(num_layers - 1)
+                    for v in range(n_per_layer)]
+
+
+# intralayer edges: we need a list of tuples (i.e. edgelist)
+# recode the node indices according to the scheme described above (33..65 is layer1 etc.).
+# note that this is unweighted for now (could add weights to the igraph object)
+intralayer_edges = []
+for i, adj_matrix in enumerate(adj_matrices):
+    conn_indices = np.where(adj_matrix)
+    x_indices, y_indices = conn_indices
+    x_indices += i * n_per_layer
+    y_indices += i * n_per_layer
+    edges = zip(*(x_indices, y_indices))
+    intralayer_edges += edges
+
+
+G_interlayer = ig.Graph(interlayer_edges)
+G_intralayer = ig.Graph(intralayer_edges)
+
+
+# run leidenalg on a uniform 32x32 grid (1024 samples) of gamma and omega in [0, 2]
+gamma_range = (0, 2)
+omega_range = (0, 2)
+leiden_gammas = np.linspace(*gamma_range, 32)
+leiden_omegas = np.linspace(*omega_range, 32)
+
+# TODO: how to set a seed??
+
+# parts = repeated_parallel_leiden_from_gammas_omegas(G_intralayer, G_interlayer, layer_vec, gammas=leiden_gammas, omegas=leiden_omegas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_multilayer_stable_partitions(G_intralayer, G_interlayer, layer_vec,
+                                                     "multiplex", parts,
+                                                     *gamma_range, *omega_range)
+
+for p in stable_parts:
+    # instead of print(p), we use a more condensed format for the membership vector here
+    print(" ".join(str(x) for x in p))
+
+len(stable_parts)
+
+stable_parts[0]
+
+os.getcwd()
+
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+domains = CHAMP_3D(G_intralayer, G_interlayer, layer_vec, parts,
+                   gamma_0=gamma_range[0], gamma_f=gamma_range[1],
+                   omega_0=omega_range[0], omega_f=omega_range[1])
+
+
+
+# append resolution parameter estimates for each dominant partition onto the CHAMP domains
+domains_with_estimates = domains_to_gamma_omega_estimates(G_intralayer, G_interlayer, layer_vec,
+                                                          domains, model='multiplex')
+
+
+
+# plot resolution parameter estimates and domains of optimality
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+plot_2d_domains_with_estimates(domains_with_estimates, xlim=omega_range, ylim=gamma_range)
+plt.title(r"CHAMP Domains and ($\omega$, $\gamma$) Estimates", fontsize=16)
+plt.xlabel(r"$\omega$", fontsize=20)
+plt.ylabel(r"$\gamma$", fontsize=20)
+plt.gca().tick_params(axis='both', labelsize=12)
+plt.tight_layout()
+plt.show()
+
+```
 
 
 

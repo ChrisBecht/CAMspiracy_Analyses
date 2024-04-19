@@ -107,12 +107,13 @@ for(i in 1:length(dir())){
 }
 rm(i)
 
+setwd("..")
 ```
 
 ##### Load data
 
 ```{r data, warning=FALSE}
-setwd("../data")
+setwd("data")
 
 read_file(CAMdataset) %>%
   # ... split it into lines ...
@@ -151,6 +152,7 @@ Create CAM single files (nodes, connectors, merged)
 CAMfiles <- create_CAMfiles(datCAM = raw_CAM, reDeleted = TRUE)
 
 ```
+
 
 Consider protocol.
 
