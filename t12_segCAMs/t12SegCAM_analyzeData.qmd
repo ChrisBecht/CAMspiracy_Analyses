@@ -63,9 +63,9 @@ setwd("..")
 ```
 
 
-```{r protocol, include=FALSE}
+```{r protocol}
 setwd("data")
-protocolDataset <- "protocol_fixed_15.txt" #  # protocol.txt
+protocolDataset <- "protocol_fixed_15.txt"
 
 consider_Protocol <- TRUE
 
@@ -191,6 +191,8 @@ if(!all(CAMfiles_high[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PI
 
 saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
 rm(tmp_ids)
+
+setwd("..")
 ```
 
 
@@ -247,6 +249,8 @@ if(!all(CAMfiles_low[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 
 saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
 rm(tmp_ids)
+
+setwd("..")
 ```
 
 
@@ -277,9 +281,102 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 
 ## mixed !!!!!!!!!!!!!!!!!!!!!!
 
-```{python test}
-print("hello world")
+## aggregate CAMs
+
+this is needed for MultilayerExtraction.
+
+```{r}
+sel_ids <- unique(CAMfiles[[1]]$participantCAM)
+CAMaggregated <-
+  aggregate_CAMs(dat_merged = CAMfiles[[3]],
+                 dat_nodes = CAMfiles[[1]],
+                 ids_CAMs = sel_ids)
+
+
+## check for symmetry
+all(colSums(CAMaggregated[[5]][[1]]) == rowSums(CAMaggregated[[5]][[1]]))
+
+
+## test first concept of first CAM
+colnames(CAMaggregated[[5]][[1]])[1]
+colnames(CAMaggregated[[5]][[1]])[CAMaggregated[[5]][[1]][1, ] >= 1]
+rownames(CAMaggregated[[5]][[1]])[CAMaggregated[[5]][[1]][1, ] >= 1]
+
+# plot(
+#   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
+#   edge.arrow.size = .7,
+#   layout = layout_nicely,
+#   vertex.frame.color = "black",
+#   asp = .5,
+#   margin = -0.1,
+#   vertex.size = 10,
+#   vertex.label.cex = .9,
+#   main = networkIndicators$CAM_ID[i]
+# )
+
+
+
+## adjacency matrix (Aij = 1 when nodes i and j are connected and Aij = 0 otherwise)
+CAMaggregated_onlyOnes <- CAMaggregated[[5]]
+for(i in 1:length(CAMaggregated_onlyOnes)){
+  CAMaggregated_onlyOnes[[i]][CAMaggregated_onlyOnes[[i]] >= 1] <- 1
+}
 ```
+
+
+## Leiden algorithm
+
+```{r}
+adjacency_matrix <- CAMaggregated[[1]]
+
+library("igraph")
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix, mode = "directed")
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+adjacency_matrix <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+library("leiden")
+? leiden
+partition <- leiden(adjacency_matrix)
+table(partition)
+
+
+for (i in unique(partition)) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix)[partition == i],
+    "\n"
+  )
+}
+
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]])) *
+    5,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
+
+```
+
 
 ### Leiden algorithm with pruning (Gibson and Mucha, 2022)
 
@@ -296,6 +393,13 @@ https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partI
 
 Doku: 
 https://modularitypruning.readthedocs.io/en/latest/index.html
+
+
+```{python test}
+print("hello world")
+
+pip install leidenalg igraph
+```
 
 ```{python Algo}
 import numpy as np
