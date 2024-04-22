@@ -34,6 +34,33 @@ p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'lavaan', 'igraph',
        'regsem', 'MplusAutomation', 'reticulate')
 
+# reticulate::py_config()
+# reticulate::py_module_available("pycairo")
+# reticulate::py_module_available("cairocffi")
+
+
+
+if(!reticulate::py_module_available("igraph")){
+  py_install("igraph") # pip install python-igraph
+}
+if(!reticulate::py_module_available("modularitypruning")){
+  py_install("modularitypruning") # pip install modularitypruning
+}
+if(!reticulate::py_module_available("matplotlib")){
+  py_install("matplotlib")
+}
+if(!reticulate::py_module_available("scipy")){
+  py_install("scipy")
+}
+if(!reticulate::py_module_available("leidenalg")){
+  py_install("leidenalg")
+}
+
+## install Python modules
+# py_install("matplotlib")
+# py_install("scipy")
+# py_install("cairocffi") 
+# py_install("pycairo") # pip install pycairo
 
 # load data
 setwd("outputs")
@@ -281,26 +308,34 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 
 ## mixed !!!!!!!!!!!!!!!!!!!!!!
 
+```{r}
+library(igraph)
+library(leiden)
+```
+
+
+######################
+#### high conspir ####
+######################
+
 ## aggregate CAMs
 
-this is needed for MultilayerExtraction.
-
 ```{r}
-sel_ids <- unique(CAMfiles[[1]]$participantCAM)
-CAMaggregated <-
+sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
+CAMaggregated_high <-
   aggregate_CAMs(dat_merged = CAMfiles[[3]],
                  dat_nodes = CAMfiles[[1]],
-                 ids_CAMs = sel_ids)
+                 ids_CAMs = sel_ids_high)
 
 
 ## check for symmetry
-all(colSums(CAMaggregated[[5]][[1]]) == rowSums(CAMaggregated[[5]][[1]]))
+all(colSums(CAMaggregated_high[[5]][[1]]) == rowSums(CAMaggregated_high[[5]][[1]]))
 
 
 ## test first concept of first CAM
-colnames(CAMaggregated[[5]][[1]])[1]
-colnames(CAMaggregated[[5]][[1]])[CAMaggregated[[5]][[1]][1, ] >= 1]
-rownames(CAMaggregated[[5]][[1]])[CAMaggregated[[5]][[1]][1, ] >= 1]
+colnames(CAMaggregated_high[[5]][[1]])[1]
+colnames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
+rownames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
 
 # plot(
 #   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
@@ -317,9 +352,9 @@ rownames(CAMaggregated[[5]][[1]])[CAMaggregated[[5]][[1]][1, ] >= 1]
 
 
 ## adjacency matrix (Aij = 1 when nodes i and j are connected and Aij = 0 otherwise)
-CAMaggregated_onlyOnes <- CAMaggregated[[5]]
-for(i in 1:length(CAMaggregated_onlyOnes)){
-  CAMaggregated_onlyOnes[[i]][CAMaggregated_onlyOnes[[i]] >= 1] <- 1
+CAMaggregated_onlyOnes_high <- CAMaggregated_high[[5]]
+for(i in 1:length(CAMaggregated_onlyOnes_high)){
+  CAMaggregated_onlyOnes_high[[i]][CAMaggregated_onlyOnes_high[[i]] >= 1] <- 1
 }
 ```
 
@@ -327,52 +362,141 @@ for(i in 1:length(CAMaggregated_onlyOnes)){
 ## Leiden algorithm
 
 ```{r}
-adjacency_matrix <- CAMaggregated[[1]]
+adjacency_matrix_high <- CAMaggregated_high[[1]]
 
-library("igraph")
-graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix, mode = "directed")
-# graph_object
-# plot(graph_object, vertex.color = "grey75")
+graph_object_high <-
+  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "directed")
+# graph_object_high
+# plot(graph_object_high, vertex.color = "grey75")
 
-adjacency_matrix <- igraph::as_adjacency_matrix(graph_object) # not needed
+adjacency_matrix_high <- igraph::as_adjacency_matrix(graph_object_high) # not needed
 
-library("leiden")
-? leiden
-partition <- leiden(adjacency_matrix)
-table(partition)
+partition_high <- leiden(adjacency_matrix_high)
+table(partition_high)
 
 
-for (i in unique(partition)) {
+for (i in unique(partition_high)) {
   cat(
-    "\nfor partion",
+    "\nfor partion_high",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix)[partition == i],
+    rownames(adjacency_matrix_high)[partition == i],
     "\n"
   )
 }
 
 
-
-
 library("RColorBrewer")
-node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+node.cols_high <- brewer.pal(max(c(3, partition_high)), "Pastel1")[partition_high]
 # plot(graph_object, vertex.color = node.cols)
 
 
 plot(
-  graph_object,
+  graph_object_high,
   edge.arrow.size = 0,
   layout = layout_nicely,
   vertex.frame.color = "black",
   asp = .5,
   margin = -0.1,
-  vertex.size = diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]])) *
+  vertex.size = diag(CAMaggregated_high[[1]]) / max(diag(CAMaggregated_high[[1]])) *
     5,
   vertex.label.cex = .9,
   edge.weight = 2,
-  vertex.color = node.cols
+  vertex.color = node.cols_high
+)
+
+```
+
+
+#####################
+#### low conspir ####
+#####################
+
+## aggregate CAMs
+
+```{r}
+sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
+CAMaggregated_low <-
+  aggregate_CAMs(dat_merged = CAMfiles[[3]],
+                 dat_nodes = CAMfiles[[1]],
+                 ids_CAMs = sel_ids_low)
+
+
+## check for symmetry
+all(colSums(CAMaggregated_low[[5]][[1]]) == rowSums(CAMaggregated_low[[5]][[1]]))
+
+
+## test first concept of first CAM
+colnames(CAMaggregated_low[[5]][[1]])[1]
+colnames(CAMaggregated_low[[5]][[1]])[CAMaggregated_low[[5]][[1]][1, ] >= 1]
+rownames(CAMaggregated_low[[5]][[1]])[CAMaggregated_low[[5]][[1]][1, ] >= 1]
+
+# plot(
+#   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
+#   edge.arrow.size = .7,
+#   layout = layout_nicely,
+#   vertex.frame.color = "black",
+#   asp = .5,
+#   margin = -0.1,
+#   vertex.size = 10,
+#   vertex.label.cex = .9,
+#   main = networkIndicators$CAM_ID[i]
+# )
+
+
+
+## adjacency matrix (Aij = 1 when nodes i and j are connected and Aij = 0 otherwise)
+CAMaggregated_onlyOnes_low <- CAMaggregated_low[[5]]
+for(i in 1:length(CAMaggregated_onlyOnes_low)){
+  CAMaggregated_onlyOnes_low[[i]][CAMaggregated_onlyOnes_low[[i]] >= 1] <- 1
+}
+```
+
+
+## Leiden algorithm
+
+```{r}
+adjacency_matrix_low <- CAMaggregated_low[[1]]
+
+graph_object_low <-
+  graph_from_adjacency_matrix(adjacency_matrix_low, mode = "directed")
+# graph_object_low
+# plot(graph_object_low, vertex.color = "grey75")
+
+adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object_low) # not needed
+
+partition_low <- leiden(adjacency_matrix_low)
+table(partition_low)
+
+
+for (i in unique(partition_low)) {
+  cat(
+    "\nfor partion_low",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_low)[partition == i],
+    "\n"
+  )
+}
+
+
+library("RColorBrewer")
+node.cols_low <- brewer.pal(max(c(3, partition_low)), "Pastel1")[partition_low]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object_low,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
+    5,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols_low
 )
 
 ```
