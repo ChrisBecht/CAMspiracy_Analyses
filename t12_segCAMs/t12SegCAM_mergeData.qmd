@@ -220,20 +220,47 @@ DT::datatable(CAMwordlist, options = list(pageLength = 5))
 ```{r}
 ## remove network indicators
 # colnames(t2_questionnaireCAMs[, c(48:79)])
-t2_questionnaire <- t2_questionnaireCAMs[, -c(48:79)]
+t2_questionnaire <- t2_questionnaireCAMs[,-c(48:79)]
 
-if(all(t2_questionnaire$PROLIFIC_PID == networkIndicators$participantCAM)){
-    print("all t2 data can be matched")
-    t2_questionnaireCAMs <- cbind(t2_questionnaire, networkIndicators)
+
+
+if (all(t2_questionnaire$PROLIFIC_PID == networkIndicators$participantCAM)) {
+  print("all t2 data can be matched")
+  t2_questionnaireCAMs <-
+    cbind(t2_questionnaire, networkIndicators)
+  
+  
+  
+  ## add duration CAM
+  t2_questionnaireCAMs$CAM_duration <- NA
+  
+  h = 1
+  for (c in t2_questionnaireCAMs$participantCAM) {
+    # print(c)
+    
+    tmp_diffConcepts <-
+      CAMfiles[[1]][CAMfiles[[1]]$participantCAM == c, "dateConceptCreated"] -
+      CAMfiles[[1]][CAMfiles[[1]]$participantCAM == c, "dateCAMcreated"]
+    tmp_diffConnectors <-
+      CAMfiles[[2]][CAMfiles[[2]]$participantCAM == c, "dateConnectorCreated"] -
+      CAMfiles[[2]][CAMfiles[[2]]$participantCAM == c, "dateCAMcreated"]
+    
+    t2_questionnaireCAMs$CAM_duration[h] <-  max(c(tmp_diffConcepts, tmp_diffConnectors))
+    h = h + 1
+  }
+  
+  ## in minutes
+  t2_questionnaireCAMs$CAM_duration <- t2_questionnaireCAMs$CAM_duration / 60
+  
 }
 
 
-if(all(t2_questionnaireCAMs$PROLIFIC_PID %in% t1_questionnaire$PROLIFIC_PID)){
+if (all(t2_questionnaireCAMs$PROLIFIC_PID %in% t1_questionnaire$PROLIFIC_PID)) {
   print("all t1, t2 data can be joined")
-
-  t12_questionnaireCAMs <- left_join(x = t1_questionnaire, y = t2_questionnaireCAMs, by = "PROLIFIC_PID")
+  
+  t12_questionnaireCAMs <-
+    left_join(x = t1_questionnaire, y = t2_questionnaireCAMs, by = "PROLIFIC_PID")
 }
-
 ```
 
 check for plausiblity
@@ -242,6 +269,14 @@ check for plausiblity
 plot(t12_questionnaireCAMs$mean_affImg, t12_questionnaireCAMs$mean_valence_macro)
 cor(t12_questionnaireCAMs$mean_affImg, t12_questionnaireCAMs$mean_valence_macro, use = "pairwise")
 ```
+
+check correlations of durations
+
+```{r}
+plot(t12_questionnaireCAMs$total_min_prolific_t2, t12_questionnaireCAMs$CAM_duration)
+cor(t12_questionnaireCAMs$total_min_prolific_t2, t12_questionnaireCAMs$CAM_duration, use = "pairwise")
+```
+
 
 
 
