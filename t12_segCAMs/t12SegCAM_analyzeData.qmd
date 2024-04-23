@@ -249,7 +249,13 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 #### Network indicators high conspir belief
 
 ```{r}
-netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn)
+CAMdrawn_high <- draw_CAM(dat_merged = CAMfiles_high[[3]],
+                          dat_nodes = CAMfiles_high[[1]],
+                          ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
+                          relvertexsize = 5,
+                          reledgesize = 1)
+
+netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_high)
 ```
 
 
@@ -289,6 +295,7 @@ setwd("..")
 
 
 #### Word list low conspir belief
+
 ```{r wordlist}
 tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
                            pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
@@ -311,6 +318,17 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 ```
 
 
+#### Network indicators low conspir belief
+
+```{r}
+CAMdrawn_low <- draw_CAM(dat_merged = CAMfiles_low[[3]],
+                         dat_nodes = CAMfiles_low[[1]],
+                         ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
+                         relvertexsize = 5,
+                         reledgesize = 1)
+
+netIndicators_low <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_low)
+```
 
 # analyze data
 
