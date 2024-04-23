@@ -224,6 +224,7 @@ setwd("..")
 
 
 #### Word list high conspir belief
+
 ```{r wordlist}
 tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
                            pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
@@ -243,6 +244,12 @@ dat_nodes <- CAMfiles_high[[1]]
 dat_nodes$text <-   dat_nodes$text_summarized
 sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
 
+```
+
+#### Network indicators high conspir belief
+
+```{r}
+netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn)
 ```
 
 
@@ -304,6 +311,7 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 ```
 
 
+
 # analyze data
 
 ## mixed !!!!!!!!!!!!!!!!!!!!!!
@@ -356,6 +364,7 @@ CAMaggregated_onlyOnes_high <- CAMaggregated_high[[5]]
 for(i in 1:length(CAMaggregated_onlyOnes_high)){
   CAMaggregated_onlyOnes_high[[i]][CAMaggregated_onlyOnes_high[[i]] >= 1] <- 1
 }
+
 ```
 
 
@@ -380,7 +389,7 @@ for (i in unique(partition_high)) {
     "\nfor partion_high",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix_high)[partition == i],
+    rownames(adjacency_matrix_high)[partition_high == i],
     "\n"
   )
 }
@@ -474,7 +483,7 @@ for (i in unique(partition_low)) {
     "\nfor partion_low",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix_low)[partition == i],
+    rownames(adjacency_matrix_low)[partition_low == i],
     "\n"
   )
 }
