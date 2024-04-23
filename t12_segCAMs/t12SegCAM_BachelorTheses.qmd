@@ -253,7 +253,6 @@ length(unique(applyApproximate$originalWord))
 names(table(applyApproximate$originalWord))[table(applyApproximate$originalWord) >= 10]
 
 
-
 readkey <- function()
 {
   # cat ('\nPress [enter] to continue\n')
@@ -274,14 +273,14 @@ defineDistance = 2
 for(i in 1:nrow(applyApproximate)){
   print(i)
   
-  dist <- stringdist::stringdist(a = applyApproximate$originalWord[i], applyApproximate$originalWord)
+  dist <- stringdist::stringdist(a = applyApproximate$summarizedWord[i], applyApproximate$summarizedWord)
 
 
   
-if(!all(unique(applyApproximate$originalWord[dist <= defineDistance]) == applyApproximate$originalWord[i])){
+if(!all(unique(applyApproximate$summarizedWord[dist <= defineDistance]) == applyApproximate$summarizedWord[i])){
   
   cat("\n if you want to summarize the followings words:\n")
-  print(unique(applyApproximate$originalWord[dist <= defineDistance]))
+  print(unique(applyApproximate$summarizedWord[dist <= defineDistance]))
   
   cat('>>> provide a superordinate word, else write "c" (for continue) or write "a123" to stop the summary process')
 
@@ -290,7 +289,7 @@ if(!all(unique(applyApproximate$originalWord[dist <= defineDistance]) == applyAp
   # print(out)
   
   if(out != "c"){
-      applyApproximate$summarizedWord[applyApproximate$summarizedWord %in% unique(applyApproximate$originalWord[dist <= defineDistance])] <- out
+      applyApproximate$summarizedWord[applyApproximate$summarizedWord %in% unique(applyApproximate$summarizedWord[dist <= defineDistance])] <- out
   }
 }
 }
