@@ -89,7 +89,6 @@ rm(i)
 setwd("..")
 ```
 
-
 ```{r protocol}
 setwd("data")
 protocolDataset <- "protocol_fixed_15.txt"
@@ -119,11 +118,15 @@ if(consider_Protocol){
   tmp_out[[2]]
 }
 
+rm(protocolDataset, consider_Protocol, text)
 ```
+
 
 # split data
 
-Data set is split according to country (Germany & USA) and persons with low (1) and high conspiracy (3). 
+Data set is split according to country (Germany & USA) and persons with high conspiracy (3) and low conspiracy (1). 
+
+## Country
 
 ### CAMs from Germany
 ```{r}
@@ -153,6 +156,7 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
   vroom::vroom_write(x =  CAMfiles_Germany[[3]], file = "CAM_merged_Germany.txt")
 }
 ```
+
 
 
 ### CAMs from USA
@@ -189,6 +193,7 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 ## classes_conspiracy: 3 = high, 1 = low conspiracy
 
 ### CAMs from high conspir belief
+
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_high")){
@@ -223,7 +228,7 @@ setwd("..")
 ```
 
 
-#### Word list high conspir belief
+#### Word list high 
 
 ```{r wordlist}
 tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
@@ -246,20 +251,9 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 
 ```
 
-#### Network indicators high conspir belief
-
-```{r}
-CAMdrawn_high <- draw_CAM(dat_merged = CAMfiles_high[[3]],
-                          dat_nodes = CAMfiles_high[[1]],
-                          ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
-                          relvertexsize = 5,
-                          reledgesize = 1)
-
-netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_high)
-```
-
 
 ### CAMs from low conspir belief
+
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_low")){
@@ -294,7 +288,7 @@ setwd("..")
 ```
 
 
-#### Word list low conspir belief
+#### Word list low 
 
 ```{r wordlist}
 tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
@@ -317,10 +311,39 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 
 ```
 
+#.
+# analyze data
 
-#### Network indicators low conspir belief
+## Network Indicators
+
+https://camtools-documentation.readthedocs.io/en/master/CAM-App/#compute-network-indicators
+
+- num_nodes_macro: Number of concepts.
+- num_nodes_pos_macro           
+- num_nodes_neg_macro           
+- num_nodes_neut_macro          
+- num_nodes_ambi_macro          
+- mean_valence_macro: The mean valence of all concepts.
+- density_macro: The density of a CAM refers to the ratio between the actual number of edges and the maximum possible number of edges in the CAM.
+- transitivity_macro: Transitivity measures the likelihood that the neighboring vertices of a vertex are connected. This is also known as the clustering coefficient.
+- assortativity_valence_macro: The coefficient ranges from [-1, 1], whereby positive values indicates that concepts with the same valence a tendency to connect with each other (level of homophily). The value -1 indicates a completely disassortative CAM.
+
+
+### Preparation
 
 ```{r}
+# high
+CAMdrawn_high <- draw_CAM(dat_merged = CAMfiles_high[[3]],
+                          dat_nodes = CAMfiles_high[[1]],
+                          ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
+                          relvertexsize = 5,
+                          reledgesize = 1)
+
+netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_high)
+
+
+
+# low
 CAMdrawn_low <- draw_CAM(dat_merged = CAMfiles_low[[3]],
                          dat_nodes = CAMfiles_low[[1]],
                          ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
@@ -330,9 +353,91 @@ CAMdrawn_low <- draw_CAM(dat_merged = CAMfiles_low[[3]],
 netIndicators_low <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_low)
 ```
 
-# analyze data
+```{r}
+CAMdrawn_overall <- draw_CAM(dat_merged = CAMfiles[[3]],
+                          dat_nodes = CAMfiles[[1]],
+                          ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
+                          relvertexsize = 5,
+                          reledgesize = 1)
 
-## mixed !!!!!!!!!!!!!!!!!!!!!!
+netIndicators_overall <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_overall)
+```
+
+
+### Table of Network Indicators
+
+```{r}
+netIndicators_table <- data.frame(
+  indicator = c(
+    "n",
+    "number of concepts",
+    "positive concepts",
+    "negative concepts",
+    "neutral concepts",
+    "ambivalent concepts",
+    "mean valence",
+    "density",
+    "transitivity"
+  ),
+  
+  overall = c(
+    nrow(netIndicators_overall),
+    round(mean(netIndicators_overall$num_nodes_macro), 2),
+    round(mean(netIndicators_overall$num_nodes_pos_macro), 2),
+    round(mean(netIndicators_overall$num_nodes_neg_macro), 2),
+    round(mean(netIndicators_overall$num_nodes_neut_macro), 2),
+    round(mean(netIndicators_overall$num_nodes_ambi_macro), 2),
+    round(mean(netIndicators_overall$mean_valence_macro), 2),
+    round(mean(netIndicators_overall$density_macro), 2),
+    round(mean(netIndicators_overall$transitivity_macro), 2)
+  ),
+  
+  high = c(
+    nrow(netIndicators_high),
+    round(mean(netIndicators_high$num_nodes_macro), 2),
+    round(mean(netIndicators_high$num_nodes_pos_macro), 2),
+    round(mean(netIndicators_high$num_nodes_neg_macro), 2),
+    round(mean(netIndicators_high$num_nodes_neut_macro), 2),
+    round(mean(netIndicators_high$num_nodes_ambi_macro), 2),
+    round(mean(netIndicators_high$mean_valence_macro), 2),
+    round(mean(netIndicators_high$density_macro), 2),
+    round(mean(netIndicators_high$transitivity_macro), 2)
+  ),
+  
+  low = c(
+    nrow(netIndicators_low),
+    round(mean(netIndicators_low$num_nodes_macro), 2),
+    round(mean(netIndicators_low$num_nodes_pos_macro), 2),
+    round(mean(netIndicators_low$num_nodes_neg_macro), 2),
+    round(mean(netIndicators_low$num_nodes_neut_macro), 2),
+    round(mean(netIndicators_low$num_nodes_ambi_macro), 2),
+    round(mean(netIndicators_low$mean_valence_macro), 2),
+    round(mean(netIndicators_low$density_macro), 2),
+    round(mean(netIndicators_low$transitivity_macro), 2)
+  )
+)
+
+netIndicators_table
+```
+
+### t-Tests
+
+```{r}
+library(car)
+
+# number of concepts
+t.test(netIndicators_high$num_nodes_macro~netIndicators_low$num_nodes_macro, var.equal = FALSE, alternative = "two.sided")
+
+
+wilcox.test(netIndicators_high$num_nodes_macro~netIndicators_low$num_nodes_macro, 
+            exact = FALSE, 
+            correct = FALSE, 
+            conf.int = FALSE)
+
+```
+
+
+## Leiden Algorithm
 
 ```{r}
 library(igraph)
@@ -340,11 +445,12 @@ library(leiden)
 ```
 
 
-######################
-#### high conspir ####
-######################
 
-## aggregate CAMs
+##################
+### high conspir
+##################
+
+#### aggregate CAMs
 
 ```{r}
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
@@ -386,7 +492,7 @@ for(i in 1:length(CAMaggregated_onlyOnes_high)){
 ```
 
 
-## Leiden algorithm
+#### Leiden algorithm
 
 ```{r}
 adjacency_matrix_high <- CAMaggregated_high[[1]]
@@ -435,11 +541,12 @@ plot(
 ```
 
 
-#####################
-#### low conspir ####
-#####################
 
-## aggregate CAMs
+##################
+### low conspir
+##################
+
+#### aggregate CAMs
 
 ```{r}
 sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
@@ -480,7 +587,7 @@ for(i in 1:length(CAMaggregated_onlyOnes_low)){
 ```
 
 
-## Leiden algorithm
+#### Leiden algorithm
 
 ```{r}
 adjacency_matrix_low <- CAMaggregated_low[[1]]
@@ -529,7 +636,8 @@ plot(
 ```
 
 
-### Leiden algorithm with pruning (Gibson and Mucha, 2022)
+#.
+# TEST: Leiden algorithm with pruning (Gibson and Mucha, 2022)
 
 Community detection based on the Leiden algorithm, similar to Louvain.
 Repeatedly run with a host of different gamma and omega parameters.
@@ -712,8 +820,6 @@ psych::cor.plot(r = cor(questionnaire_CAM_USA[, str_detect(string = colnames(que
                                                    use = "pairwise.complete.obs"),
                                                    upper = FALSE, xlas = 2, main = "USA")
 ```
-
-
 
 
 ## mean differences
