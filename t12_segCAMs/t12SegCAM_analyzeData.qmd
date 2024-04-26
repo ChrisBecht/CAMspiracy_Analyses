@@ -118,7 +118,7 @@ if(consider_Protocol){
   tmp_out[[2]]
 }
 
-rm(protocolDataset, consider_Protocol, text)
+rm(protocolDataset, consider_Protocol, text, tmp_out)
 ```
 
 
@@ -340,6 +340,7 @@ CAMdrawn_high <- draw_CAM(dat_merged = CAMfiles_high[[3]],
                           reledgesize = 1)
 
 netIndicators_high <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_high)
+netIndicators_high$group <- "high"
 
 
 
@@ -351,16 +352,55 @@ CAMdrawn_low <- draw_CAM(dat_merged = CAMfiles_low[[3]],
                          reledgesize = 1)
 
 netIndicators_low <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_low)
-```
+netIndicators_low$group <- "low"
 
-```{r}
+
+# overall
 CAMdrawn_overall <- draw_CAM(dat_merged = CAMfiles[[3]],
                           dat_nodes = CAMfiles[[1]],
                           ids_CAMs = "all", plot_CAM = FALSE, useCoordinates = TRUE,
                           relvertexsize = 5,
                           reledgesize = 1)
 
-netIndicators_overall <- compute_indicatorsCAM(drawn_CAM = CAMdrawn_overall)
+netIndicators_overall <- rbind(netIndicators_high, netIndicators_low)
+```
+
+### t-Tests prerequisites
+
+```{r}
+library(car)
+
+# number of concepts
+leveneTest(num_nodes_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# number of positive concepts
+leveneTest(num_nodes_pos_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# number of negative concepts
+leveneTest(num_nodes_neg_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# number of neutral concepts
+leveneTest(num_nodes_neut_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# number of ambivalent concepts
+leveneTest(num_nodes_ambi_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# mean valence
+leveneTest(mean_valence_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# density
+leveneTest(density_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# transitivity
+leveneTest(transitivity_macro ~ group, data = netIndicators_overall, center = "median")
+
 ```
 
 
@@ -392,6 +432,18 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_overall$transitivity_macro), 2)
   ),
   
+  SD_o = c(
+    "-",
+    round(sd(netIndicators_overall$num_nodes_macro), 2),
+    round(sd(netIndicators_overall$num_nodes_pos_macro), 2),
+    round(sd(netIndicators_overall$num_nodes_neg_macro), 2),
+    round(sd(netIndicators_overall$num_nodes_neut_macro), 2),
+    round(sd(netIndicators_overall$num_nodes_ambi_macro), 2),
+    round(sd(netIndicators_overall$mean_valence_macro), 2),
+    round(sd(netIndicators_overall$density_macro), 2),
+    round(sd(netIndicators_overall$transitivity_macro), 2)
+  ),
+  
   high = c(
     nrow(netIndicators_high),
     round(mean(netIndicators_high$num_nodes_macro), 2),
@@ -404,6 +456,18 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_high$transitivity_macro), 2)
   ),
   
+  SD_h = c(
+    "-",
+    round(sd(netIndicators_high$num_nodes_macro), 2),
+    round(sd(netIndicators_high$num_nodes_pos_macro), 2),
+    round(sd(netIndicators_high$num_nodes_neg_macro), 2),
+    round(sd(netIndicators_high$num_nodes_neut_macro), 2),
+    round(sd(netIndicators_high$num_nodes_ambi_macro), 2),
+    round(sd(netIndicators_high$mean_valence_macro), 2),
+    round(sd(netIndicators_high$density_macro), 2),
+    round(sd(netIndicators_high$transitivity_macro), 2)
+  ),
+  
   low = c(
     nrow(netIndicators_low),
     round(mean(netIndicators_low$num_nodes_macro), 2),
@@ -414,27 +478,115 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_low$mean_valence_macro), 2),
     round(mean(netIndicators_low$density_macro), 2),
     round(mean(netIndicators_low$transitivity_macro), 2)
+  ),
+  
+  SD_l = c(
+    "-",
+    round(sd(netIndicators_low$num_nodes_macro), 2),
+    round(sd(netIndicators_low$num_nodes_pos_macro), 2),
+    round(sd(netIndicators_low$num_nodes_neg_macro), 2),
+    round(sd(netIndicators_low$num_nodes_neut_macro), 2),
+    round(sd(netIndicators_low$num_nodes_ambi_macro), 2),
+    round(sd(netIndicators_low$mean_valence_macro), 2),
+    round(sd(netIndicators_low$density_macro), 2),
+    round(sd(netIndicators_low$transitivity_macro), 2)
+  ),
+  
+  t.119 = c(
+    "-",
+    round(t.test(
+        netIndicators_high$num_nodes_macro,
+        netIndicators_low$num_nodes_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$num_nodes_pos_macro,
+        netIndicators_low$num_nodes_pos_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$num_nodes_neg_macro,
+        netIndicators_low$num_nodes_neg_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$num_nodes_neut_macro,
+        netIndicators_low$num_nodes_neut_macro,
+        var.equal = TRUE,
+        alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$num_nodes_ambi_macro,
+        netIndicators_low$num_nodes_ambi_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$mean_valence_macro,
+        netIndicators_low$mean_valence_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$density_macro,
+        netIndicators_low$density_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$transitivity_macro,
+        netIndicators_low$transitivity_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2)
+  ),
+  
+  p = c(
+    "-",
+    round(t.test(
+        netIndicators_high$num_nodes_macro,
+        netIndicators_low$num_nodes_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$num_nodes_pos_macro,
+        netIndicators_low$num_nodes_pos_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$num_nodes_neg_macro,
+        netIndicators_low$num_nodes_neg_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$num_nodes_neut_macro,
+        netIndicators_low$num_nodes_neut_macro,
+        var.equal = TRUE,
+        alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$num_nodes_ambi_macro,
+        netIndicators_low$num_nodes_ambi_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$mean_valence_macro,
+        netIndicators_low$mean_valence_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$density_macro,
+        netIndicators_low$density_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$transitivity_macro,
+        netIndicators_low$transitivity_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3)
   )
 )
 
 netIndicators_table
-```
-
-### t-Tests
-
-```{r}
-library(car)
-
-# number of concepts
-t.test(netIndicators_high$num_nodes_macro~netIndicators_low$num_nodes_macro, var.equal = FALSE, alternative = "two.sided")
-
-
-wilcox.test(netIndicators_high$num_nodes_macro~netIndicators_low$num_nodes_macro, 
-            exact = FALSE, 
-            correct = FALSE, 
-            conf.int = FALSE)
 
 ```
+
 
 
 ## Leiden Algorithm
