@@ -1,6 +1,6 @@
 ---
-title: "Analyze Merged Files from t1, t2"
-author: "Julius Fenn, Christophe Becht"
+title: "Analyzes for Bachelor Theses"
+author: "Julius Fenn"
 format:
   html:
     toc: true
@@ -232,7 +232,7 @@ sum(is.na(affectiveImagery$mean_affImg))
 ```
 
 
-use approximate matching only for German:
+use approximate matching only for German (not run automatically!):
 
 ```{r}
 #| eval: false
@@ -309,4 +309,95 @@ write.csv2(x = applyApproximate, file = "applyApproximate.csv")
 ## save as R object
 saveRDS(applyApproximate, file = "applyApproximate.rds")
 ```
+
+## overwrite affective imagery
+
+### create long format data
+
+```{r}
+### create long format data
+counter = 1
+for(p in affectiveImagery$PROLIFIC_PID){
+  tmp_dat <- affectiveImagery[affectiveImagery$PROLIFIC_PID == p, ]
+  
+  tmp_vec_word <- unlist(tmp_dat[, str_subset(string = colnames(tmp_dat), pattern = "^R[:digit:]")])
+  tmp_vec_word <- tmp_vec_word[!is.na(tmp_vec_word)]
+  
+  
+    tmp_vec_valence <- unlist(tmp_dat[, str_subset(string = colnames(tmp_dat), pattern = "^affImgAffect")])
+  tmp_vec_valence <- tmp_vec_valence[!is.na(tmp_vec_valence)]
+  
+  if(length(tmp_vec_word) != length(tmp_vec_valence)){
+    tmp_vec_valence <- rep(NA, times = length(tmp_vec_word))
+  }
+  
+  if(length(tmp_vec_word) == 0 & length(tmp_vec_valence) == 0){
+    tmp_vec_word <- NA
+    tmp_vec_valence <- NA
+  }
+  
+  if(counter == 1){
+    dat_out <- data.frame(PROLIFIC_PID = tmp_dat$PROLIFIC_PID, 
+             country = tmp_dat$country.x,
+             class_conspiracy = tmp_dat$classes_conspiracy, 
+             originalWord = tmp_vec_word,
+             valence = tmp_vec_valence)
+  }else{
+    dat_out <- rbind(dat_out, data.frame(PROLIFIC_PID = tmp_dat$PROLIFIC_PID, 
+             country = tmp_dat$country.x,
+             class_conspiracy = tmp_dat$classes_conspiracy, 
+             originalWord = tmp_vec_word,
+             valence = tmp_vec_valence))
+  }
+  
+  counter = counter + 1
+}
+```
+
+
+### overwrite
+
+```{r}
+setwd("data_BA_Magdalena")
+
+overwriteApproximate <- read.xlsx2(file = "AffectiveImageryDatenDeutschZusammengefasst.xlsx", sheetIndex = 1)
+
+
+dat_out$summarizedWord <- dat_out$originalWord
+w <- "Real"
+
+for(w in unique(overwriteApproximate$originalWord)){
+  dat_out$summarizedWord[dat_out$originalWord %in% w & dat_out$country == "Germany"] <- overwriteApproximate$summarizedWord_final[overwriteApproximate$originalWord %in% w]
+}
+
+setwd("..")
+
+### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("data_AffImg_processed")){
+  dir.create("data_AffImg_processed")
+}
+setwd("data_AffImg_processed")
+
+## save as .xlsx file
+xlsx::write.xlsx2(x = dat_out, file = "affImg.xlsx")
+## save as .csv file
+write.csv2(x = dat_out, file = "affImg.csv")
+## save as R object
+saveRDS(dat_out, file = "affImg.rds")
+```
+
+### statistics
+
+```{r}
+dat_out %>%
+  group_by(class_conspiracy) %>%
+  summarise(N = n(), mean = mean(valence, na.rm = TRUE))
+
+
+dat_out %>%
+  group_by(class_conspiracy, country) %>%
+  summarise(N = n(), mean = mean(valence, na.rm = TRUE))
+```
+
 
