@@ -34,10 +34,12 @@ p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'lavaan', 'igraph',
        'regsem', 'MplusAutomation', 'reticulate')
 
+library(openxlsx)
+library(ggplot2)
+
 # reticulate::py_config()
 # reticulate::py_module_available("pycairo")
 # reticulate::py_module_available("cairocffi")
-
 
 
 if(!reticulate::py_module_available("igraph")){
@@ -55,12 +57,18 @@ if(!reticulate::py_module_available("scipy")){
 if(!reticulate::py_module_available("leidenalg")){
   py_install("leidenalg")
 }
+if(!reticulate::py_module_available("numpy")){
+  py_install("numpy")
+}
 
 ## install Python modules
 # py_install("matplotlib")
 # py_install("scipy")
 # py_install("cairocffi") 
 # py_install("pycairo") # pip install pycairo
+
+library(igraph)
+library(leiden)
 
 # load data
 setwd("outputs")
@@ -128,7 +136,7 @@ Data set is split according to country (Germany & USA) and persons with high con
 
 ## Country
 
-### CAMs from Germany
+### CAMs from Germany | not necessary
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_Germany")){
@@ -159,7 +167,7 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
 
 
 
-### CAMs from USA
+### CAMs from USA | not necessary
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_USA")){
@@ -228,30 +236,6 @@ setwd("..")
 ```
 
 
-#### Word list high 
-
-```{r wordlist}
-tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
-                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
-
-CAMwordlist_high <- create_wordlist(
-  dat_nodes = CAMfiles_high[[1]],
-  dat_merged = CAMfiles_high[[3]],
-  useSummarized = TRUE,
-  order = "frequency",
-  splitByValence = TRUE,
-  comments = TRUE,
-  raterSubsetWords = NULL,
-  rater = FALSE
-)
-
-dat_nodes <- CAMfiles_high[[1]]
-dat_nodes$text <-   dat_nodes$text_summarized
-sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
-
-```
-
-
 ### CAMs from low conspir belief
 
 ```{r}
@@ -288,29 +272,6 @@ setwd("..")
 ```
 
 
-#### Word list low 
-
-```{r wordlist}
-tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
-                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
-
-CAMwordlist_low <- create_wordlist(
-  dat_nodes = CAMfiles_low[[1]],
-  dat_merged = CAMfiles_low[[3]],
-  useSummarized = TRUE,
-  order = "frequency",
-  splitByValence = TRUE,
-  comments = TRUE,
-  raterSubsetWords = NULL,
-  rater = FALSE
-)
-
-dat_nodes <- CAMfiles_low[[1]]
-dat_nodes$text <-   dat_nodes$text_summarized
-sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
-
-```
-
 #.
 # analyze data
 
@@ -319,14 +280,15 @@ sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative
 https://camtools-documentation.readthedocs.io/en/master/CAM-App/#compute-network-indicators
 
 - num_nodes_macro: Number of concepts.
-- num_nodes_pos_macro           
-- num_nodes_neg_macro           
-- num_nodes_neut_macro          
-- num_nodes_ambi_macro          
+- num_nodes_pos_macro: Number of concepts.       
+- num_nodes_neg_macro: Number of negative concepts.
+- num_nodes_neut_macro: Number of neutral concepts.
+- num_nodes_ambi_macro: Number of ambivalent concepts.
 - mean_valence_macro: The mean valence of all concepts.
 - density_macro: The density of a CAM refers to the ratio between the actual number of edges and the maximum possible number of edges in the CAM.
+- num_edges_macro: Number of edges. 
 - transitivity_macro: Transitivity measures the likelihood that the neighboring vertices of a vertex are connected. This is also known as the clustering coefficient.
-- assortativity_valence_macro: The coefficient ranges from [-1, 1], whereby positive values indicates that concepts with the same valence a tendency to connect with each other (level of homophily). The value -1 indicates a completely disassortative CAM.
+- assortativity_valence_macro: The coefficient ranges from [-1, 1], whereby positive values indicate that concepts with the same valence have a tendency to connect with each other (level of homophily). The value -1 indicates a completely disassortative CAM.
 
 
 ### Preparation
@@ -365,6 +327,135 @@ CAMdrawn_overall <- draw_CAM(dat_merged = CAMfiles[[3]],
 netIndicators_overall <- rbind(netIndicators_high, netIndicators_low)
 ```
 
+
+### Pie Charts
+
+#### Overall
+```{r}
+data <- data.frame(
+  pos = sum(netIndicators_overall$num_nodes_pos_macro),
+  neg = sum(netIndicators_overall$num_nodes_neg_macro),
+  neut = sum(netIndicators_overall$num_nodes_neut_macro),
+  ambi = sum(netIndicators_overall$num_nodes_ambi_macro)
+)
+
+# Prozentwerte berechnen
+percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
+
+# Daten in das richtige Format für ggplot2 bringen
+df <- data.frame(
+  variable = colnames(data),
+  value = unlist(data),
+  percent = unlist(percentages)
+)
+
+# Benennung der Variablen
+variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
+df$variable <- factor(df$variable, levels = names(variable_labels))
+df$variable_label <- variable_labels[df$variable]
+
+# Kreisdiagramm erstellen
+pie_overall <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
+  geom_bar(stat = "identity", color = "black", width = 1) +
+  coord_polar("y", start = 0) +
+  geom_text(position = position_stack(vjust = 0.5), size = 4) +
+  scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
+  theme_void() + 
+  theme(
+    legend.position = "right" # Legende auf der rechten Seite anzeigen
+  )
+
+# Kreisdiagramm anzeigen
+print(pie_overall)
+
+rm(df, percentages, data, pie_overall)
+```
+
+
+#### high
+```{r}
+data <- data.frame(
+  pos = sum(netIndicators_high$num_nodes_pos_macro),
+  neg = sum(netIndicators_high$num_nodes_neg_macro),
+  neut = sum(netIndicators_high$num_nodes_neut_macro),
+  ambi = sum(netIndicators_high$num_nodes_ambi_macro)
+)
+
+# Prozentwerte berechnen
+percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
+
+# Daten in das richtige Format für ggplot2 bringen
+df <- data.frame(
+  variable = colnames(data),
+  value = unlist(data),
+  percent = unlist(percentages)
+)
+
+# Benennung der Variablen
+variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
+df$variable <- factor(df$variable, levels = names(variable_labels))
+df$variable_label <- variable_labels[df$variable]
+
+# Kreisdiagramm erstellen
+pie_high <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
+  geom_bar(stat = "identity", color = "black", width = 1) +
+  coord_polar("y", start = 0) +
+  geom_text(position = position_stack(vjust = 0.5), size = 4) +
+  scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
+  theme_void() +
+  theme(
+    legend.position = "right" # Legende auf der rechten Seite anzeigen
+  )
+
+# Kreisdiagramm anzeigen
+print(pie_high)
+
+rm(df, percentages, data, pie_high)
+```
+
+
+#### low
+```{r}
+data <- data.frame(
+  pos = sum(netIndicators_low$num_nodes_pos_macro),
+  neg = sum(netIndicators_low$num_nodes_neg_macro),
+  neut = sum(netIndicators_low$num_nodes_neut_macro),
+  ambi = sum(netIndicators_low$num_nodes_ambi_macro)
+)
+
+# Prozentwerte berechnen
+percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
+
+# Daten in das richtige Format für ggplot2 bringen
+df <- data.frame(
+  variable = colnames(data),
+  value = unlist(data),
+  percent = unlist(percentages)
+)
+
+# Benennung der Variablen
+variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
+df$variable <- factor(df$variable, levels = names(variable_labels))
+df$variable_label <- variable_labels[df$variable]
+
+# Kreisdiagramm erstellen
+pie_low <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
+  geom_bar(stat = "identity", color = "black", width = 1) +
+  coord_polar("y", start = 0) +
+  geom_text(position = position_stack(vjust = 0.5), size = 4) +
+  scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
+  theme_void() +
+  theme(
+    legend.position = "right" # Legende auf der rechten Seite anzeigen
+  )
+
+# Kreisdiagramm anzeigen
+print(pie_low)
+
+rm(df, percentages, data, pie_low)
+```
+
+
 ### t-Tests prerequisites
 
 ```{r}
@@ -394,12 +485,20 @@ leveneTest(num_nodes_ambi_macro ~ group, data = netIndicators_overall, center = 
 leveneTest(mean_valence_macro ~ group, data = netIndicators_overall, center = "median")
 
 
+# number of edges
+leveneTest(num_edges_macro ~ group, data = netIndicators_overall, center = "median")
+
+
 # density
 leveneTest(density_macro ~ group, data = netIndicators_overall, center = "median")
 
 
 # transitivity
 leveneTest(transitivity_macro ~ group, data = netIndicators_overall, center = "median")
+
+
+# assortativity
+leveneTest(assortativity_valence_macro ~ group, data = netIndicators_overall, center = "median")
 
 ```
 
@@ -416,8 +515,10 @@ netIndicators_table <- data.frame(
     "neutral concepts",
     "ambivalent concepts",
     "mean valence",
+    "number of edges",
     "density",
-    "transitivity"
+    "transitivity",
+    "assortativity valence"
   ),
   
   overall = c(
@@ -428,8 +529,10 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_overall$num_nodes_neut_macro), 2),
     round(mean(netIndicators_overall$num_nodes_ambi_macro), 2),
     round(mean(netIndicators_overall$mean_valence_macro), 2),
+    round(mean(netIndicators_overall$num_edges_macro), 2),
     round(mean(netIndicators_overall$density_macro), 2),
-    round(mean(netIndicators_overall$transitivity_macro), 2)
+    round(mean(netIndicators_overall$transitivity_macro), 2),
+    round(mean(netIndicators_overall$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   SD_o = c(
@@ -440,8 +543,10 @@ netIndicators_table <- data.frame(
     round(sd(netIndicators_overall$num_nodes_neut_macro), 2),
     round(sd(netIndicators_overall$num_nodes_ambi_macro), 2),
     round(sd(netIndicators_overall$mean_valence_macro), 2),
+    round(sd(netIndicators_overall$num_edges_macro), 2),
     round(sd(netIndicators_overall$density_macro), 2),
-    round(sd(netIndicators_overall$transitivity_macro), 2)
+    round(sd(netIndicators_overall$transitivity_macro), 2),
+    round(sd(netIndicators_overall$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   high = c(
@@ -452,8 +557,10 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_high$num_nodes_neut_macro), 2),
     round(mean(netIndicators_high$num_nodes_ambi_macro), 2),
     round(mean(netIndicators_high$mean_valence_macro), 2),
+    round(mean(netIndicators_high$num_edges_macro), 2),
     round(mean(netIndicators_high$density_macro), 2),
-    round(mean(netIndicators_high$transitivity_macro), 2)
+    round(mean(netIndicators_high$transitivity_macro), 2),
+    round(mean(netIndicators_high$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   SD_h = c(
@@ -464,8 +571,10 @@ netIndicators_table <- data.frame(
     round(sd(netIndicators_high$num_nodes_neut_macro), 2),
     round(sd(netIndicators_high$num_nodes_ambi_macro), 2),
     round(sd(netIndicators_high$mean_valence_macro), 2),
+    round(sd(netIndicators_high$num_edges_macro), 2),
     round(sd(netIndicators_high$density_macro), 2),
-    round(sd(netIndicators_high$transitivity_macro), 2)
+    round(sd(netIndicators_high$transitivity_macro), 2),
+    round(sd(netIndicators_high$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   low = c(
@@ -476,8 +585,10 @@ netIndicators_table <- data.frame(
     round(mean(netIndicators_low$num_nodes_neut_macro), 2),
     round(mean(netIndicators_low$num_nodes_ambi_macro), 2),
     round(mean(netIndicators_low$mean_valence_macro), 2),
+    round(mean(netIndicators_low$num_edges_macro), 2),
     round(mean(netIndicators_low$density_macro), 2),
-    round(mean(netIndicators_low$transitivity_macro), 2)
+    round(mean(netIndicators_low$transitivity_macro), 2),
+    round(mean(netIndicators_low$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   SD_l = c(
@@ -488,8 +599,10 @@ netIndicators_table <- data.frame(
     round(sd(netIndicators_low$num_nodes_neut_macro), 2),
     round(sd(netIndicators_low$num_nodes_ambi_macro), 2),
     round(sd(netIndicators_low$mean_valence_macro), 2),
+    round(sd(netIndicators_low$num_edges_macro), 2),
     round(sd(netIndicators_low$density_macro), 2),
-    round(sd(netIndicators_low$transitivity_macro), 2)
+    round(sd(netIndicators_low$transitivity_macro), 2),
+    round(sd(netIndicators_low$assortativity_valence_macro, na.rm = TRUE), 2)
   ),
   
   t.119 = c(
@@ -526,6 +639,11 @@ netIndicators_table <- data.frame(
         var.equal = TRUE, alternative = "two.sided"
       )$statistic, 2),
     round(t.test(
+        netIndicators_high$num_edges_macro,
+        netIndicators_low$num_edges_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
         netIndicators_high$density_macro,
         netIndicators_low$density_macro,
         var.equal = TRUE, alternative = "two.sided"
@@ -533,6 +651,11 @@ netIndicators_table <- data.frame(
     round(t.test(
         netIndicators_high$transitivity_macro,
         netIndicators_low$transitivity_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        netIndicators_high$assortativity_valence_macro,
+        netIndicators_low$assortativity_valence_macro,
         var.equal = TRUE, alternative = "two.sided"
       )$statistic, 2)
   ),
@@ -571,6 +694,11 @@ netIndicators_table <- data.frame(
         var.equal = TRUE, alternative = "two.sided"
       )$p.value, 3),
     round(t.test(
+        netIndicators_high$num_nodes_macro,
+        netIndicators_low$num_nodes_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
         netIndicators_high$density_macro,
         netIndicators_low$density_macro,
         var.equal = TRUE, alternative = "two.sided"
@@ -578,6 +706,11 @@ netIndicators_table <- data.frame(
     round(t.test(
         netIndicators_high$transitivity_macro,
         netIndicators_low$transitivity_macro,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        netIndicators_high$assortativity_valence_macro,
+        netIndicators_low$assortativity_valence_macro,
         var.equal = TRUE, alternative = "two.sided"
       )$p.value, 3)
   )
@@ -588,15 +721,77 @@ netIndicators_table
 ```
 
 
+## Concepts (Word lists)
 
-## Leiden Algorithm
+### Preparation
 
 ```{r}
-library(igraph)
-library(leiden)
+# Word list high
+tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_high <- create_wordlist(
+  dat_nodes = CAMfiles_high[[1]],
+  dat_merged = CAMfiles_high[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = TRUE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_high[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+rm(tmp_text)
+
+# Word list low
+tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_low <- create_wordlist(
+  dat_nodes = CAMfiles_low[[1]],
+  dat_merged = CAMfiles_low[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = TRUE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_low[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
 ```
 
 
+### Concept Comparisons
+
+```{r}
+CAMwordlist_high <- CAMwordlist_high[c(1:7)]
+CAMwordlist_low <- CAMwordlist_low[c(1:7)]
+
+setwd("outputs/CAMwordlists")
+write.xlsx(CAMwordlist_high, file = "CAMwordlist_high.xlsx")
+write.xlsx(CAMwordlist_low, file = "CAMwordlist_low.xlsx")
+
+CAMwordlist_high$group <- "high"
+CAMwordlist_low$group <- "low"
+
+
+CAMwordlist_overall <- merge(CAMwordlist_high, CAMwordlist_low, by = "Words")
+CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x - CAMwordlist_overall$mean_valence.y)
+
+write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
+
+```
+
+
+## Leiden Algorithm
 
 ##################
 ### high conspir
@@ -641,6 +836,7 @@ for(i in 1:length(CAMaggregated_onlyOnes_high)){
   CAMaggregated_onlyOnes_high[[i]][CAMaggregated_onlyOnes_high[[i]] >= 1] <- 1
 }
 
+rm(sel_ids_high)
 ```
 
 
@@ -805,12 +1001,6 @@ https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partI
 Doku: 
 https://modularitypruning.readthedocs.io/en/latest/index.html
 
-
-```{python test}
-print("hello world")
-
-pip install leidenalg igraph
-```
 
 ```{python Algo}
 import numpy as np
