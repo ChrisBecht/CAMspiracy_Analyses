@@ -36,6 +36,7 @@ p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
 
 library(openxlsx)
 library(ggplot2)
+library(RColorBrewer)
 
 # reticulate::py_config()
 # reticulate::py_module_available("pycairo")
@@ -69,6 +70,7 @@ if(!reticulate::py_module_available("numpy")){
 
 library(igraph)
 library(leiden)
+library(lsr)
 
 # load data
 setwd("outputs")
@@ -134,40 +136,9 @@ rm(protocolDataset, consider_Protocol, text, tmp_out)
 
 Data set is split according to country (Germany & USA) and persons with high conspiracy (3) and low conspiracy (1). 
 
-## Country
+## Country | not necessary
 
-### CAMs from Germany | not necessary
-```{r}
-setwd("outputs")
-if(!file.exists("CAMs_Germany")){
-  dir.create("CAMs_Germany")
-}
-setwd("CAMs_Germany")
-
-
-CAMfiles_Germany <- CAMfiles
-
-## check is ID data set is complete
-if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
-    print("Error")
-}else{
-  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$country.x == "Germany"]
-  
-  ## keep only CAM data from Germany
-  CAMfiles_Germany[[1]] <- CAMfiles_Germany[[1]][CAMfiles_Germany[[1]]$participantCAM %in% tmp_ids,]
-  CAMfiles_Germany[[2]] <- CAMfiles_Germany[[2]][CAMfiles_Germany[[2]]$participantCAM %in% tmp_ids,]
-  CAMfiles_Germany[[3]] <- CAMfiles_Germany[[3]][CAMfiles_Germany[[3]]$participantCAM.x %in% tmp_ids,]
-  
-  ## save files ob subsets
-  vroom::vroom_write(x =  CAMfiles_Germany[[1]], file = "CAM_nodes_Germany.txt")
-  vroom::vroom_write(x =  CAMfiles_Germany[[2]], file = "CAM_connectors_Germany.txt")
-  vroom::vroom_write(x =  CAMfiles_Germany[[3]], file = "CAM_merged_Germany.txt")
-}
-```
-
-
-
-### CAMs from USA | not necessary
+### CAMs USA
 ```{r}
 setwd("outputs")
 if(!file.exists("CAMs_USA")){
@@ -196,6 +167,35 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 }
 ```
 
+
+### CAMs Germany
+```{r}
+setwd("outputs")
+if(!file.exists("CAMs_Germany")){
+  dir.create("CAMs_Germany")
+}
+setwd("CAMs_Germany")
+
+
+CAMfiles_Germany <- CAMfiles
+
+## check is ID data set is complete
+if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID)){
+    print("Error")
+}else{
+  tmp_ids <- t12_questionnaireCAMs$PROLIFIC_PID[t12_questionnaireCAMs$country.x == "Germany"]
+  
+  ## keep only CAM data from Germany
+  CAMfiles_Germany[[1]] <- CAMfiles_Germany[[1]][CAMfiles_Germany[[1]]$participantCAM %in% tmp_ids,]
+  CAMfiles_Germany[[2]] <- CAMfiles_Germany[[2]][CAMfiles_Germany[[2]]$participantCAM %in% tmp_ids,]
+  CAMfiles_Germany[[3]] <- CAMfiles_Germany[[3]][CAMfiles_Germany[[3]]$participantCAM.x %in% tmp_ids,]
+  
+  ## save files ob subsets
+  vroom::vroom_write(x =  CAMfiles_Germany[[1]], file = "CAM_nodes_Germany.txt")
+  vroom::vroom_write(x =  CAMfiles_Germany[[2]], file = "CAM_connectors_Germany.txt")
+  vroom::vroom_write(x =  CAMfiles_Germany[[3]], file = "CAM_merged_Germany.txt")
+}
+```
 
 
 ## classes_conspiracy: 3 = high, 1 = low conspiracy
@@ -325,6 +325,7 @@ CAMdrawn_overall <- draw_CAM(dat_merged = CAMfiles[[3]],
                           reledgesize = 1)
 
 netIndicators_overall <- rbind(netIndicators_high, netIndicators_low)
+
 ```
 
 
@@ -713,6 +714,21 @@ netIndicators_table <- data.frame(
         netIndicators_low$assortativity_valence_macro,
         var.equal = TRUE, alternative = "two.sided"
       )$p.value, 3)
+  ),
+  Cohen_d = c(
+    "-",
+    "-",
+    "-",
+    round(cohensD(netIndicators_high$num_nodes_neg_macro,
+                  netIndicators_low$num_nodes_neg_macro), 2),
+    "-",
+    "-",
+    round(cohensD(netIndicators_high$mean_valence_macro,
+                  netIndicators_low$mean_valence_macro), 2),
+    "-",
+    "-",
+    "-",
+    "-"
   )
 )
 
@@ -723,14 +739,16 @@ netIndicators_table
 
 ## Concepts (Word lists)
 
-### Preparation
+### Split by valence
+
+#### Preparation
 
 ```{r}
 # Word list high
 tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
                            pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
 
-CAMwordlist_high <- create_wordlist(
+CAMwordlist_high_split <- create_wordlist(
   dat_nodes = CAMfiles_high[[1]],
   dat_merged = CAMfiles_high[[3]],
   useSummarized = TRUE,
@@ -745,13 +763,12 @@ dat_nodes <- CAMfiles_high[[1]]
 dat_nodes$text <-   dat_nodes$text_summarized
 sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
 
-rm(tmp_text)
 
 # Word list low
 tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
                            pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
 
-CAMwordlist_low <- create_wordlist(
+CAMwordlist_low_split <- create_wordlist(
   dat_nodes = CAMfiles_low[[1]],
   dat_merged = CAMfiles_low[[3]],
   useSummarized = TRUE,
@@ -766,14 +783,91 @@ dat_nodes <- CAMfiles_low[[1]]
 dat_nodes$text <-   dat_nodes$text_summarized
 sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
 
+rm(tmp_text)
+
 ```
 
 
-### Concept Comparisons
+#### Concept Comparisons
 
 ```{r}
-CAMwordlist_high <- CAMwordlist_high[c(1:7)]
-CAMwordlist_low <- CAMwordlist_low[c(1:7)]
+
+setwd("outputs/CAMwordlists")
+write.xlsx(CAMwordlist_high_split, file = "CAMwordlist_high_split.xlsx")
+write.xlsx(CAMwordlist_low_split, file = "CAMwordlist_low_split.xlsx")
+
+CAMwordlist_high_split$group <- "high"
+CAMwordlist_low_split$group <- "low"
+
+
+
+CAMwordlist_overall_split <- merge(CAMwordlist_high_split[c(1:7, length(CAMwordlist_high_split))], CAMwordlist_low_split[c(1:7, length(CAMwordlist_low_split))], by = "Words")
+
+# raw_diff: difference in frequency of mentions
+CAMwordlist_overall_split$raw_diff <- abs(CAMwordlist_overall_split$raw.x - CAMwordlist_overall_split$raw.y)
+
+# mean_valence_diff: difference of mean valence
+CAMwordlist_overall_split$mean_valence_diff <- abs(CAMwordlist_overall_split$mean_valence.x - CAMwordlist_overall_split$mean_valence.y)
+
+CAMwordlist_overall_split
+
+write.xlsx(CAMwordlist_overall_split, file = "CAMwordlist_overall_split.xlsx")
+
+```
+
+
+### Not split by valence
+
+#### Preparation
+
+```{r}
+# Word list high
+tmp_text <- str_remove_all(string = CAMfiles_high[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_high <- create_wordlist(
+  dat_nodes = CAMfiles_high[[1]],
+  dat_merged = CAMfiles_high[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = FALSE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_high[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+
+# Word list low
+tmp_text <- str_remove_all(string = CAMfiles_low[[1]]$text,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+CAMwordlist_low <- create_wordlist(
+  dat_nodes = CAMfiles_low[[1]],
+  dat_merged = CAMfiles_low[[3]],
+  useSummarized = TRUE,
+  order = "frequency",
+  splitByValence = FALSE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+dat_nodes <- CAMfiles_low[[1]]
+dat_nodes$text <-   dat_nodes$text_summarized
+sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
+
+rm(tmp_text)
+
+```
+
+
+#### Concept Comparisons
+
+```{r}
 
 setwd("outputs/CAMwordlists")
 write.xlsx(CAMwordlist_high, file = "CAMwordlist_high.xlsx")
@@ -783,7 +877,13 @@ CAMwordlist_high$group <- "high"
 CAMwordlist_low$group <- "low"
 
 
-CAMwordlist_overall <- merge(CAMwordlist_high, CAMwordlist_low, by = "Words")
+
+CAMwordlist_overall <- merge(CAMwordlist_high[c(1:7, length(CAMwordlist_high))], CAMwordlist_low[c(1:7, length(CAMwordlist_low))], by = "Words")
+
+# raw_diff: difference in frequency of mentions
+CAMwordlist_overall$raw_diff <- abs(CAMwordlist_overall$raw.x - CAMwordlist_overall$raw.y)
+
+# mean_valence_diff: difference of mean valence
 CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x - CAMwordlist_overall$mean_valence.y)
 
 write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
@@ -796,6 +896,7 @@ write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
 ##################
 ### high conspir
 ##################
+
 
 #### aggregate CAMs
 
@@ -836,7 +937,7 @@ for(i in 1:length(CAMaggregated_onlyOnes_high)){
   CAMaggregated_onlyOnes_high[[i]][CAMaggregated_onlyOnes_high[[i]] >= 1] <- 1
 }
 
-rm(sel_ids_high)
+rm(sel_ids_high, i)
 ```
 
 
@@ -865,9 +966,8 @@ for (i in unique(partition_high)) {
     "\n"
   )
 }
+rm(i)
 
-
-library("RColorBrewer")
 node.cols_high <- brewer.pal(max(c(3, partition_high)), "Pastel1")[partition_high]
 # plot(graph_object, vertex.color = node.cols)
 
@@ -885,6 +985,8 @@ plot(
   edge.weight = 2,
   vertex.color = node.cols_high
 )
+
+rm(node.cols_high)
 
 ```
 
@@ -932,6 +1034,9 @@ CAMaggregated_onlyOnes_low <- CAMaggregated_low[[5]]
 for(i in 1:length(CAMaggregated_onlyOnes_low)){
   CAMaggregated_onlyOnes_low[[i]][CAMaggregated_onlyOnes_low[[i]] >= 1] <- 1
 }
+
+rm(sel_ids_low, i)
+
 ```
 
 
@@ -960,9 +1065,8 @@ for (i in unique(partition_low)) {
     "\n"
   )
 }
+rm(i)
 
-
-library("RColorBrewer")
 node.cols_low <- brewer.pal(max(c(3, partition_low)), "Pastel1")[partition_low]
 # plot(graph_object, vertex.color = node.cols)
 
@@ -981,6 +1085,7 @@ plot(
   vertex.color = node.cols_low
 )
 
+rm(node.cols_low)
 ```
 
 
