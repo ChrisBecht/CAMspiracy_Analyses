@@ -37,6 +37,10 @@ p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
 library(openxlsx)
 library(ggplot2)
 library(RColorBrewer)
+library(car)
+library(igraph)
+library(leiden)
+library(lsr)
 
 # reticulate::py_config()
 # reticulate::py_module_available("pycairo")
@@ -68,9 +72,6 @@ if(!reticulate::py_module_available("numpy")){
 # py_install("cairocffi") 
 # py_install("pycairo") # pip install pycairo
 
-library(igraph)
-library(leiden)
-library(lsr)
 
 # load data
 setwd("outputs")
@@ -198,6 +199,7 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
 ```
 
 
+
 ## classes_conspiracy: 3 = high, 1 = low conspiracy
 
 ### CAMs from high conspir belief
@@ -271,9 +273,228 @@ rm(tmp_ids)
 setwd("..")
 ```
 
+#.
+# Analyze questionnaire data
+
+## t1
+
+```{r}
+t1_table <- data.frame(
+  Questionnaire = c(
+    "GCB",
+    "CMQ",
+    "CCS-Q",
+    "CRKQ"
+  ),
+  M = c(
+    round(mean(t12_questionnaireCAMs$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs$mean_CRKQ),2)
+  ),
+  SD = c(
+    round(sd(t12_questionnaireCAMs$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs$mean_CRKQ),2)
+  )
+)
+
+t1_table
+
+```
+
+
+## t2
+
+### preparation
+
+```{r}
+t12_questionnaireCAMs_onlyt2 <- t12_questionnaireCAMs %>%
+  filter(PROLIFIC_PID %in% CAMfiles[[1]][["participantCAM"]])
+
+t12_questionnaireCAMs_high <- t12_questionnaireCAMs_onlyt2[t12_questionnaireCAMs_onlyt2$classes_conspiracy == 3, ]
+t12_questionnaireCAMs_low <- t12_questionnaireCAMs_onlyt2[t12_questionnaireCAMs_onlyt2$classes_conspiracy == 1, ]
+
+t12_questionnaireCAMs_onlyt2$classes_conspiracy <- as.character(t12_questionnaireCAMs_onlyt2$classes_conspiracy)
+
+```
+
+
+### t-Tests prerequisites
+
+```{r}
+# GCB
+leveneTest(mean_GCB ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
+  # -> t-Test
+
+# GCB
+leveneTest(mean_CMQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
+  # -> t-Test
+
+# CCS-Q
+leveneTest(mean_CCSQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
+  # -> Welch-Test
+
+# CRKQ
+leveneTest(mean_CRKQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
+  # -> Welch-Test
+
+```
+
+
+### t2 table
+
+```{r}
+t2_table <- data.frame(
+  Questionnaire = c(
+    "GCB",
+    "CMQ",
+    "CCS-Q",
+    "CRKQ"
+  ),
+  M_o = c(
+    round(mean(t12_questionnaireCAMs_onlyt2$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs_onlyt2$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs_onlyt2$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs_onlyt2$mean_CRKQ),2)
+  ),
+  
+  SD_o = c(
+    round(sd(t12_questionnaireCAMs_onlyt2$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs_onlyt2$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs_onlyt2$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs_onlyt2$mean_CRKQ),2)
+  ),
+  
+  M_h = c(
+    round(mean(t12_questionnaireCAMs_high$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CRKQ),2)
+  ),
+  
+  SD_h = c(
+    round(sd(t12_questionnaireCAMs_high$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CRKQ),2)
+  ),
+  
+  M_l = c(
+    round(mean(t12_questionnaireCAMs_low$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CRKQ),2)
+  ),
+  
+  SD_l = c(
+    round(sd(t12_questionnaireCAMs_low$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CRKQ),2)
+  ),
+  
+  t = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = TRUE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE,
+        alternative = "two.sided"
+      )$statistic, 2)
+  ),
+  
+  df = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = TRUE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = TRUE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE,
+        alternative = "two.sided"
+      )$parameter, 2)
+  ),
+  
+  p = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = TRUE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE,
+        alternative = "two.sided"
+      )$p.value, 3)
+  ),
+  
+  Cohen_d = c(
+    round(cohensD(t12_questionnaireCAMs_high$mean_GCB,
+                  t12_questionnaireCAMs_low$mean_GCB), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CMQ,
+                  t12_questionnaireCAMs_low$mean_CMQ), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CCSQ,
+                  t12_questionnaireCAMs_low$mean_CCSQ), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CRKQ,
+                  t12_questionnaireCAMs_low$mean_CRKQ), 2)
+  )
+)
+
+t2_table
+
+
+t.test <- t.test(
+     t12_questionnaireCAMs_high$mean_CRKQ,
+     t12_questionnaireCAMs_low$mean_CRKQ,
+     var.equal = FALSE,
+     alternative = "two.sided"
+)
+
+```
+
+
 
 #.
-# analyze data
+# Analyze CAM data
 
 ## Network Indicators
 
@@ -332,6 +553,7 @@ netIndicators_overall <- rbind(netIndicators_high, netIndicators_low)
 ### Pie Charts
 
 #### Overall
+
 ```{r}
 data <- data.frame(
   pos = sum(netIndicators_overall$num_nodes_pos_macro),
@@ -369,11 +591,12 @@ pie_overall <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0
 # Kreisdiagramm anzeigen
 print(pie_overall)
 
-rm(df, percentages, data, pie_overall)
+rm(df, percentages, data, pie_overall, variable_labels)
 ```
 
 
 #### high
+
 ```{r}
 data <- data.frame(
   pos = sum(netIndicators_high$num_nodes_pos_macro),
@@ -411,11 +634,12 @@ pie_high <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(pe
 # Kreisdiagramm anzeigen
 print(pie_high)
 
-rm(df, percentages, data, pie_high)
+rm(df, percentages, data, pie_high, variable_labels)
 ```
 
 
 #### low
+
 ```{r}
 data <- data.frame(
   pos = sum(netIndicators_low$num_nodes_pos_macro),
@@ -453,53 +677,61 @@ pie_low <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(per
 # Kreisdiagramm anzeigen
 print(pie_low)
 
-rm(df, percentages, data, pie_low)
+rm(df, percentages, data, pie_low, variable_labels)
 ```
 
 
 ### t-Tests prerequisites
 
 ```{r}
-library(car)
-
 # number of concepts
 leveneTest(num_nodes_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # number of positive concepts
 leveneTest(num_nodes_pos_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # number of negative concepts
 leveneTest(num_nodes_neg_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # number of neutral concepts
 leveneTest(num_nodes_neut_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # number of ambivalent concepts
 leveneTest(num_nodes_ambi_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # mean valence
 leveneTest(mean_valence_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # number of edges
 leveneTest(num_edges_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # density
 leveneTest(density_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # transitivity
 leveneTest(transitivity_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 
 # assortativity
 leveneTest(assortativity_valence_macro ~ group, data = netIndicators_overall, center = "median")
+  # -> t-Test
 
 ```
 
@@ -792,9 +1024,9 @@ rm(tmp_text)
 
 ```{r}
 
-setwd("outputs/CAMwordlists")
-write.xlsx(CAMwordlist_high_split, file = "CAMwordlist_high_split.xlsx")
-write.xlsx(CAMwordlist_low_split, file = "CAMwordlist_low_split.xlsx")
+# setwd("outputs/CAMwordlists")
+# write.xlsx(CAMwordlist_high_split, file = "CAMwordlist_high_split.xlsx")
+# write.xlsx(CAMwordlist_low_split, file = "CAMwordlist_low_split.xlsx")
 
 CAMwordlist_high_split$group <- "high"
 CAMwordlist_low_split$group <- "low"
@@ -811,7 +1043,7 @@ CAMwordlist_overall_split$mean_valence_diff <- abs(CAMwordlist_overall_split$mea
 
 CAMwordlist_overall_split
 
-write.xlsx(CAMwordlist_overall_split, file = "CAMwordlist_overall_split.xlsx")
+# write.xlsx(CAMwordlist_overall_split, file = "CAMwordlist_overall_split.xlsx")
 
 ```
 
@@ -869,9 +1101,9 @@ rm(tmp_text)
 
 ```{r}
 
-setwd("outputs/CAMwordlists")
-write.xlsx(CAMwordlist_high, file = "CAMwordlist_high.xlsx")
-write.xlsx(CAMwordlist_low, file = "CAMwordlist_low.xlsx")
+# setwd("outputs/CAMwordlists")
+# write.xlsx(CAMwordlist_high, file = "CAMwordlist_high.xlsx")
+# write.xlsx(CAMwordlist_low, file = "CAMwordlist_low.xlsx")
 
 CAMwordlist_high$group <- "high"
 CAMwordlist_low$group <- "low"
@@ -886,7 +1118,7 @@ CAMwordlist_overall$raw_diff <- abs(CAMwordlist_overall$raw.x - CAMwordlist_over
 # mean_valence_diff: difference of mean valence
 CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x - CAMwordlist_overall$mean_valence.y)
 
-write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
+# write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
 
 ```
 
