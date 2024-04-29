@@ -65,6 +65,9 @@ if(!reticulate::py_module_available("leidenalg")){
 if(!reticulate::py_module_available("numpy")){
   py_install("numpy")
 }
+if(!reticulate::py_module_available("cairocffi")){
+  py_install("cairocffi")
+}
 
 ## install Python modules
 # py_install("matplotlib")
@@ -98,7 +101,14 @@ for(i in 1:length(dir())){
 }
 rm(i)
 setwd("..")
+
+# CAMfiles[[2]][["isBidirectional"]] <- 1
+# CAMfiles[[3]][["isBidirectional"]] <- 1
+
 ```
+
+
+# load protocol
 
 ```{r protocol}
 setwd("data")
@@ -130,6 +140,7 @@ if(consider_Protocol){
 }
 
 rm(protocolDataset, consider_Protocol, text, tmp_out)
+
 ```
 
 
@@ -166,7 +177,9 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
   vroom::vroom_write(x =  CAMfiles_USA[[2]], file = "CAM_connectors_USA.txt")
   vroom::vroom_write(x =  CAMfiles_USA[[3]], file = "CAM_merged_USA.txt")
 }
+
 ```
+
 
 
 ### CAMs Germany
@@ -196,7 +209,9 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
   vroom::vroom_write(x =  CAMfiles_Germany[[2]], file = "CAM_connectors_Germany.txt")
   vroom::vroom_write(x =  CAMfiles_Germany[[3]], file = "CAM_merged_Germany.txt")
 }
+
 ```
+
 
 
 
@@ -235,6 +250,7 @@ saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
 rm(tmp_ids)
 
 setwd("..")
+
 ```
 
 
@@ -271,6 +287,7 @@ saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
 rm(tmp_ids)
 
 setwd("..")
+
 ```
 
 #.
@@ -328,17 +345,21 @@ t12_questionnaireCAMs_onlyt2$classes_conspiracy <- as.character(t12_questionnair
 leveneTest(mean_GCB ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
   # -> t-Test
 
+
 # GCB
 leveneTest(mean_CMQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
   # -> t-Test
+
 
 # CCS-Q
 leveneTest(mean_CCSQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
   # -> Welch-Test
 
+
 # CRKQ
 leveneTest(mean_CRKQ ~ classes_conspiracy, data = t12_questionnaireCAMs_onlyt2, center = "median")
   # -> Welch-Test
+
 
 ```
 
@@ -414,8 +435,7 @@ t2_table <- data.frame(
     round(t.test(
         t12_questionnaireCAMs_high$mean_CRKQ,
         t12_questionnaireCAMs_low$mean_CRKQ,
-        var.equal = FALSE,
-        alternative = "two.sided"
+        var.equal = FALSE, alternative = "two.sided"
       )$statistic, 2)
   ),
   
@@ -438,8 +458,7 @@ t2_table <- data.frame(
     round(t.test(
         t12_questionnaireCAMs_high$mean_CRKQ,
         t12_questionnaireCAMs_low$mean_CRKQ,
-        var.equal = FALSE,
-        alternative = "two.sided"
+        var.equal = FALSE, alternative = "two.sided"
       )$parameter, 2)
   ),
   
@@ -462,8 +481,7 @@ t2_table <- data.frame(
     round(t.test(
         t12_questionnaireCAMs_high$mean_CRKQ,
         t12_questionnaireCAMs_low$mean_CRKQ,
-        var.equal = FALSE,
-        alternative = "two.sided"
+        var.equal = FALSE, alternative = "two.sided"
       )$p.value, 3)
   ),
   
@@ -480,14 +498,6 @@ t2_table <- data.frame(
 )
 
 t2_table
-
-
-t.test <- t.test(
-     t12_questionnaireCAMs_high$mean_CRKQ,
-     t12_questionnaireCAMs_low$mean_CRKQ,
-     var.equal = FALSE,
-     alternative = "two.sided"
-)
 
 ```
 
@@ -562,22 +572,18 @@ data <- data.frame(
   ambi = sum(netIndicators_overall$num_nodes_ambi_macro)
 )
 
-# Prozentwerte berechnen
 percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
 
-# Daten in das richtige Format für ggplot2 bringen
 df <- data.frame(
   variable = colnames(data),
   value = unlist(data),
   percent = unlist(percentages)
 )
 
-# Benennung der Variablen
 variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
 df$variable <- factor(df$variable, levels = names(variable_labels))
 df$variable_label <- variable_labels[df$variable]
 
-# Kreisdiagramm erstellen
 pie_overall <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
   geom_bar(stat = "identity", color = "black", width = 1) +
   coord_polar("y", start = 0) +
@@ -585,13 +591,13 @@ pie_overall <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0
   scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
   theme_void() + 
   theme(
-    legend.position = "right" # Legende auf der rechten Seite anzeigen
+    legend.position = "right"
   )
 
-# Kreisdiagramm anzeigen
 print(pie_overall)
 
 rm(df, percentages, data, pie_overall, variable_labels)
+
 ```
 
 
@@ -605,22 +611,18 @@ data <- data.frame(
   ambi = sum(netIndicators_high$num_nodes_ambi_macro)
 )
 
-# Prozentwerte berechnen
 percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
 
-# Daten in das richtige Format für ggplot2 bringen
 df <- data.frame(
   variable = colnames(data),
   value = unlist(data),
   percent = unlist(percentages)
 )
 
-# Benennung der Variablen
 variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
 df$variable <- factor(df$variable, levels = names(variable_labels))
 df$variable_label <- variable_labels[df$variable]
 
-# Kreisdiagramm erstellen
 pie_high <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
   geom_bar(stat = "identity", color = "black", width = 1) +
   coord_polar("y", start = 0) +
@@ -628,13 +630,13 @@ pie_high <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(pe
   scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
   theme_void() +
   theme(
-    legend.position = "right" # Legende auf der rechten Seite anzeigen
+    legend.position = "right"
   )
 
-# Kreisdiagramm anzeigen
 print(pie_high)
 
 rm(df, percentages, data, pie_high, variable_labels)
+
 ```
 
 
@@ -648,22 +650,18 @@ data <- data.frame(
   ambi = sum(netIndicators_low$num_nodes_ambi_macro)
 )
 
-# Prozentwerte berechnen
 percentages <- round(prop.table(as.matrix(data), margin = 1) * 100, 1)
 
-# Daten in das richtige Format für ggplot2 bringen
 df <- data.frame(
   variable = colnames(data),
   value = unlist(data),
   percent = unlist(percentages)
 )
 
-# Benennung der Variablen
 variable_labels <- c("pos" = "positive", "neg" = "negative", "neut" = "neutral", "ambi" = "ambivalent")
 df$variable <- factor(df$variable, levels = names(variable_labels))
 df$variable_label <- variable_labels[df$variable]
 
-# Kreisdiagramm erstellen
 pie_low <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(percentages, "%"))) +
   geom_bar(stat = "identity", color = "black", width = 1) +
   coord_polar("y", start = 0) +
@@ -671,13 +669,13 @@ pie_low <- ggplot(df, aes(x = "", y = value, fill = variable, label = paste0(per
   scale_fill_manual(values = c("pos" = "green", "neg" = "red", "neut" = "yellow", "ambi" = "purple"), name = "Concept type:", labels = variable_labels) +
   theme_void() +
   theme(
-    legend.position = "right" # Legende auf der rechten Seite anzeigen
+    legend.position = "right"
   )
 
-# Kreisdiagramm anzeigen
 print(pie_low)
 
 rm(df, percentages, data, pie_low, variable_labels)
+
 ```
 
 
@@ -1112,6 +1110,8 @@ CAMwordlist_low$group <- "low"
 
 CAMwordlist_overall <- merge(CAMwordlist_high[c(1:7, length(CAMwordlist_high))], CAMwordlist_low[c(1:7, length(CAMwordlist_low))], by = "Words")
 
+# concepts "positive values" and "weather" exist only in CAMwordlist_high
+
 # raw_diff: difference in frequency of mentions
 CAMwordlist_overall$raw_diff <- abs(CAMwordlist_overall$raw.x - CAMwordlist_overall$raw.y)
 
@@ -1123,7 +1123,9 @@ CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x 
 ```
 
 
-## Leiden Algorithm
+
+#.
+## TEST: Leiden Algorithm
 
 ##################
 ### high conspir
@@ -1170,6 +1172,7 @@ for(i in 1:length(CAMaggregated_onlyOnes_high)){
 }
 
 rm(sel_ids_high, i)
+
 ```
 
 
@@ -1178,6 +1181,12 @@ rm(sel_ids_high, i)
 ```{r}
 adjacency_matrix_high <- CAMaggregated_high[[1]]
 
+setwd("outputs")
+write.table(adjacency_matrix_high, file = "adjacency_matrix_high.csv",
+              row.names = FALSE, col.names = TRUE)
+
+setwd("..")
+
 graph_object_high <-
   graph_from_adjacency_matrix(adjacency_matrix_high, mode = "directed")
 # graph_object_high
@@ -1185,7 +1194,7 @@ graph_object_high <-
 
 adjacency_matrix_high <- igraph::as_adjacency_matrix(graph_object_high) # not needed
 
-partition_high <- leiden(adjacency_matrix_high)
+partition_high <- leiden(adjacency_matrix_high, resolution_parameter = 1)
 table(partition_high)
 
 
@@ -1284,7 +1293,7 @@ graph_object_low <-
 
 adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object_low) # not needed
 
-partition_low <- leiden(adjacency_matrix_low)
+partition_low <- leiden(adjacency_matrix_low, resolution_parameter = 1)
 table(partition_low)
 
 
@@ -1318,11 +1327,12 @@ plot(
 )
 
 rm(node.cols_low)
+
 ```
 
 
 #.
-# TEST: Leiden algorithm with pruning (Gibson and Mucha, 2022)
+# Leiden algorithm with pruning (Gibson and Mucha, 2022)
 
 Community detection based on the Leiden algorithm, similar to Louvain.
 Repeatedly run with a host of different gamma and omega parameters.
@@ -1333,24 +1343,29 @@ mit aggregierten CAMs vs. mit individuellen
 
 Datenaufbereitung: 
 Algo selbst: 
-https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd  ab Z. ca. 200 - 360
+https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd 
 
 Doku: 
 https://modularitypruning.readthedocs.io/en/latest/index.html
 
 
-```{python Algo}
+```{python}
 import numpy as np
 import igraph as ig
-from modularitypruning import prune_to_multilayer_stable_partitions
-from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas_omegas
+from modularitypruning import prune_to_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas
 from modularitypruning.champ_utilities import CHAMP_3D
 from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
 from modularitypruning.plotting import plot_2d_domains_with_estimates
+from modularitypruning.plotting import plot_estimates
+from modularitypruning.champ_utilities import CHAMP_2D
+from modularitypruning.parameter_estimation_utilities import ranges_to_gamma_estimates
+from modularitypruning.plotting import plot_estimates
 import matplotlib.pyplot as plt
-
-import scipy.io
 import os
+import python_helpers  # our local helper scripts
+from python_helpers import print_partition
+import cairocffi
 
 #import subprocess
 #import sys
@@ -1359,92 +1374,59 @@ import os
 
 np.set_printoptions(threshold=np.inf)
 
-CAMaggregated = scipy.io.loadmat("partII_CAMs/outputs/01_dataPreperation/final/CAMaggregated_adj_matrices.mat")
-adj_matrices = list(CAMaggregated["multigraph_adj_matrices_list"][0,0])
+with open("outputs/adjacency_matrix_high.csv", "r") as f:
+    names = f.readline()
+    
+names = names.split('" "')
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
 
-num_layers = len(adj_matrices)
-n_per_layer = 33
+names = dict(enumerate(names))
 
-# nodes   0..32 are layer0
-# nodes  33..65 are layer1
-# ...
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high.csv", "rb"), delimiter=" ", skiprows=1)
 
-# layer_vec holds the layer membership of each node
-# e.g. layer_vec[5] = 2 means that node 5 resides in layer 2 (the third layer)
-layer_vec = [i // n_per_layer for i in range(n_per_layer * num_layers)]
-interlayer_edges = [(n_per_layer * layer + v, n_per_layer * layer + v + n_per_layer)
-                    for layer in range(num_layers - 1)
-                    for v in range(n_per_layer)]
+print(adj_matrix)
 
 
-# intralayer edges: we need a list of tuples (i.e. edgelist)
-# recode the node indices according to the scheme described above (33..65 is layer1 etc.).
-# note that this is unweighted for now (could add weights to the igraph object)
-intralayer_edges = []
-for i, adj_matrix in enumerate(adj_matrices):
-    conn_indices = np.where(adj_matrix)
-    x_indices, y_indices = conn_indices
-    x_indices += i * n_per_layer
-    y_indices += i * n_per_layer
-    edges = zip(*(x_indices, y_indices))
-    intralayer_edges += edges
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
 
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
 
-G_interlayer = ig.Graph(interlayer_edges)
-G_intralayer = ig.Graph(intralayer_edges)
-
-
-# run leidenalg on a uniform 32x32 grid (1024 samples) of gamma and omega in [0, 2]
 gamma_range = (0, 2)
-omega_range = (0, 2)
-leiden_gammas = np.linspace(*gamma_range, 32)
-leiden_omegas = np.linspace(*omega_range, 32)
-
+# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+leiden_gammas = np.linspace(*gamma_range, 2000)
 # TODO: how to set a seed??
 
-# parts = repeated_parallel_leiden_from_gammas_omegas(G_intralayer, G_interlayer, layer_vec, gammas=leiden_gammas, omegas=leiden_omegas)
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
 
 # TODO: how to set a seed??
 
 # prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
-stable_parts = prune_to_multilayer_stable_partitions(G_intralayer, G_interlayer, layer_vec,
-                                                     "multiplex", parts,
-                                                     *gamma_range, *omega_range)
-
-for p in stable_parts:
-    # instead of print(p), we use a more condensed format for the membership vector here
-    print(" ".join(str(x) for x in p))
-
-len(stable_parts)
-
-stable_parts[0]
-
-os.getcwd()
-
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
 
 # run CHAMP to obtain the dominant partitions along with their regions of optimality
-domains = CHAMP_3D(G_intralayer, G_interlayer, layer_vec, parts,
-                   gamma_0=gamma_range[0], gamma_f=gamma_range[1],
-                   omega_0=omega_range[0], omega_f=omega_range[1])
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
 
 
 
-# append resolution parameter estimates for each dominant partition onto the CHAMP domains
-domains_with_estimates = domains_to_gamma_omega_estimates(G_intralayer, G_interlayer, layer_vec,
-                                                          domains, model='multiplex')
-
-
-
-# plot resolution parameter estimates and domains of optimality
+# plot gamma estimates and domains of optimality
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
-plot_2d_domains_with_estimates(domains_with_estimates, xlim=omega_range, ylim=gamma_range)
-plt.title(r"CHAMP Domains and ($\omega$, $\gamma$) Estimates", fontsize=16)
-plt.xlabel(r"$\omega$", fontsize=20)
-plt.ylabel(r"$\gamma$", fontsize=20)
-plt.gca().tick_params(axis='both', labelsize=12)
-plt.tight_layout()
+plot_estimates(gamma_estimates)
+plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+plt.xlabel(r"gamma", fontsize=14)
+plt.ylabel("Number of communities", fontsize=14)
 plt.show()
+
 
 ```
 
@@ -1514,7 +1496,6 @@ ggbetweenstats(
   y = mean_valence_macro
 )
 
-
 ggbetweenstats(
   data = t12_questionnaireCAMs,
   x = classes_conspiracy,
@@ -1539,5 +1520,6 @@ ggbetweenstats(
   x = country,
   y = mean_PolicyItems
 )
+
 ```
 

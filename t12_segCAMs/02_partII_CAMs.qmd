@@ -1,0 +1,972 @@
+---
+title: "Analyze CAM data on micro, meso, macro level for part II of basal attributes article"
+author: "Paul Sölder, Julius Fenn"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    html-math-method: katex
+    number-sections: true
+---
+
+
+# Notes
+
+
+# load data files
+
+
+
+```{r}
+#| label: load files
+#| warning: false
+
+# sets the directory of location of this script as the current directory
+# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+### load packages
+require(pacman)
+p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
+       'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
+       'lavaan', 
+       'regsem', 'MplusAutomation', 'igraph', 'shiny', 'ggplot2', 'tidyLPA', 'MultilayerExtraction',
+       'Matrix', 'igraph', 'foreach', 'doParallel', 'parallel', 'R.matlab',
+       'reticulate')
+
+
+
+
+# reticulate::py_config()
+# reticulate::py_module_available("pycairo")
+# reticulate::py_module_available("cairocffi")
+
+
+
+if(!reticulate::py_module_available("igraph")){
+  py_install("igraph") # pip install python-igraph
+}
+if(!reticulate::py_module_available("modularitypruning")){
+  py_install("modularitypruning") # pip install modularitypruning
+}
+if(!reticulate::py_module_available("matplotlib")){
+  py_install("matplotlib")
+}
+if(!reticulate::py_module_available("scipy")){
+  py_install("scipy")
+}
+if(!reticulate::py_module_available("leidenalg")){
+  py_install("leidenalg")
+}
+
+## install Python modules
+# py_install("matplotlib")
+# py_install("scipy")
+# py_install("cairocffi") 
+# py_install("pycairo") # pip install pycairo
+
+
+multilayer_extraction_results <- readRDS(file = "outputs/02_partII_CAMs/multilayer_extraction_results.Rda")
+
+setwd("outputs/01_dataPreperation/final")
+### load questionnaire
+questionnaire <- readRDS(file = "questionnaire.rds")
+
+CAMfiles <- readRDS(file = "CAMfiles.rds")
+
+CAMdrawn <- readRDS(file = "CAMdrawn.rds")
+
+CAMaggregated <- readRDS(file = "CAMaggregated.rds")
+
+networkIndicators <- readRDS(file = "networkIndicators.rds")
+
+CAMwordlist <- xlsx::read.xlsx2(file = "CAMwordlist.xlsx", sheetIndex = 1)
+CAMwordlist$mean_valence <- as.numeric(CAMwordlist$mean_valence)
+CAMwordlist$mean_degree <- as.numeric(CAMwordlist$mean_degree)
+CAMwordlist$mean_transitivity <- as.numeric(CAMwordlist$mean_transitivity)
+
+
+### load functions
+# print(getwd())
+setwd("../../../functions")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+
+
+setwd("../functions_CAMapp")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+rm(i)
+
+
+
+### summary function
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      se = sd(x[[col]], na.rm=TRUE) / sqrt(length(x[[col]])))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- plyr::rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+```
+
+
+
+# Micro level
+
+Distributions, cluster analyses... on single node level...
+
+## Valence distributions
+
+```{r}
+#| label: valence distributions
+
+valenceData <- CAMfiles[[1]]
+valenceData$value[valenceData$value == 10] <- 0
+valenceData$text <-
+  str_replace_all(string = valenceData$text,
+                  pattern = "  ",
+                  replacement = " ")
+
+valenceDataShort <-
+  valenceData %>% pivot_wider(names_from = text,
+                              values_from = value,
+                              id_cols = CAM)
+
+tmp_names <- sort(unique(valenceData$text))
+length(tmp_names)
+
+
+hist1_names <- tmp_names[1:16]
+hist2_names <- tmp_names[17:length(tmp_names)]
+
+
+# adjust aesthetics of ggplot
+ggplot_theme <- theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_text(size = 12),
+  axis.text.x = element_text(
+    size = 10,
+    hjust = 0.5,
+    vjust = 0.5,
+    face = "plain",
+    colour = "black"
+  ),
+  axis.text.y = element_text(
+    size = 12,
+    face = "plain",
+    colour = "black"
+  ),
+  panel.border = element_blank(),
+  axis.line = element_line(colour = "black"),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.background = element_blank()
+)
+
+
+# histograms sorted by MEAN VALENCE
+# valenceData %>% group_by(text) %>% 
+#   summarise(N = n(), 
+#             mean = mean(value)) %>% 
+#   arrange(desc(mean), .by_group = TRUE) %>%
+#   print(n = Inf)
+
+
+hist1_names_mean <-
+  CAMwordlist[order(CAMwordlist$mean_valence, decreasing = TRUE), "Words"][1:16]
+hist2_names_mean <-
+  CAMwordlist[order(CAMwordlist$mean_valence, decreasing = TRUE), "Words"][17:33]
+
+valenceData %>% filter(text %in% hist1_names_mean) %>%
+  ggplot(aes(x = value)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist1_names_mean),
+              ncol = 4,
+              nrow = 4) +
+  ggtitle("Sorted by avg. valence (first)") + ggplot_theme
+
+valenceData %>% filter(text %in% hist2_names_mean) %>%
+  ggplot(aes(x = value)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist2_names_mean),
+              ncol = 4,
+              nrow = 5) +
+  ggtitle("Sorted by avg. valence (second)") + ggplot_theme
+
+
+# create data for mean degree, transitivity
+valenceData$degree <- NA
+valenceData$transitivity <- NA
+
+for (i in unique(valenceData$participantCAM)) {
+  tmp_deg <- igraph::degree(graph = CAMdrawn[[i]], mode = "total")
+  tmp_transitivity <-
+    igraph::transitivity(graph = as.undirected(CAMdrawn[[i]]),
+                         type = "local")
+
+  counter = 1
+
+  for (n in V(CAMdrawn[[i]])$name) {
+    valenceData[valenceData$participantCAM %in% i &
+                  valenceData$id == n, "degree"] <- tmp_deg[counter]
+    valenceData[valenceData$participantCAM %in% i &
+                  valenceData$id == n, "transitivity"] <-
+      tmp_transitivity[counter]
+    counter = counter + 1
+  }
+}
+
+
+
+
+# histograms sorted by MEAN DEGREE
+hist1_names_degree <-
+  CAMwordlist[order(CAMwordlist$mean_degree, decreasing = TRUE), "Words"][1:16]
+hist2_names_degree <-
+  CAMwordlist[order(CAMwordlist$mean_degree, decreasing = TRUE), "Words"][17:33]
+
+
+valenceData %>% filter(text %in% hist1_names_degree) %>%
+  ggplot(aes(x = degree)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist1_names_degree),
+              ncol = 4,
+              nrow = 4) +
+  ggtitle("Sorted by avg. degree (first)") + ggplot_theme
+
+
+valenceData %>% filter(text %in% hist2_names_degree) %>%
+  ggplot(aes(x = degree)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist2_names_degree),
+              ncol = 4,
+              nrow = 5) +
+  ggtitle("Sorted by avg. degree (second)") + ggplot_theme
+
+
+
+# histograms sorted by MEAN TRANSITIVITY
+# ! interpret carefully
+hist1_names_transitivity <-
+  CAMwordlist[order(CAMwordlist$mean_transitivity, decreasing = TRUE), "Words"][1:16]
+hist2_names_transitivity <-
+  CAMwordlist[order(CAMwordlist$mean_transitivity, decreasing = TRUE), "Words"][17:33]
+
+
+
+valenceData %>% filter(text %in% hist1_names_transitivity) %>%
+  ggplot(aes(x = transitivity)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist1_names_transitivity),
+              ncol = 4,
+              nrow = 4) +
+  ggtitle("Sorted by avg. transitivity (first)") + ggplot_theme
+
+
+valenceData %>% filter(text %in% hist2_names_transitivity) %>%
+  ggplot(aes(x = transitivity)) + geom_histogram() + 
+  facet_wrap( ~ factor(text, levels = hist2_names_transitivity),
+              ncol = 4,
+              nrow = 5) +
+  ggtitle("Sorted by avg. transitivity (second)") + ggplot_theme
+```
+
+
+
+```{r}
+#| label: correlation of valence distributions
+
+cor.plot(r = cor(valenceData[, c("value", "degree", "transitivity")], use = "pairwise"))
+```
+
+
+
+# Meso level
+
+
+## Louvain algorithm
+
+```{r}
+g <- graph_from_adjacency_matrix(CAMaggregated[[1]], mode = "max")
+g <- as.undirected(g)
+
+lc <- cluster_louvain(graph = g, resolution = 1)
+membership(lc)
+communities(lc)
+# plot(lc, g)
+```
+
+
+## Leiden algorithm
+
+```{r}
+modules <- reticulate::py_module_available("leidenalg") && reticulate::py_module_available("igraph")
+modules
+
+
+
+adjacency_matrix <- CAMaggregated[[1]]
+
+library("igraph")
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix, mode = "directed")
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+adjacency_matrix <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+library("leiden")
+# ?leiden
+partition <- leiden(object = CAMaggregated[[1]], resolution_parameter = 1)
+table(partition)
+
+
+for (i in unique(partition)) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix)[partition == i],
+    "\n"
+  )
+}
+
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]])) *
+    10,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
+
+```
+
+```{r}
+g = CAMaggregated[[2]]
+g2 = simplify(CAMaggregated[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*20)
+
+# g2 <- delete_edges(
+#     g2,
+#     E(g2)[E(g2)$weight <= 3]
+# )
+
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight / 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+
+### > plot multiple times because of random layout
+for(i in 1:5){
+    plot(g2, edge.arrow.size = 0,
+         layout=layout_nicely, vertex.frame.color="black", asp = .55, margin = -0.05,
+         vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*8,
+         vertex.label.cex = .9, 
+         edge.weight=2, edge.width=(E(g2)$weight/5),
+         vertex.color = node.cols)
+}
+```
+
+
+
+
+
+
+
+```{r}
+networkIndicators$participantCAM[networkIndicators$assortativity_valence_macro >= .5 & !is.na(networkIndicators$assortativity_valence_macro)]
+
+  plot(CAMdrawn[["5f298b2b7823df0a46e25d81"]], edge.arrow.size = .7,
+       layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+       vertex.size = 10, vertex.label.cex = .9)
+```
+
+
+
+
+## Multilayer community detection
+
+### MultilayerExtraction
+Community detection with the MultilayerExtraction-Algorithm (https://github.com/jdwilson4/MultilayerExtraction)
+
+```{r}
+setwd("outputs")
+# recode vertex labels to integers
+attributes_names <- c(hist1_names, hist2_names)
+CAMaggregated[[4]][["node1"]] <- match(CAMaggregated[[4]][["node1"]], attributes_names)
+CAMaggregated[[4]][["node2"]] <- match(CAMaggregated[[4]][["node2"]], attributes_names)
+
+# recode layers (CAM IDs) to integers
+layer_names <- unique(CAMfiles[[1]]$participantCAM)
+CAMaggregated[[4]][["layer"]] <- match(CAMaggregated[[4]][["layer"]], layer_names)
+
+# now we're ready for community extraction using the MultiLayer extraction package
+set.seed(123)
+start_time <- Sys.time()
+#multilayer_extraction_results <- multilayer.extraction(adjacency = CAMaggregated[[4]], seed = 123, min.score = 0, prop.sample = .10)
+end_time <- Sys.time()
+end_time - start_time
+
+#saveRDS(multilayer_extraction_results, file = "multilayer_extraction_results.Rda")
+
+plot(multilayer_extraction_results, main = "Diagnostic Plot")
+
+
+# look at the first ... 20 communities
+multilayer_extraction_communities <- data.frame(n_communities = seq(1:20))
+multilayer_extraction_communities[paste0("community", 1:20)] <- NA
+
+for(i in 1:20) {
+  object <- refine(multilayer_extraction_results, k = i, m = 192, n = nrow(CAMwordlist))
+  
+  for(j in 1:i) {
+    multilayer_extraction_communities[i,j+1] <- paste(attributes_names[which(object$Vertices[,j] == 1)], collapse = ", ")
+  }
+}
+
+DT::datatable(multilayer_extraction_communities, options = list(pageLength = 5)) 
+```
+
+
+### GenLouvain with MATLAB (Mucha et al., 2010)
+Community detection with the generalized Louvain algorithm as proposed by Mucha et al. (2010).
+The algorithm was run in MATLAB, results are only re-imported here.
+It was run with a host of different gamma and omega parameters, which leaves the problem of choosing
+the right parameters.
+
+```{r}
+genlouvain <- readMat("outputs/02_partII_CAMs/genlouvain_results.mat", drop="singletonLists")
+genlouvain <- unlist(genlouvain, recursive = FALSE)
+
+genlouvain_results <- list()
+
+# recover the data structure from MATLAB export:
+# it's a flat list, and each run of the algorithm produced 5 list elements
+# (S, Q, n_it, omega, gamma) -> recover them into a list
+# ... and compute some interesting descriptives like number of communities found.
+for(i in 1:(length(genlouvain) / 5)) {
+ genlouvain_results[[i]] <- list(S = genlouvain[[(i-1) * 5 + 1]], # [nodes x layers] matrix with community assignments
+                                 Q = genlouvain[[(i-1) * 5 + 2]], # Modularity for the partition into communities
+                                 n_it = genlouvain[[(i-1) * 5 + 3]], # number of iterations of the iterated_genlouvain
+                                 omega = genlouvain[[(i-1) * 5 + 4]], # interlayer coupling parameter (tunable)
+                                 gamma = genlouvain[[(i-1) * 5 + 5]], # resolution parameter (tunable)
+                                 n_communities = length(unique(as.vector(genlouvain[[(i-1) * 5 + 1]]))) # number of communities
+                                 )
+}
+
+# Save the results for use with Python
+saveRDS(genlouvain_results, file = "outputs/02_partII_CAMs/genlouvain_results.rds")
+```
+
+### Leiden algorithm with pruning (Gibson and Mucha, 2022)
+
+Community detection based on the Leiden algorithm, similar to Louvain.
+Repeatedly run with a host of different gamma and omega parameters.
+The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning)
+to keep only stable and modularity-optimal partitions.
+
+
+```{r}
+print(getwd())
+```
+
+
+```{python}
+import numpy as np
+import igraph as ig
+from modularitypruning import prune_to_multilayer_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas_omegas
+from modularitypruning.champ_utilities import CHAMP_3D
+from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
+from modularitypruning.plotting import plot_2d_domains_with_estimates
+import matplotlib.pyplot as plt
+
+import cairocffi
+import scipy.io
+#import os
+#
+#import subprocess
+#import sys
+#
+#subprocess.check_call([sys.executable, "-m", "pip", "install", "cairocffi"])
+
+np.set_printoptions(threshold=np.inf)
+
+# CAMaggregated = scipy.io.loadmat("outputs/01_dataPreperation/final/CAMaggregated_adj_matrices.mat") # !!!
+CAMaggregated = scipy.io.loadmat("outputs/partII_CAMs/outputs/01_dataPreperation/final/CAMaggregated_adj_matrices_onlyOnes.mat") # !!!
+
+
+adj_matrices = list(CAMaggregated["multigraph_adj_matrices_list"][0,0])
+
+print(adj_matrices[0])
+
+num_layers = len(adj_matrices)
+n_per_layer = 33
+
+# nodes   0..32 are layer0
+# nodes  33..65 are layer1
+# ...
+
+# layer_vec holds the layer membership of each node
+# e.g. layer_vec[5] = 2 means that node 5 resides in layer 2 (the third layer)
+layer_vec = [i // n_per_layer for i in range(n_per_layer * num_layers)]
+interlayer_edges = [(n_per_layer * layer + v, n_per_layer * layer + v + n_per_layer)
+                    for layer in range(num_layers - 1)
+                    for v in range(n_per_layer)]
+
+
+# intralayer edges: we need a list of tuples (i.e. edgelist)
+# recode the node indices according to the scheme described above (33..65 is layer1 etc.).
+# note that this is unweighted for now (could add weights to the igraph object)
+intralayer_edges = []
+for i, adj_matrix in enumerate(adj_matrices):
+    conn_indices = np.where(adj_matrix)
+    x_indices, y_indices = conn_indices
+    x_indices += i * n_per_layer
+    y_indices += i * n_per_layer
+    edges = zip(*(x_indices, y_indices))
+    intralayer_edges += edges
+
+
+G_interlayer = ig.Graph(interlayer_edges)
+G_intralayer = ig.Graph(intralayer_edges)
+
+
+G_intralayer_firstCAM = ig.Graph(intralayer_edges[0:78])
+
+print(intralayer_edges[0:78])
+
+ig.plot(G_interlayer, target='G_interlayer.pdf')
+ig.plot(G_intralayer, target='G_intralayer.pdf')
+ig.plot(G_intralayer_firstCAM, target='G_intralayer_firstCAM.pdf')
+
+# run leidenalg on a uniform 32x32 grid (1024 samples) of gamma and omega in [0, 2]
+gamma_range = (0, 2)
+omega_range = (0, 2)
+leiden_gammas = np.linspace(*gamma_range, 32)
+leiden_omegas = np.linspace(*omega_range, 32)
+
+# TODO: how to set a seed??
+
+parts = repeated_parallel_leiden_from_gammas_omegas(G_intralayer, G_interlayer, layer_vec, gammas=leiden_gammas, omegas=leiden_omegas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_multilayer_stable_partitions(G_intralayer, G_interlayer, layer_vec,
+                                                     "multiplex", parts,
+                                                     *gamma_range, *omega_range)
+
+for p in stable_parts:
+    # instead of print(p), we use a more condensed format for the membership vector here
+    print(" ".join(str(x) for x in p))
+
+len(stable_parts)
+
+stable_parts[0]
+
+os.getcwd()
+
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+domains = CHAMP_3D(G_intralayer, G_interlayer, layer_vec, parts,
+                   gamma_0=gamma_range[0], gamma_f=gamma_range[1],
+                   omega_0=omega_range[0], omega_f=omega_range[1])
+
+
+
+# append resolution parameter estimates for each dominant partition onto the CHAMP domains
+domains_with_estimates = domains_to_gamma_omega_estimates(G_intralayer, G_interlayer, layer_vec,
+                                                          domains, model='multiplex')
+
+
+
+# plot resolution parameter estimates and domains of optimality
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+plot_2d_domains_with_estimates(domains_with_estimates, xlim=omega_range, ylim=gamma_range)
+plt.title(r"CHAMP Domains and ($\omega$, $\gamma$) Estimates", fontsize=16)
+plt.xlabel(r"$\omega$", fontsize=20)
+plt.ylabel(r"$\gamma$", fontsize=20)
+plt.gca().tick_params(axis='both', labelsize=12)
+plt.tight_layout()
+plt.show()
+```
+
+#### check input
+
+```{python}
+import numpy as np
+import igraph as ig
+from modularitypruning import prune_to_multilayer_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas_omegas
+from modularitypruning.champ_utilities import CHAMP_3D
+from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
+from modularitypruning.plotting import plot_2d_domains_with_estimates
+import matplotlib.pyplot as plt
+
+import scipy.io
+import os
+
+import cairocffi
+
+#import subprocess
+#import sys
+#
+#subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
+
+np.set_printoptions(threshold=np.inf)
+
+# CAMaggregated = scipy.io.loadmat("C:/DATEN/PHD/AnalysesBasalAttributes/partII_CAMs/outputs/01_dataPreperation/final/CAMaggregated_adj_matrices.mat") # !!!
+CAMaggregated = scipy.io.loadmat("C:/DATEN/PHD/AnalysesBasalAttributes/partII_CAMs/outputs/01_dataPreperation/final/CAMaggregated_adj_matrices_onlyOnes.mat") # !!!
+
+
+adj_matrices = list(CAMaggregated["multigraph_adj_matrices_list"][0,0])
+
+num_layers = len(adj_matrices)
+n_per_layer = 33
+
+# nodes   0..32 are layer0
+# nodes  33..65 are layer1
+# ...
+
+# layer_vec holds the layer membership of each node
+# e.g. layer_vec[5] = 2 means that node 5 resides in layer 2 (the third layer)
+layer_vec = [i // n_per_layer for i in range(n_per_layer * num_layers)]
+interlayer_edges = [(n_per_layer * layer + v, n_per_layer * layer + v + n_per_layer)
+                    for layer in range(num_layers - 1)
+                    for v in range(n_per_layer)]
+
+
+# intralayer edges: we need a list of tuples (i.e. edgelist)
+# recode the node indices according to the scheme described above (33..65 is layer1 etc.).
+# note that this is unweighted for now (could add weights to the igraph object)
+intralayer_edges = []
+for i, adj_matrix in enumerate(adj_matrices):
+    conn_indices = np.where(adj_matrix)
+    x_indices, y_indices = conn_indices
+    x_indices += i * n_per_layer
+    y_indices += i * n_per_layer
+    edges = zip(*(x_indices, y_indices))
+    intralayer_edges += edges
+
+
+G_interlayer = ig.Graph(interlayer_edges)
+G_intralayer = ig.Graph(intralayer_edges)
+G_intralayer_firstCAM = ig.Graph(intralayer_edges[0:78])
+
+print(intralayer_edges[0:78])
+
+ig.plot(G_interlayer, target='G_interlayer.pdf')
+ig.plot(G_intralayer, target='G_intralayer.pdf')
+ig.plot(G_intralayer_firstCAM, target='G_intralayer_firstCAM.pdf')
+```
+
+
+### Leiden algorithm on weighted aggregated graph (Gibson and Mucha, 2022)
+Community detection based on the single-layer, weighted aggregated graph.
+Partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning).
+
+```{python}
+import numpy as np
+import igraph as ig
+from modularitypruning import prune_to_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas
+from modularitypruning.champ_utilities import CHAMP_3D
+from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
+from modularitypruning.plotting import plot_2d_domains_with_estimates
+from modularitypruning.plotting import plot_estimates
+from modularitypruning.champ_utilities import CHAMP_2D
+from modularitypruning.parameter_estimation_utilities import ranges_to_gamma_estimates
+from modularitypruning.plotting import plot_estimates
+import matplotlib.pyplot as plt
+import os
+import python_helpers  # our local helper scripts
+
+
+#import subprocess
+#import sys
+#
+#subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
+
+np.set_printoptions(threshold=np.inf)
+
+with open("outputs/adjacency_matrix_high.csv", "r") as f:
+    names = f.readline()
+    
+names = names.split('" "')
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
+
+names = dict(enumerate(names))
+
+adj_matrix = np.loadtxt(open("outputs/01_dataPreperation/final/CAMaggregated_adj_matrix.csv", "rb"), delimiter=" ", skiprows=1)
+
+print(adj_matrix)
+
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
+
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
+
+gamma_range = (0, 2)
+leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+
+# TODO: how to set a seed??
+
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
+
+
+
+
+
+# plot gamma estimates and domains of optimality
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+plot_estimates(gamma_estimates)
+plt.title(r"CHAMP Domains of Optimality and $\gamma$ Estimates", fontsize=14)
+plt.xlabel(r"$\gamma$", fontsize=14)
+plt.ylabel("Number of communities", fontsize=14)
+plt.show()
+
+
+```
+
+
+## random graph - delete me
+
+Compare the probability that two concepts are connected in randomly generated networks to drawn CAMs:
+
+```{r}
+## get average number of drawn concepts (here fixed)
+numConcepts <- mean(networkIndicators$num_nodes_macro)
+## get average density
+numDensity <- mean(networkIndicators$density_macro)
+
+## simply get the average probability that two concepts are connected:
+g <- igraph::random.graph.game(n = numConcepts, p.or.m = numDensity)
+plot(g)
+are.connected(g, 1, 2)
+
+
+#> whereby each edge to be drawn has the identical probability in the Erdős–Rényi model
+vec_booleanConnected <- c()
+# vec_booleanConnected2 <- c()
+
+for(i in 1:10000){
+  g <- igraph::random.graph.game(n = numConcepts, p.or.m = numDensity)
+  vec_booleanConnected[i] <- are.connected(g, 1, 2)
+    # vec_booleanConnected2[i] <- are.connected(g, 22, 26)
+}
+baselineProbability <- mean(vec_booleanConnected)
+baselineProbability
+# mean(vec_booleanConnected2)
+```
+
+
+This baseline probability can be compared to all possible combinations of drawn concepts: 
+
+```{r}
+vec_boolean <- c()
+for(i in 1:length(CAMdrawn)){
+  vec_boolean[i] <- are.connected(graph = CAMdrawn[[i]], 
+              v1 = V(CAMdrawn[[i]])[V(CAMdrawn[[i]])$label == "robust"], 
+              v2 = V(CAMdrawn[[i]])[V(CAMdrawn[[i]])$label == "widerstandsfähig"])
+}
+
+mean(vec_boolean)
+```
+
+
+
+
+
+
+
+# Macro level
+
+## plot aggregated CAM
+
+```{r}
+#| label: aggregate CAMs
+
+# plot(CAMaggregated[[2]], vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*20, edge.arrow.size=0.01)
+# plot(CAMaggregated[[2]], vertex.size=(abs(V(CAMaggregated[[2]])$value)+1)*5, edge.arrow.size=0.01)
+
+
+g = CAMaggregated[[2]]
+g2 = simplify(CAMaggregated[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*20)
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight * 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+
+### > plot multiple times because of random layout
+for(i in 1:3){
+  plot(g2, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*5,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(g2)$weight/40))
+}
+
+
+
+CAMaggregated[[1]][1:5, 1:5]
+```
+
+
+
+
+
+# Clusteranalyses
+
+
+
+## hierachical cluster analysis
+
+
+```{r}
+hc_dat <- data.frame(CAM = unique(CAMfiles[[1]]$CAM), participantCAM = unique(CAMfiles[[1]]$participantCAM))
+
+### create data set
+## word vars
+for(w in unique(CAMfiles[[1]]$text)){
+  varName_w <- str_remove_all(string = str_to_title(string = w, locale = "en"), pattern = " |\\W+")
+
+  hc_dat[[paste0("N_", varName_w)]] <- NA
+  hc_dat[[paste0("mean_", varName_w)]] <- NA
+  hc_dat[[paste0("SD_", varName_w)]] <- NA
+}
+
+
+## get N, mean, sd of single summarized concepts
+verbose = FALSE
+
+for(c in unique(CAMfiles[[1]]$CAM)){
+  if(verbose){
+      cat("considered CAM: ", c, "\n")
+  }
+  tmp_CAM_nodes <- CAMfiles[[1]][CAMfiles[[1]]$CAM == c, ]
+  tmp_CAM_nodes$value <- ifelse(test = tmp_CAM_nodes$value == 10, yes = 0, no = tmp_CAM_nodes$value)
+
+  for(w in unique(CAMfiles[[1]]$text)){
+      if(verbose){
+    cat("considered concept: ", w, "\n")
+      }
+
+    varName_w <- str_remove_all(string = str_to_title(string = w, locale = "en"), pattern = " |\\W+")
+          if(verbose){
+    cat("   > the freqeuncy, mean, SD are saved with the prefix N_, mean_, SD_ plus
+      word without white spaces: ", varName_w, "\n")
+          }
+
+    if(sum(tmp_CAM_nodes$text == w) > 0){
+      tmp_CAM_nodes_w <- tmp_CAM_nodes[tmp_CAM_nodes$text == w, ]
+
+      ## add N
+      hc_dat[hc_dat$CAM == c, paste0("N_", varName_w)] <- nrow(tmp_CAM_nodes_w)
+      ## add mean
+      hc_dat[hc_dat$CAM == c, paste0("mean_", varName_w)] <- mean(x = tmp_CAM_nodes_w$value)
+      ## add SD, only if > 1
+      hc_dat[hc_dat$CAM == c, paste0("SD_", varName_w)] <- sd(x = tmp_CAM_nodes_w$value)
+    }
+  }
+        if(verbose){
+  cat("\n")
+        }
+}
+
+
+### compute clustering
+hc_df <- hc_dat[, str_subset(string = colnames(hc_dat), pattern = "mean_")]
+hc_df <- hc_df[, colSums(x = !is.na(hc_df)) >= 2] # only considers concepts which where drawn at least 2 times
+
+
+hc_df_scaled <- scale(hc_df)
+
+dist.eucl <- dist(hc_df_scaled, method = "euclidean")
+
+hc_cluster <- hclust(dist.eucl, method = "ward.D2") # Ward's method
+hc_cluster
+
+
+set_cutOff <- 20
+
+
+plot(hc_cluster)
+abline(h = set_cutOff, col = "red", lty = 2)
+rect.hclust(hc_cluster, h=set_cutOff, border = "tomato")
+
+groups <- cutree(hc_cluster, h=set_cutOff)
+# groupsOut <- names(table(groups))[table(groups) >= 2]
+
+table(groups)
+aggregate(hc_df, by=list(cluster=groups), mean, na.rm = TRUE)  
+```
+
+
+
+
+## Latent profile analysis
+just a preliminary analysis to get a feeling for what we've got.
+
+```{r}
+# lpa <- valenceDataShort %>% select(-CAM) %>%
+#  estimate_profiles(1:9, variances = c("equal", "equal", "varying"),
+#                         covariances = c("zero", "equal", "zero"))
+```
+
+
