@@ -12,7 +12,8 @@ format:
 # Notes
 
 ```{r}
-## global variables: 
+## global variables:
+consider_Protocol <- TRUE
 ```
 
 
@@ -24,28 +25,27 @@ format:
 #| warning: false
 
 # sets the directory of location of this script as the current directory
-setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
-# load packages
+### load R packages
 require(pacman)
 
-p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
+p_load('tidyverse', 'ggplot2', 'RColorBrewer',
+       'car', 'lsr',
+       'jsonlite', 'magrittr', 
+       'xlsx', 'openxlsx',
        'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
        'lavaan', 'igraph',
-       'regsem', 'MplusAutomation', 'reticulate')
+       'reticulate')
 
-library(openxlsx)
-library(ggplot2)
-library(RColorBrewer)
-library(car)
-library(igraph)
-library(leiden)
-library(lsr)
 
+virtualenv_create("r-reticulate")
+# library(leiden)
+#'regsem', 'MplusAutomation'
+
+### load Python modules
 # reticulate::py_config()
 # reticulate::py_module_available("pycairo")
-# reticulate::py_module_available("cairocffi")
-
 
 if(!reticulate::py_module_available("igraph")){
   py_install("igraph") # pip install python-igraph
@@ -68,14 +68,6 @@ if(!reticulate::py_module_available("numpy")){
 if(!reticulate::py_module_available("cairocffi")){
   py_install("cairocffi")
 }
-
-## install Python modules
-# py_install("matplotlib")
-# py_install("scipy")
-# py_install("cairocffi") 
-# py_install("pycairo") # pip install pycairo
-
-
 # load data
 setwd("outputs")
 t12_questionnaireCAMs <- readRDS(file = "t12_questionnaireCAMs.rds")
@@ -101,10 +93,6 @@ for(i in 1:length(dir())){
 }
 rm(i)
 setwd("..")
-
-# CAMfiles[[2]][["isBidirectional"]] <- 1
-# CAMfiles[[3]][["isBidirectional"]] <- 1
-
 ```
 
 
@@ -114,7 +102,6 @@ setwd("..")
 setwd("data")
 protocolDataset <- "protocol_fixed_15.txt"
 
-consider_Protocol <- TRUE
 
 if(consider_Protocol){
   text <- readLines(protocolDataset, warn = FALSE)
@@ -136,10 +123,18 @@ if(consider_Protocol){
   tmp_out <- overwriteTextNodes(protocolDat = protocol,
                                 nodesDat = CAMfiles[[1]])
   CAMfiles[[1]] <- tmp_out[[1]]
-  tmp_out[[2]]
+  # tmp_out[[2]]
 }
 
 rm(protocolDataset, consider_Protocol, text, tmp_out)
+
+
+
+tmp_text <- str_remove_all(string = CAMfiles[[1]]$text_summarized,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+sort(unique(tmp_text))
+
+CAMfiles[[1]]$text_summarized <- str_replace_all(string = CAMfiles[[1]]$text_summarized, pattern = " _", replacement = "_")
 
 ```
 
@@ -290,7 +285,9 @@ setwd("..")
 
 ```
 
-#.
+
+
+
 # Analyze questionnaire data
 
 ## t1
@@ -503,7 +500,6 @@ t2_table
 
 
 
-#.
 # Analyze CAM data
 
 ## Network Indicators
@@ -1124,15 +1120,9 @@ CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x 
 
 
 
-#.
-## TEST: Leiden Algorithm
+## Leiden Algorithm - high conspiracy
 
-##################
-### high conspir
-##################
-
-
-#### aggregate CAMs
+### aggregate CAMs
 
 ```{r}
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
@@ -1142,14 +1132,17 @@ CAMaggregated_high <-
                  ids_CAMs = sel_ids_high)
 
 
+CAMaggregated_high[[1]][1:5, 1:5]
+
 ## check for symmetry
+all(colSums(CAMaggregated_high[[1]]) == rowSums(CAMaggregated_high[[1]]))
 all(colSums(CAMaggregated_high[[5]][[1]]) == rowSums(CAMaggregated_high[[5]][[1]]))
 
 
 ## test first concept of first CAM
-colnames(CAMaggregated_high[[5]][[1]])[1]
-colnames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
-rownames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
+# colnames(CAMaggregated_high[[5]][[1]])[1]
+# colnames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
+# rownames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
 
 # plot(
 #   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
@@ -1176,68 +1169,170 @@ rm(sel_ids_high, i)
 ```
 
 
-#### Leiden algorithm
+### Leiden algorithm
+
+from Julius!
+
+split by valence
 
 ```{r}
 adjacency_matrix_high <- CAMaggregated_high[[1]]
 
-setwd("outputs")
-write.table(adjacency_matrix_high, file = "adjacency_matrix_high.csv",
-              row.names = FALSE, col.names = TRUE)
-
-setwd("..")
-
-graph_object_high <-
-  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "directed")
-# graph_object_high
-# plot(graph_object_high, vertex.color = "grey75")
-
-adjacency_matrix_high <- igraph::as_adjacency_matrix(graph_object_high) # not needed
-
-partition_high <- leiden(adjacency_matrix_high, resolution_parameter = 1)
-table(partition_high)
+diag(adjacency_matrix_high) <- 0
 
 
-for (i in unique(partition_high)) {
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_high <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+for(i in seq(.1, 2, by = .1)){
+  print(i)
+  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+  print(table(partition))
+}
+
+
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
+
+for (i in sort(unique(partition))) {
   cat(
-    "\nfor partion_high",
+    "\nfor partion",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix_high)[partition_high == i],
+    rownames(adjacency_matrix_high)[partition == i],
     "\n"
   )
 }
-rm(i)
 
-node.cols_high <- brewer.pal(max(c(3, partition_high)), "Pastel1")[partition_high]
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
 # plot(graph_object, vertex.color = node.cols)
 
 
 plot(
-  graph_object_high,
+  graph_object,
   edge.arrow.size = 0,
   layout = layout_nicely,
   vertex.frame.color = "black",
   asp = .5,
   margin = -0.1,
   vertex.size = diag(CAMaggregated_high[[1]]) / max(diag(CAMaggregated_high[[1]])) *
-    5,
+    1,
   vertex.label.cex = .9,
   edge.weight = 2,
-  vertex.color = node.cols_high
+  vertex.color = node.cols
 )
+```
 
-rm(node.cols_high)
+from Julius!
 
+not split by valence
+
+```{r}
+
+sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
+tmp_nodes <- CAMfiles[[1]]
+tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+
+CAMaggregated_high <-
+  aggregate_CAMs(dat_merged = CAMfiles[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_high)
+
+
+CAMaggregated_high[[1]][1:5, 1:5]
+
+## check for symmetry
+all(colSums(CAMaggregated_high[[1]]) == rowSums(CAMaggregated_high[[1]]))
+all(colSums(CAMaggregated_high[[5]][[1]]) == rowSums(CAMaggregated_high[[5]][[1]]))
+
+
+adjacency_matrix_high <- CAMaggregated_high[[1]]
+
+diag(adjacency_matrix_high) <- 0
+
+
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_high <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+for(i in seq(.1, 2, by = .1)){
+  print(i)
+  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+  print(table(partition))
+}
+
+
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
+
+for (i in sort(unique(partition))) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_high)[partition == i],
+    "\n"
+  )
+}
+
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_high[[1]]) / max(diag(CAMaggregated_high[[1]])) *
+    20,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
 ```
 
 
 
-##################
-### low conspir
-##################
 
-#### aggregate CAMs
+
+
+
+
+
+
+## Leiden Algorithm - low conspiracy
+
+### aggregate CAMs
 
 ```{r}
 sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
@@ -1281,7 +1376,7 @@ rm(sel_ids_low, i)
 ```
 
 
-#### Leiden algorithm
+### Leiden algorithm
 
 ```{r}
 adjacency_matrix_low <- CAMaggregated_low[[1]]
@@ -1331,7 +1426,8 @@ rm(node.cols_low)
 ```
 
 
-#.
+
+
 # Leiden algorithm with pruning (Gibson and Mucha, 2022)
 
 Community detection based on the Leiden algorithm, similar to Louvain.
