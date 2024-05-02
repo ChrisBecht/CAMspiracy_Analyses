@@ -99,9 +99,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#overwrite-affective-imagery" id="toc-overwrite-affective-imagery" class="nav-link" data-scroll-target="#overwrite-affective-imagery">overwrite affective imagery</a>
   <ul class="collapse">
   <li><a href="#create-long-format-data" id="toc-create-long-format-data" class="nav-link" data-scroll-target="#create-long-format-data">create long format data</a></li>
-  <li><a href="#overwrite" id="toc-overwrite" class="nav-link" data-scroll-target="#overwrite">overwrite</a></li>
+  <li><a href="#overwrite-approximate-matching" id="toc-overwrite-approximate-matching" class="nav-link" data-scroll-target="#overwrite-approximate-matching">overwrite approximate matching</a></li>
+  <li><a href="#overwrite-translated-words" id="toc-overwrite-translated-words" class="nav-link" data-scroll-target="#overwrite-translated-words">overwrite translated words</a></li>
   <li><a href="#statistics" id="toc-statistics" class="nav-link" data-scroll-target="#statistics">statistics</a></li>
   </ul></li>
+  <li><a href="#clean-affective-imagery-after-translation" id="toc-clean-affective-imagery-after-translation" class="nav-link" data-scroll-target="#clean-affective-imagery-after-translation">clean affective imagery after translation</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -243,10 +245,7 @@ policyItems-8              7    -1.22         0.52    0.00
 
 variables under investigation:  policyItems1 policyItems2 policyItems3 policyItems4 policyItems5 policyItems6 policyItems7 policyItems8 
 
-Cronbachs Alpha: 0.82 
-Error in if (any(lower &gt; upper)) stop("lower&gt;upper integration limits") : 
-  Fehlender Wert, wo TRUE/FALSE nötig ist
-[1] "use instead of polychoric correlations pearson correlations"</code></pre>
+Cronbachs Alpha: 0.82 </code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
@@ -624,44 +623,94 @@ CFA first 6 Modification Indices:
 <span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="overwrite" class="level3">
-<h3 class="anchored" data-anchor-id="overwrite">overwrite</h3>
+<section id="overwrite-approximate-matching" class="level3">
+<h3 class="anchored" data-anchor-id="overwrite-approximate-matching">overwrite approximate matching</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_BA_Magdalena"</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>overwriteApproximate <span class="ot">&lt;-</span> <span class="fu">read.xlsx2</span>(<span class="at">file =</span> <span class="st">"AffectiveImageryDatenDeutschZusammengefasst.xlsx"</span>, <span class="at">sheetIndex =</span> <span class="dv">1</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>overwriteApproximate <span class="ot">&lt;-</span> <span class="fu">read.xlsx2</span>(<span class="at">file =</span> <span class="st">"AffectiveImageryDataGermanSummarised.xlsx"</span>, <span class="at">sheetIndex =</span> <span class="dv">1</span>)</span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>dat_out<span class="sc">$</span>summarizedWord <span class="ot">&lt;-</span> dat_out<span class="sc">$</span>originalWord</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="st">"Real"</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co"># w &lt;- "Real"</span></span>
 <span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(w <span class="cf">in</span> <span class="fu">unique</span>(overwriteApproximate<span class="sc">$</span>originalWord)){</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  dat_out<span class="sc">$</span>summarizedWord[dat_out<span class="sc">$</span>originalWord <span class="sc">%in%</span> w <span class="sc">&amp;</span> dat_out<span class="sc">$</span>country <span class="sc">==</span> <span class="st">"Germany"</span>] <span class="ot">&lt;-</span> overwriteApproximate<span class="sc">$</span>summarizedWord_final[overwriteApproximate<span class="sc">$</span>originalWord <span class="sc">%in%</span> w]</span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">".."</span>)</span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data_AffImg_processed"</span>)){</span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data_AffImg_processed"</span>)</span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_AffImg_processed"</span>)</span>
-<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .xlsx file</span></span>
-<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>xlsx<span class="sc">::</span><span class="fu">write.xlsx2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg.xlsx"</span>)</span>
-<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .csv file</span></span>
-<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg.csv"</span>)</span>
-<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
-<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(dat_out, <span class="at">file =</span> <span class="st">"affImg.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1337</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(w <span class="cf">in</span> <span class="fu">unique</span>(overwriteApproximate<span class="sc">$</span>originalWord)){</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  dat_out<span class="sc">$</span>summarizedWord[dat_out<span class="sc">$</span>originalWord <span class="sc">%in%</span> w <span class="sc">&amp;</span> dat_out<span class="sc">$</span>country <span class="sc">==</span> <span class="st">"Germany"</span>] <span class="ot">&lt;-</span> overwriteApproximate<span class="sc">$</span>summarizedWord_final[overwriteApproximate<span class="sc">$</span>originalWord <span class="sc">%in%</span> w]</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1001</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">".."</span>)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data_AffImg_processed"</span>)){</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data_AffImg_processed"</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_AffImg_processed"</span>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .xlsx file</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>xlsx<span class="sc">::</span><span class="fu">write.xlsx2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg.xlsx"</span>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .csv file</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg.csv"</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(dat_out, <span class="at">file =</span> <span class="st">"affImg.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="overwrite-translated-words" class="level3">
+<h3 class="anchored" data-anchor-id="overwrite-translated-words">overwrite translated words</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_BA_Magdalena"</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>overwriteApproximate <span class="ot">&lt;-</span> <span class="fu">read.xlsx2</span>(<span class="at">file =</span> <span class="st">"AffectiveImageryDataGermanTranslated.xlsx"</span>, <span class="at">sheetIndex =</span> <span class="dv">1</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>overwriteApproximate <span class="ot">&lt;-</span> overwriteApproximate[overwriteApproximate<span class="sc">$</span>country <span class="sc">==</span> <span class="st">"Germany"</span>, ]</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="co"># dat_out$summarizedWord &lt;- dat_out$originalWord</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co"># w &lt;-  unique(overwriteApproximate$originalWord)[2]</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1001</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(w <span class="cf">in</span> <span class="fu">unique</span>(overwriteApproximate<span class="sc">$</span>originalWord)){</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  dat_out<span class="sc">$</span>summarizedWord[dat_out<span class="sc">$</span>originalWord <span class="sc">%in%</span> w <span class="sc">&amp;</span> dat_out<span class="sc">$</span>country <span class="sc">==</span> <span class="st">"Germany"</span>] <span class="ot">&lt;-</span> overwriteApproximate<span class="sc">$</span>summarizedWord_final[overwriteApproximate<span class="sc">$</span>originalWord <span class="sc">%in%</span> w]</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 891</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">".."</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">###</span><span class="co"> save data set</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data_AffImg_processed"</span>)){</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data_AffImg_processed"</span>)</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_AffImg_processed"</span>)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .xlsx file</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>xlsx<span class="sc">::</span><span class="fu">write.xlsx2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg_translated.xlsx"</span>)</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .csv file</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> dat_out, <span class="at">file =</span> <span class="st">"affImg_translated.csv"</span>)</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(dat_out, <span class="at">file =</span> <span class="st">"affImg_translated.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="statistics" class="level3">
 <h3 class="anchored" data-anchor-id="statistics">statistics</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>dat_out <span class="sc">%&gt;%</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(class_conspiracy) <span class="sc">%&gt;%</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">N =</span> <span class="fu">n</span>(), <span class="at">mean =</span> <span class="fu">mean</span>(valence, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>dat_out <span class="sc">%&gt;%</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(class_conspiracy) <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">N =</span> <span class="fu">n</span>(), <span class="at">mean =</span> <span class="fu">mean</span>(valence, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 3
   class_conspiracy     N  mean
@@ -670,9 +719,9 @@ CFA first 6 Modification Indices:
 2                2   754  2.50
 3                3   737  2.71</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>dat_out <span class="sc">%&gt;%</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(class_conspiracy, country) <span class="sc">%&gt;%</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">N =</span> <span class="fu">n</span>(), <span class="at">mean =</span> <span class="fu">mean</span>(valence, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>dat_out <span class="sc">%&gt;%</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(class_conspiracy, country) <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">N =</span> <span class="fu">n</span>(), <span class="at">mean =</span> <span class="fu">mean</span>(valence, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>`summarise()` has grouped output by 'class_conspiracy'. You can override using
 the `.groups` argument.</code></pre>
@@ -691,6 +740,75 @@ the `.groups` argument.</code></pre>
 </div>
 </div>
 </section>
+</section>
+<section id="clean-affective-imagery-after-translation" class="level2">
+<h2 class="anchored" data-anchor-id="clean-affective-imagery-after-translation">clean affective imagery after translation</h2>
+<p>use approximate matching for English and German (not run automatically!):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="do">## remove NAs</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>dat_out<span class="sc">$</span>summarizedWord[<span class="fu">is.na</span>(dat_out<span class="sc">$</span>summarizedWord)] <span class="ot">&lt;-</span> <span class="st">""</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>readkey <span class="ot">&lt;-</span> <span class="cf">function</span>()</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cat ('\nPress [enter] to continue\n')</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cat('or write "aaa" in the console to terminate loop\n')</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  line <span class="ot">&lt;-</span> <span class="fu">readline</span>()</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(line <span class="sc">==</span> <span class="st">"a123"</span>){</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"for loop terminated, please write down the last round where you have summarized words:"</span>,</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        i, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"process terminated"</span>)</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>  }<span class="cf">else</span>{</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(line)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>defineDistance <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(dat_out)){</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(i)</span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>  dist <span class="ot">&lt;-</span> stringdist<span class="sc">::</span><span class="fu">stringdist</span>(<span class="at">a =</span> dat_out<span class="sc">$</span>summarizedWord[i], dat_out<span class="sc">$</span>summarizedWord)</span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">all</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord[dist <span class="sc">&lt;=</span> defineDistance]) <span class="sc">==</span> dat_out<span class="sc">$</span>summarizedWord[i])){</span>
+<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st"> if you want to summarize the followings words:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord[dist <span class="sc">&lt;=</span> defineDistance]))</span>
+<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">'&gt;&gt;&gt; provide a superordinate word, else write "c" (for continue) or write "a123" to stop the summary process'</span>)</span>
+<span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">readkey</span>() </span>
+<span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print(out)</span></span>
+<span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb36-42"><a href="#cb36-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(out <span class="sc">!=</span> <span class="st">"c"</span>){</span>
+<span id="cb36-43"><a href="#cb36-43" aria-hidden="true" tabindex="-1"></a>      dat_out<span class="sc">$</span>summarizedWord[dat_out<span class="sc">$</span>summarizedWord <span class="sc">%in%</span> <span class="fu">unique</span>(dat_out<span class="sc">$</span>summarizedWord[dist <span class="sc">&lt;=</span> defineDistance])] <span class="ot">&lt;-</span> out</span>
+<span id="cb36-44"><a href="#cb36-44" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb36-45"><a href="#cb36-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-46"><a href="#cb36-46" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-47"><a href="#cb36-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-48"><a href="#cb36-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-49"><a href="#cb36-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-50"><a href="#cb36-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-51"><a href="#cb36-51" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
+<span id="cb36-52"><a href="#cb36-52" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data"</span>)){</span>
+<span id="cb36-54"><a href="#cb36-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data_AffImg"</span>)</span>
+<span id="cb36-55"><a href="#cb36-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-56"><a href="#cb36-56" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_AffImg"</span>)</span>
+<span id="cb36-57"><a href="#cb36-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-58"><a href="#cb36-58" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .xlsx file</span></span>
+<span id="cb36-59"><a href="#cb36-59" aria-hidden="true" tabindex="-1"></a>xlsx<span class="sc">::</span><span class="fu">write.xlsx2</span>(<span class="at">x =</span> applyApproximate, <span class="at">file =</span> <span class="st">"applyApproximate_translated.xlsx"</span>)</span>
+<span id="cb36-60"><a href="#cb36-60" aria-hidden="true" tabindex="-1"></a><span class="do">## save as .csv file</span></span>
+<span id="cb36-61"><a href="#cb36-61" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> applyApproximate, <span class="at">file =</span> <span class="st">"applyApproximate_translated.csv"</span>)</span>
+<span id="cb36-62"><a href="#cb36-62" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
+<span id="cb36-63"><a href="#cb36-63" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(applyApproximate, <span class="at">file =</span> <span class="st">"applyApproximate_translated.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 </section>
 </section>
 

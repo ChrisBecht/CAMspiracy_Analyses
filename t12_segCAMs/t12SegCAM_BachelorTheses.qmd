@@ -355,20 +355,25 @@ for(p in affectiveImagery$PROLIFIC_PID){
 ```
 
 
-### overwrite
+### overwrite approximate matching
 
 ```{r}
 setwd("data_BA_Magdalena")
 
-overwriteApproximate <- read.xlsx2(file = "AffectiveImageryDatenDeutschZusammengefasst.xlsx", sheetIndex = 1)
+overwriteApproximate <- read.xlsx2(file = "AffectiveImageryDataGermanSummarised.xlsx", sheetIndex = 1)
 
 
 dat_out$summarizedWord <- dat_out$originalWord
-w <- "Real"
+# w <- "Real"
+
+length(unique(dat_out$summarizedWord))
 
 for(w in unique(overwriteApproximate$originalWord)){
   dat_out$summarizedWord[dat_out$originalWord %in% w & dat_out$country == "Germany"] <- overwriteApproximate$summarizedWord_final[overwriteApproximate$originalWord %in% w]
 }
+
+length(unique(dat_out$summarizedWord))
+
 
 setwd("..")
 
@@ -387,6 +392,45 @@ write.csv2(x = dat_out, file = "affImg.csv")
 saveRDS(dat_out, file = "affImg.rds")
 ```
 
+### overwrite translated words
+
+```{r}
+setwd("data_BA_Magdalena")
+
+overwriteApproximate <- read.xlsx2(file = "AffectiveImageryDataGermanTranslated.xlsx", sheetIndex = 1)
+
+overwriteApproximate <- overwriteApproximate[overwriteApproximate$country == "Germany", ]
+
+
+# dat_out$summarizedWord <- dat_out$originalWord
+# w <-  unique(overwriteApproximate$originalWord)[2]
+
+length(unique(dat_out$summarizedWord))
+
+for(w in unique(overwriteApproximate$originalWord)){
+  dat_out$summarizedWord[dat_out$originalWord %in% w & dat_out$country == "Germany"] <- overwriteApproximate$summarizedWord_final[overwriteApproximate$originalWord %in% w]
+}
+
+length(unique(dat_out$summarizedWord))
+
+
+setwd("..")
+
+# ### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("data_AffImg_processed")){
+  dir.create("data_AffImg_processed")
+}
+setwd("data_AffImg_processed")
+
+## save as .xlsx file
+xlsx::write.xlsx2(x = dat_out, file = "affImg_translated.xlsx")
+## save as .csv file
+write.csv2(x = dat_out, file = "affImg_translated.csv")
+## save as R object
+saveRDS(dat_out, file = "affImg_translated.rds")
+```
+
 ### statistics
 
 ```{r}
@@ -401,3 +445,75 @@ dat_out %>%
 ```
 
 
+## clean affective imagery after translation
+
+use approximate matching for English and German (not run automatically!):
+
+```{r}
+#| eval: false
+
+
+## remove NAs
+dat_out$summarizedWord[is.na(dat_out$summarizedWord)] <- ""
+
+readkey <- function()
+{
+  # cat ('\nPress [enter] to continue\n')
+  # cat('or write "aaa" in the console to terminate loop\n')
+
+  line <- readline()
+  if(line == "a123"){
+    cat("for loop terminated, please write down the last round where you have summarized words:",
+        i, "\n")
+    stop("process terminated")
+  }else{
+    return(line)
+  }
+}
+
+defineDistance = 1
+
+
+
+
+for(i in 1:nrow(dat_out)){
+  print(i)
+  
+  dist <- stringdist::stringdist(a = dat_out$summarizedWord[i], dat_out$summarizedWord)
+
+
+  
+if(!all(unique(dat_out$summarizedWord[dist <= defineDistance]) == dat_out$summarizedWord[i])){
+  
+  cat("\n if you want to summarize the followings words:\n")
+  print(unique(dat_out$summarizedWord[dist <= defineDistance]))
+  
+  cat('>>> provide a superordinate word, else write "c" (for continue) or write "a123" to stop the summary process')
+
+ 
+  out <- readkey() 
+  # print(out)
+  
+  if(out != "c"){
+      dat_out$summarizedWord[dat_out$summarizedWord %in% unique(dat_out$summarizedWord[dist <= defineDistance])] <- out
+  }
+}
+}
+
+
+
+
+### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("data")){
+  dir.create("data_AffImg")
+}
+setwd("data_AffImg")
+
+## save as .xlsx file
+xlsx::write.xlsx2(x = applyApproximate, file = "applyApproximate_translated.xlsx")
+## save as .csv file
+write.csv2(x = applyApproximate, file = "applyApproximate_translated.csv")
+## save as R object
+saveRDS(applyApproximate, file = "applyApproximate_translated.rds")
+```
