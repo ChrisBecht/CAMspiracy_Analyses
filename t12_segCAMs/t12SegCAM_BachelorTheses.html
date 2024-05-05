@@ -104,6 +104,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#statistics" id="toc-statistics" class="nav-link" data-scroll-target="#statistics">statistics</a></li>
   </ul></li>
   <li><a href="#clean-affective-imagery-after-translation" id="toc-clean-affective-imagery-after-translation" class="nav-link" data-scroll-target="#clean-affective-imagery-after-translation">clean affective imagery after translation</a></li>
+  <li><a href="#get-tables-for-ratings" id="toc-get-tables-for-ratings" class="nav-link" data-scroll-target="#get-tables-for-ratings">get tables for ratings</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -245,7 +246,10 @@ policyItems-8              7    -1.22         0.52    0.00
 
 variables under investigation:  policyItems1 policyItems2 policyItems3 policyItems4 policyItems5 policyItems6 policyItems7 policyItems8 
 
-Cronbachs Alpha: 0.82 </code></pre>
+Cronbachs Alpha: 0.82 
+Error in if (any(lower &gt; upper)) stop("lower&gt;upper integration limits") : 
+  Fehlender Wert, wo TRUE/FALSE nötig ist
+[1] "use instead of polychoric correlations pearson correlations"</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
@@ -797,7 +801,7 @@ the `.groups` argument.</code></pre>
 <span id="cb36-50"><a href="#cb36-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-51"><a href="#cb36-51" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
 <span id="cb36-52"><a href="#cb36-52" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
-<span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data"</span>)){</span>
+<span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"data_AffImg"</span>)){</span>
 <span id="cb36-54"><a href="#cb36-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"data_AffImg"</span>)</span>
 <span id="cb36-55"><a href="#cb36-55" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb36-56"><a href="#cb36-56" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"data_AffImg"</span>)</span>
@@ -808,6 +812,77 @@ the `.groups` argument.</code></pre>
 <span id="cb36-61"><a href="#cb36-61" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv2</span>(<span class="at">x =</span> applyApproximate, <span class="at">file =</span> <span class="st">"applyApproximate_translated.csv"</span>)</span>
 <span id="cb36-62"><a href="#cb36-62" aria-hidden="true" tabindex="-1"></a><span class="do">## save as R object</span></span>
 <span id="cb36-63"><a href="#cb36-63" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(applyApproximate, <span class="at">file =</span> <span class="st">"applyApproximate_translated.rds"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="get-tables-for-ratings" class="level2">
+<h2 class="anchored" data-anchor-id="get-tables-for-ratings">get tables for ratings</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="st">"savedWordlists_combined"</span>)){</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="st">"savedWordlists_combined"</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"savedWordlists_combined"</span>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="do">### create tables for ratings</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(<span class="fu">unique</span>(CAMfiles[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM))){</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="do">## t1 - Affective Imagery</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  tmp_associations <span class="ot">&lt;-</span> dat_out[dat_out<span class="sc">$</span>PROLIFIC_PID <span class="sc">%in%</span> <span class="fu">unique</span>(CAMfiles[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM)[i], ]</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>  <span class="do">## t2 - CAM</span></span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> CAMfiles[[<span class="dv">1</span>]][CAMfiles[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM <span class="sc">%in%</span> <span class="fu">unique</span>(CAMfiles[[<span class="dv">1</span>]]<span class="sc">$</span>participantCAM)[i], ]</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  <span class="do">## add variables Affective Imagery</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  tmp_associations<span class="sc">$</span>type <span class="ot">&lt;-</span> <span class="st">"Affective Imagery"</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  tmp_associations<span class="sc">$</span>Rating_Magdalena <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>  tmp_associations<span class="sc">$</span>Comment_Magdalena <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>  tmp_associations<span class="sc">$</span>id <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>  tmp_associations<span class="sc">$</span>comment <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>  tmp_associations <span class="ot">&lt;-</span> tmp_associations[, <span class="fu">c</span>(<span class="st">"type"</span>, <span class="st">"PROLIFIC_PID"</span>, <span class="st">"id"</span>, <span class="st">"summarizedWord"</span>, <span class="st">"valence"</span>, <span class="st">"comment"</span>, <span class="st">"Rating_Magdalena"</span>, <span class="st">"Comment_Magdalena"</span>)]</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(tmp_associations)[<span class="dv">4</span>] <span class="ot">&lt;-</span> <span class="st">"text"</span></span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>  <span class="do">## add variables CAM</span></span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>  tmp_concepts<span class="sc">$</span>type <span class="ot">&lt;-</span> <span class="st">"CAM"</span></span>
+<span id="cb37-31"><a href="#cb37-31" aria-hidden="true" tabindex="-1"></a>  tmp_concepts<span class="sc">$</span>Rating_Magdalena <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-32"><a href="#cb37-32" aria-hidden="true" tabindex="-1"></a>  tmp_concepts<span class="sc">$</span>Comment_Magdalena <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb37-33"><a href="#cb37-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-34"><a href="#cb37-34" aria-hidden="true" tabindex="-1"></a>  <span class="do">## order chronologically</span></span>
+<span id="cb37-35"><a href="#cb37-35" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> tmp_concepts[<span class="fu">order</span>(tmp_concepts<span class="sc">$</span>dateConceptCreated), ]</span>
+<span id="cb37-36"><a href="#cb37-36" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> tmp_concepts[<span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>, ] <span class="co"># first 8 concepts</span></span>
+<span id="cb37-37"><a href="#cb37-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-38"><a href="#cb37-38" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-39"><a href="#cb37-39" aria-hidden="true" tabindex="-1"></a>  tmp_concepts <span class="ot">&lt;-</span> tmp_concepts[, <span class="fu">c</span>(<span class="st">"type"</span>, <span class="st">"participantCAM"</span>, <span class="st">"id"</span>, <span class="st">"text"</span>, <span class="st">"value"</span>, <span class="st">"comment"</span>, <span class="st">"Rating_Magdalena"</span>, <span class="st">"Comment_Magdalena"</span>)]</span>
+<span id="cb37-40"><a href="#cb37-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(tmp_concepts)[<span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="st">"PROLIFIC_PID"</span></span>
+<span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(tmp_concepts)[<span class="dv">5</span>] <span class="ot">&lt;-</span> <span class="st">"valence"</span></span>
+<span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-44"><a href="#cb37-44" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-45"><a href="#cb37-45" aria-hidden="true" tabindex="-1"></a>  tmp_dat <span class="ot">&lt;-</span> <span class="fu">rbind</span>(tmp_associations, tmp_concepts)</span>
+<span id="cb37-46"><a href="#cb37-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-47"><a href="#cb37-47" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(i <span class="sc">==</span> <span class="dv">1</span>){</span>
+<span id="cb37-48"><a href="#cb37-48" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.xlsx2</span>(<span class="at">x =</span> tmp_dat, <span class="at">file=</span><span class="st">"ratingsAffimgCAMs.xlsx"</span>, <span class="at">sheetName=</span><span class="fu">unique</span>(tmp_concepts<span class="sc">$</span>PROLIFIC_PID), <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb37-49"><a href="#cb37-49" aria-hidden="true" tabindex="-1"></a>  }<span class="cf">else</span>{</span>
+<span id="cb37-50"><a href="#cb37-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.xlsx2</span>(tmp_dat, <span class="at">file=</span><span class="st">"ratingsAffimgCAMs.xlsx"</span>, <span class="at">sheetName=</span><span class="fu">unique</span>(tmp_concepts<span class="sc">$</span>PROLIFIC_PID), <span class="at">row.names=</span><span class="cn">FALSE</span>, <span class="at">append=</span><span class="cn">TRUE</span>)</span>
+<span id="cb37-51"><a href="#cb37-51" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb37-52"><a href="#cb37-52" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"outputs/BA_Magdalena"</span>)</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">"savedWordlists_combined"</span>)</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># file &lt;- system.file("tests", "ratingsAffimgCAMs.xlsx", package = "xlsx")</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>wb <span class="ot">&lt;-</span> <span class="fu">loadWorkbook</span>(<span class="st">"ratingsAffimgCAMs.xlsx"</span>)</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>sheets <span class="ot">&lt;-</span> <span class="fu">getSheets</span>(wb)</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(sheets)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 121</code></pre>
+</div>
 </div>
 </section>
 </section>

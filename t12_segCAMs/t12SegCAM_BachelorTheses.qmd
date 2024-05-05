@@ -505,7 +505,7 @@ if(!all(unique(dat_out$summarizedWord[dist <= defineDistance]) == dat_out$summar
 
 ### save data set
 setwd("outputs/BA_Magdalena")
-if(!file.exists("data")){
+if(!file.exists("data_AffImg")){
   dir.create("data_AffImg")
 }
 setwd("data_AffImg")
@@ -516,4 +516,74 @@ xlsx::write.xlsx2(x = applyApproximate, file = "applyApproximate_translated.xlsx
 write.csv2(x = applyApproximate, file = "applyApproximate_translated.csv")
 ## save as R object
 saveRDS(applyApproximate, file = "applyApproximate_translated.rds")
+```
+
+
+
+## get tables for ratings
+
+```{r}
+### save data set
+setwd("outputs/BA_Magdalena")
+if(!file.exists("savedWordlists_combined")){
+  dir.create("savedWordlists_combined")
+}
+setwd("savedWordlists_combined")
+
+### create tables for ratings
+for(i in 1:length(unique(CAMfiles[[1]]$participantCAM))){
+  
+  ## t1 - Affective Imagery
+  tmp_associations <- dat_out[dat_out$PROLIFIC_PID %in% unique(CAMfiles[[1]]$participantCAM)[i], ]
+
+  ## t2 - CAM
+  tmp_concepts <- CAMfiles[[1]][CAMfiles[[1]]$participantCAM %in% unique(CAMfiles[[1]]$participantCAM)[i], ]
+
+  ## add variables Affective Imagery
+  tmp_associations$type <- "Affective Imagery"
+  tmp_associations$Rating_Magdalena <- NA
+  tmp_associations$Comment_Magdalena <- NA
+  
+  tmp_associations$id <- NA
+  tmp_associations$comment <- NA
+  
+  tmp_associations <- tmp_associations[, c("type", "PROLIFIC_PID", "id", "summarizedWord", "valence", "comment", "Rating_Magdalena", "Comment_Magdalena")]
+
+  colnames(tmp_associations)[4] <- "text"
+  
+  ## add variables CAM
+  tmp_concepts$type <- "CAM"
+  tmp_concepts$Rating_Magdalena <- NA
+  tmp_concepts$Comment_Magdalena <- NA
+  
+  ## order chronologically
+  tmp_concepts <- tmp_concepts[order(tmp_concepts$dateConceptCreated), ]
+  tmp_concepts <- tmp_concepts[1:9, ] # first 8 concepts
+
+  
+  tmp_concepts <- tmp_concepts[, c("type", "participantCAM", "id", "text", "value", "comment", "Rating_Magdalena", "Comment_Magdalena")]
+  
+  colnames(tmp_concepts)[2] <- "PROLIFIC_PID"
+  colnames(tmp_concepts)[5] <- "valence"
+  
+  
+  tmp_dat <- rbind(tmp_associations, tmp_concepts)
+
+  if(i == 1){
+    write.xlsx2(x = tmp_dat, file="ratingsAffimgCAMs.xlsx", sheetName=unique(tmp_concepts$PROLIFIC_PID), row.names=FALSE)
+  }else{
+    write.xlsx2(tmp_dat, file="ratingsAffimgCAMs.xlsx", sheetName=unique(tmp_concepts$PROLIFIC_PID), row.names=FALSE, append=TRUE)
+  }
+}
+```
+```{r}
+### save data set
+setwd("outputs/BA_Magdalena")
+setwd("savedWordlists_combined")
+
+# file <- system.file("tests", "ratingsAffimgCAMs.xlsx", package = "xlsx")
+
+wb <- loadWorkbook("ratingsAffimgCAMs.xlsx")
+sheets <- getSheets(wb)
+length(sheets)
 ```
