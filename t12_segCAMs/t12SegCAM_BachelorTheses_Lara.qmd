@@ -119,6 +119,12 @@ psych::cor.plot(r = cor(t12_questionnaireCAMs[, c("mean_BiosphericValues", "mean
 
 
 
+```{r}
+getwd()
+setwd("outputs/BA_Lara")
+write.csv2(x = t12_questionnaireCAMs, file = "t12_questionnaireCAMs_Lara.csv")
+```
+
 
 
 
