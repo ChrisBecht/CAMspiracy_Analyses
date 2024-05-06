@@ -574,6 +574,9 @@ for(i in 1:length(unique(CAMfiles[[1]]$participantCAM))){
   }else{
     write.xlsx2(tmp_dat, file="ratingsAffimgCAMs.xlsx", sheetName=unique(tmp_concepts$PROLIFIC_PID), row.names=FALSE, append=TRUE)
   }
+  
+      write.xlsx2(x = tmp_dat, file=paste0(unique(tmp_concepts$PROLIFIC_PID), ".xlsx"), sheetName=unique(tmp_concepts$PROLIFIC_PID), row.names=FALSE)
+
 }
 ```
 ```{r}

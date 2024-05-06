@@ -255,7 +255,7 @@ Error in if (any(lower &gt; upper)) stop("lower&gt;upper integration limits") :
 <p><img src="t12SegCAM_BachelorTheses_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid" width="672"></p>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Parallel analysis suggests that the number of factors =  3  and the number of components =  1 
+<pre><code>Parallel analysis suggests that the number of factors =  2  and the number of components =  1 
 PolicyItems 
 Number of components:  1 
 
@@ -868,7 +868,10 @@ the `.groups` argument.</code></pre>
 <span id="cb37-49"><a href="#cb37-49" aria-hidden="true" tabindex="-1"></a>  }<span class="cf">else</span>{</span>
 <span id="cb37-50"><a href="#cb37-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write.xlsx2</span>(tmp_dat, <span class="at">file=</span><span class="st">"ratingsAffimgCAMs.xlsx"</span>, <span class="at">sheetName=</span><span class="fu">unique</span>(tmp_concepts<span class="sc">$</span>PROLIFIC_PID), <span class="at">row.names=</span><span class="cn">FALSE</span>, <span class="at">append=</span><span class="cn">TRUE</span>)</span>
 <span id="cb37-51"><a href="#cb37-51" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb37-52"><a href="#cb37-52" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb37-52"><a href="#cb37-52" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-53"><a href="#cb37-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">write.xlsx2</span>(<span class="at">x =</span> tmp_dat, <span class="at">file=</span><span class="fu">paste0</span>(<span class="fu">unique</span>(tmp_concepts<span class="sc">$</span>PROLIFIC_PID), <span class="st">".xlsx"</span>), <span class="at">sheetName=</span><span class="fu">unique</span>(tmp_concepts<span class="sc">$</span>PROLIFIC_PID), <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb37-54"><a href="#cb37-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-55"><a href="#cb37-55" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="do">### save data set</span></span>
