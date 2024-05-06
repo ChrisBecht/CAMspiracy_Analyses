@@ -102,6 +102,8 @@ t12_questionnaireCAMs$`Risk-4riskProb`
 
 
 ```{r}
+
+
 t12_questionnaireCAMs$mean_RPI <- NA
 t12_questionnaireCAMs$mean_RPI[!is.na(t12_questionnaireCAMs$country.y )] <- rowMeans(t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$country.y ), str_subset(string = colnames(t12_questionnaireCAMs), pattern = "^concernClimate|^probabilityClimate|Risk-")])
 ```
@@ -163,8 +165,24 @@ full.model <- lm(mean_BiosphericValues ~ mean_valence_macro + density_macro + tr
 summary(full.model)
 
 
+report::report(x = full.model)
 
-plot(t12_questionnaireCAMs$mean_BiosphericValues, t12_questionnaireCAMs$mean_valence_macro)
+### eine Skala:
+"mean_BiosphericValues"    
+"mean_CET"  
+"mean_PolicyItems"
+
+
+t12_questionnaireCAMs$mean_RPI <- NA
+
+boxplot( t12_questionnaireCAMs$mean_BiosphericValues ~ t12_questionnaireCAMs$classes_conspiracy)
+
+
+
+cor(t12_questionnaireCAMs$mean_BiosphericValues, t12_questionnaireCAMs$num_nodes_macro, use = "pairwise")
+cor(t12_questionnaireCAMs$mean_CET, t12_questionnaireCAMs$num_nodes_macro, use = "pairwise")
+cor(t12_questionnaireCAMs$mean_PolicyItems, t12_questionnaireCAMs$num_nodes_macro, use = "pairwise")
+cor(t12_questionnaireCAMs$mean_RPI, t12_questionnaireCAMs$num_nodes_macro, use = "pairwise")
 
 # stargazer::stargazer(full.model, type = "html", out = "regression.html")
 
