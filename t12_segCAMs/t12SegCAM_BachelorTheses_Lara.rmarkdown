@@ -1,0 +1,112 @@
+---
+title: "Analyzes for Bachelor Theses"
+author: "Julius Fenn"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    html-math-method: katex
+---
+
+
+
+# Notes
+
+
+# global variables
+
+
+```{r}
+## global variables: 
+
+
+```
+
+
+
+
+# load merged pre-processed data
+
+
+```{r}
+#| echo: true
+#| warning: false
+
+# sets the directory of location of this script as the current directory
+# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+
+# load packages
+require(pacman)
+# regsem not needed!
+p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
+       'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
+       'lavaan', 'igraph',
+       'regsem', 'MplusAutomation')
+
+
+# load data
+setwd("outputs")
+t12_questionnaireCAMs <- readRDS(file = "t12_questionnaireCAMs.rds")
+CAMfiles <- readRDS(file = "CAMfiles.rds")
+CAMdrawn <- readRDS(file = "CAMdrawn.rds")
+
+
+t12_questionnaireCAMs$total_min_prolific[t12_questionnaireCAMs$total_min_prolific > 1000] <- NA
+
+
+# load functions
+setwd("../../functions")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+
+
+setwd("../functions_CAMapp")
+for(i in 1:length(dir())){
+  # print(dir()[i])
+  source(dir()[i], encoding = "utf-8")
+}
+rm(i)
+```
+
+
+
+# Laras BA
+
+## policy scale
+
+
+
+```{r}
+#| echo: true
+#| warning: false
+
+
+regEx <- "^policyItems"
+nameScale <- "Policy Scale"
+nameVariable <- "mean_PolicyItems"
+
+### number of items
+sum(str_detect(string = colnames(t12_questionnaireCAMs), pattern = regEx))
+
+### only keep values with no missing values
+tmp_dat <- t12_questionnaireCAMs[, c(str_subset(string = colnames(t12_questionnaireCAMs), pattern = regEx), "country.y")]
+
+# tmp_dat <- tmp_dat[!is.na(tmp_dat$country.y), ]
+tmp_dat <- tmp_dat[tmp_dat$country.y == "Germany" & !is.na(tmp_dat$country.y), ]
+cat("analyes for country/ies:\n", unique(tmp_dat$country.y), "\n")
+
+### get correlation plot, descriptives, EFA, CFA
+tmp <- CFAstats(dataset = tmp_dat, regularExp = regEx, labelLatent = str_remove(string = nameVariable, pattern = "mean_"), 
+                showPlots = TRUE, 
+                computeEFA = TRUE, 
+                computeCFA = TRUE, 
+                computeCFAMplus = FALSE)
+
+# ### variable mean
+# questionnaireCAMs[[nameVariable]]  <- questionnaireCAMs %>%
+#   select(matches(regEx)) %>%
+#   rowMeans(na.rm = TRUE)
+```
+
