@@ -101,7 +101,7 @@ setwd("..")
 ```{r protocol}
 setwd("data")
 protocolDataset <- "protocol_fixed_15.txt"
-
+consider_Protocol <- TRUE
 
 if(consider_Protocol){
   text <- readLines(protocolDataset, warn = FALSE)
@@ -135,6 +135,8 @@ tmp_text <- str_remove_all(string = CAMfiles[[1]]$text_summarized,
 sort(unique(tmp_text))
 
 CAMfiles[[1]]$text_summarized <- str_replace_all(string = CAMfiles[[1]]$text_summarized, pattern = " _", replacement = "_")
+
+rm(tmp_text)
 
 ```
 
@@ -236,9 +238,9 @@ if(!all(CAMfiles_high[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PI
   CAMfiles_high[[3]] <- CAMfiles_high[[3]][CAMfiles_high[[3]]$participantCAM.x %in% tmp_ids,]
   
   ## save files ob subsets
-  vroom::vroom_write(x =  CAMfiles_high[[1]], file = "CAM_nodes_high.txt")
-  vroom::vroom_write(x =  CAMfiles_high[[2]], file = "CAM_connectors_high.txt")
-  vroom::vroom_write(x =  CAMfiles_high[[3]], file = "CAM_merged_high.txt")
+  # vroom::vroom_write(x =  CAMfiles_high[[1]], file = "CAM_nodes_high.txt")
+  # vroom::vroom_write(x =  CAMfiles_high[[2]], file = "CAM_connectors_high.txt")
+  # vroom::vroom_write(x =  CAMfiles_high[[3]], file = "CAM_merged_high.txt")
 }
 
 saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
@@ -273,9 +275,9 @@ if(!all(CAMfiles_low[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
   CAMfiles_low[[3]] <- CAMfiles_low[[3]][CAMfiles_low[[3]]$participantCAM.x %in% tmp_ids,]
   
   ## save files ob subsets
-  vroom::vroom_write(x =  CAMfiles_low[[1]], file = "CAM_nodes_low.txt")
-  vroom::vroom_write(x =  CAMfiles_low[[2]], file = "CAM_connectors_low.txt")
-  vroom::vroom_write(x =  CAMfiles_low[[3]], file = "CAM_merged_low.txt")
+  # vroom::vroom_write(x =  CAMfiles_low[[1]], file = "CAM_nodes_low.txt")
+  # vroom::vroom_write(x =  CAMfiles_low[[2]], file = "CAM_connectors_low.txt")
+  # vroom::vroom_write(x =  CAMfiles_low[[3]], file = "CAM_merged_low.txt")
 }
 
 saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
@@ -286,11 +288,12 @@ setwd("..")
 ```
 
 
-
-
+#.
 # Analyze questionnaire data
 
 ## t1
+
+### preparation
 
 ```{r}
 t1_table <- data.frame(
@@ -311,6 +314,176 @@ t1_table <- data.frame(
     round(sd(t12_questionnaireCAMs$mean_CMQ),2),
     round(sd(t12_questionnaireCAMs$mean_CCSQ),2),
     round(sd(t12_questionnaireCAMs$mean_CRKQ),2)
+  )
+)
+
+t1_table
+
+```
+
+```{r}
+t12_questionnaireCAMs_high <- t12_questionnaireCAMs[t12_questionnaireCAMs$classes_conspiracy == 3, ]
+t12_questionnaireCAMs_low <- t12_questionnaireCAMs[t12_questionnaireCAMs$classes_conspiracy == 1, ]
+
+t12_questionnaireCAMs$classes_conspiracy <- as.character(t12_questionnaireCAMs$classes_conspiracy)
+```
+
+### t-Tests prerequisites
+
+```{r}
+# GCB
+leveneTest(mean_GCB ~ classes_conspiracy, data = t12_questionnaireCAMs, center = "median")
+  # -> Welch-Test
+
+
+# GCB
+leveneTest(mean_CMQ ~ classes_conspiracy, data = t12_questionnaireCAMs, center = "median")
+  # -> Welch-Test
+
+
+# CCS-Q
+leveneTest(mean_CCSQ ~ classes_conspiracy, data = t12_questionnaireCAMs, center = "median")
+  # -> Welch-Test
+
+
+# CRKQ
+leveneTest(mean_CRKQ ~ classes_conspiracy, data = t12_questionnaireCAMs, center = "median")
+  # -> Welch-Test
+
+
+```
+
+
+### t1 table
+
+```{r}
+t1_table <- data.frame(
+  Questionnaire = c(
+    "GCB",
+    "CMQ",
+    "CCS-Q",
+    "CRKQ"
+  ),
+  M_o = c(
+    round(mean(t12_questionnaireCAMs$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs$mean_CRKQ),2)
+  ),
+  
+  SD_o = c(
+    round(sd(t12_questionnaireCAMs$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs$mean_CRKQ),2)
+  ),
+  
+  M_h = c(
+    round(mean(t12_questionnaireCAMs_high$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs_high$mean_CRKQ),2)
+  ),
+  
+  SD_h = c(
+    round(sd(t12_questionnaireCAMs_high$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs_high$mean_CRKQ),2)
+  ),
+  
+  M_l = c(
+    round(mean(t12_questionnaireCAMs_low$mean_GCB),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CMQ),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CCSQ),2),
+    round(mean(t12_questionnaireCAMs_low$mean_CRKQ),2)
+  ),
+  
+  SD_l = c(
+    round(sd(t12_questionnaireCAMs_low$mean_GCB),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CMQ),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CCSQ),2),
+    round(sd(t12_questionnaireCAMs_low$mean_CRKQ),2)
+  ),
+  
+  t = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = FALSE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$statistic, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$statistic, 2)
+  ),
+  
+  df = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = FALSE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$parameter, 2),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$parameter, 2)
+  ),
+  
+  p = c(
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_GCB,
+        t12_questionnaireCAMs_low$mean_GCB,
+        var.equal = FALSE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CMQ,
+        t12_questionnaireCAMs_low$mean_CMQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CCSQ,
+        t12_questionnaireCAMs_low$mean_CCSQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$p.value, 3),
+    round(t.test(
+        t12_questionnaireCAMs_high$mean_CRKQ,
+        t12_questionnaireCAMs_low$mean_CRKQ,
+        var.equal = FALSE, alternative = "two.sided"
+      )$p.value, 3)
+  ),
+  
+  Cohen_d = c(
+    round(cohensD(t12_questionnaireCAMs_high$mean_GCB,
+                  t12_questionnaireCAMs_low$mean_GCB), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CMQ,
+                  t12_questionnaireCAMs_low$mean_CMQ), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CCSQ,
+                  t12_questionnaireCAMs_low$mean_CCSQ), 2),
+    round(cohensD(t12_questionnaireCAMs_high$mean_CRKQ,
+                  t12_questionnaireCAMs_low$mean_CRKQ), 2)
   )
 )
 
@@ -499,7 +672,7 @@ t2_table
 ```
 
 
-
+#.
 # Analyze CAM data
 
 ## Network Indicators
@@ -965,9 +1138,38 @@ netIndicators_table
 
 ## Concepts (Word lists)
 
-### Split by valence
+### concepts -> categories
 
-#### Preparation
+```{r}
+nodes <- CAMfiles[[1]]
+nodes$text_summarized <- gsub("_positive|_negative|_neutral|_ambivalent", "", nodes$text_summarized)
+
+# Text in different columns
+nodes_summarized <- nodes[, c("text_summarized", "text")] %>%
+  group_by(text_summarized) %>%
+  mutate(row_num = row_number()) %>%
+  spread(key = row_num, value = text) %>%
+  rename_with(~paste("element", .), -text_summarized) %>%
+  ungroup() %>%
+  select(text_summarized, everything())
+
+# Text in the same column
+nodes_summarized2 <- nodes[, c("text_summarized", "text")] %>%
+  group_by(text_summarized) %>%
+  summarise(text = paste(text, collapse = ", ")) %>%
+  ungroup()
+
+setwd("outputs")
+write.xlsx(nodes_summarized2, file = "nodes_summarized2.xlsx")
+setwd("..")
+
+rm(nodes)
+```
+
+
+### Split by valence | not necessary
+
+#### Preparation high & low (split)
 
 ```{r}
 # Word list high
@@ -1013,8 +1215,7 @@ rm(tmp_text)
 
 ```
 
-
-#### Concept Comparisons
+#### Concept Comparisons (split)
 
 ```{r}
 
@@ -1040,6 +1241,7 @@ CAMwordlist_overall_split
 # write.xlsx(CAMwordlist_overall_split, file = "CAMwordlist_overall_split.xlsx")
 
 ```
+
 
 
 ### Not split by valence
@@ -1086,12 +1288,14 @@ dat_nodes <- CAMfiles_low[[1]]
 dat_nodes$text <-   dat_nodes$text_summarized
 sum(stringr::str_detect(string = dat_nodes$text, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")) < nrow(dat_nodes)
 
-rm(tmp_text)
+rm(tmp_text, dat_nodes)
 
 ```
 
 
 #### Concept Comparisons
+
+##### Wordlists
 
 ```{r}
 
@@ -1109,20 +1313,107 @@ CAMwordlist_overall <- merge(CAMwordlist_high[c(1:7, length(CAMwordlist_high))],
 # concepts "positive values" and "weather" exist only in CAMwordlist_high
 
 # raw_diff: difference in frequency of mentions
-CAMwordlist_overall$raw_diff <- abs(CAMwordlist_overall$raw.x - CAMwordlist_overall$raw.y)
+CAMwordlist_overall$percent_diff <- abs(CAMwordlist_overall$percent.x - CAMwordlist_overall$percent.y)
 
 # mean_valence_diff: difference of mean valence
 CAMwordlist_overall$mean_valence_diff <- abs(CAMwordlist_overall$mean_valence.x - CAMwordlist_overall$mean_valence.y)
 
+CAMwordlist_overall$raw.o <- rowSums(CAMwordlist_overall[, c("raw.x", "raw.y")])
+CAMwordlist_overall$percent.o <- rowMeans(CAMwordlist_overall[, c("percent.x", "percent.y")])
+CAMwordlist_overall$mean_valence.o <- rowMeans(CAMwordlist_overall[, c("mean_valence.x", "mean_valence.y")])
+
 # write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
 
+rm(CAMwordlist_high, CAMwordlist_low)
+```
+
+##### Specific categories
+
+Differences in main concept "climate change".
+
+```{r}
+nodes_high <- CAMfiles_high[[1]]
+nodes_low <- CAMfiles_low[[1]]
+
+nodes_high <- nodes_high[nodes_high$text == "Climate Change" | nodes_high$text == "climate change",]
+nodes_low <- nodes_low[nodes_low$text == "Climate Change" | nodes_low$text == "climate change",]
+
+nodes_high$group <- "high"
+nodes_low$group <- "low"
+
+nodes_overall <- rbind(nodes_high, nodes_low)
+nodes_overall$value[nodes_overall$value == 10] <- 0
+
+leveneTest(value ~ group, data = nodes_overall, center = "median")
+t.test(nodes_overall$value ~ nodes_overall$group, var.equal = FALSE, alternative = "two.sided")
+cohensD(nodes_overall$value ~ nodes_overall$group)
+
+rm(nodes_high, nodes_low, nodes_overall)
 ```
 
 
+Differences in any category. 
 
-## Leiden Algorithm - high conspiracy
+```{r}
+category <- "conspirative narration"
 
-### aggregate CAMs
+nodes_high <- CAMfiles_high[[1]]
+nodes_low <- CAMfiles_low[[1]]
+
+# Remove valence split
+nodes_high$text_summarized <- gsub("_positive|_negative|_neutral|_ambivalent", "", nodes_high$text_summarized)
+nodes_low$text_summarized <- gsub("_positive|_negative|_neutral|_ambivalent", "", nodes_low$text_summarized)
+
+# Filter data regarding the category
+nodes_high <- nodes_high[nodes_high$text_summarized == category,]
+nodes_low <- nodes_low[nodes_low$text_summarized == category,]
+
+nodes_high$group <- "high"
+nodes_low$group <- "low"
+
+nodes_overall <- rbind(nodes_high, nodes_low)
+nodes_overall$value[nodes_overall$value == 10] <- 0
+
+nodes_overall$group <- as.factor(nodes_overall$group)
+
+shapiro.test(nodes_overall$value)
+leveneTest(value ~ group, data = nodes_overall, center = "median")
+
+# Not normally distributed -> Mann-Whitney-U-Test/Wilcoxon-Test
+wilcox_test(nodes_overall$value ~ nodes_overall$group,
+            distribution = "exact")
+
+# Effect size
+z <-
+  qnorm(as.numeric(pvalue(
+    wilcox_test(nodes_overall$value ~ nodes_overall$group,
+                distribution = "exact")
+  )) / 2)
+r <- z/sqrt(nrow(nodes_overall))
+r
+
+rm(category, nodes_high, nodes_low, z, r)
+```
+
+Wilcoxon-Test effect sizes:
+|r| < 0.1 	no effect / very small effect
+|r| = 0.1 	small effect
+|r| = 0.3 	medium effect
+|r| = 0.5 	large effect
+
+
+
+```{r}
+# correlation between number of mentions (%) and mean valence
+plot(CAMwordlist_overall$percent_diff, CAMwordlist_overall$mean_valence_diff)
+cor.test(CAMwordlist_overall$percent_diff, CAMwordlist_overall$mean_valence_diff, method = "pearson", alternative = "two.sided")
+```
+
+
+#.
+## Leiden Algorithm - high
+
+### aggregate CAMs | not necessary?
 
 ```{r}
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
@@ -1169,20 +1460,39 @@ rm(sel_ids_high, i)
 ```
 
 
-### Leiden algorithm
-
-from Julius!
-
+### Leiden algorithm (split)
 split by valence
 
 ```{r}
-adjacency_matrix_high <- CAMaggregated_high[[1]]
+sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
+tmp_nodes <- CAMfiles_high[[1]]
 
-diag(adjacency_matrix_high) <- 0
+# %>% filter(CAMfiles_high[[1]][["text_summarized"]] %in% tmp_list_high_split$Words)
+# [CAMfiles_high[[1]][["text_summarized"]] %in% tmp_list_high_split$Words,]
+
+
+CAMaggregated_high <-
+  aggregate_CAMs(dat_merged = CAMfiles_high[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_high)
+
+
+
+adjacency_matrix_high_split <- CAMaggregated_high[[1]]
+
+diag(adjacency_matrix_high_split) <- 0
+
+
+
+# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
+rows_to_keep <- which(rowSums(adjacency_matrix_high_split) > 3)
+adjacency_matrix_high_split <- adjacency_matrix_high_split[rows_to_keep, rows_to_keep]
+rm(rows_to_keep)
+
 
 
 graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
+  graph_from_adjacency_matrix(adjacency_matrix_high_split, mode = "undirected")
 # graph_object <- simplify(graph = graph_object)
 # graph_object
 # plot(graph_object, vertex.color = "grey75")
@@ -1192,6 +1502,11 @@ graph_object <-
 # library("leiden")
 # ?leiden
 
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_high_split, file = "adjacency_matrix_high_split.csv")
+setwd("..")
+
 for(i in seq(.1, 2, by = .1)){
   print(i)
   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
@@ -1199,8 +1514,8 @@ for(i in seq(.1, 2, by = .1)){
 }
 
 
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
 partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
 
 for (i in sort(unique(partition))) {
@@ -1208,7 +1523,7 @@ for (i in sort(unique(partition))) {
     "\nfor partion",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix_high)[partition == i],
+    rownames(adjacency_matrix_high_split)[partition == i],
     "\n"
   )
 }
@@ -1236,12 +1551,10 @@ plot(
 )
 ```
 
-from Julius!
 
-not split by valence
+### Leiden algorithm (not split)
 
 ```{r}
-
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
 tmp_nodes <- CAMfiles[[1]]
 tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
@@ -1249,7 +1562,7 @@ tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
 
 
 CAMaggregated_high <-
-  aggregate_CAMs(dat_merged = CAMfiles[[3]],
+  aggregate_CAMs(dat_merged = CAMfiles_high[[3]],
                  dat_nodes = tmp_nodes,
                  ids_CAMs = sel_ids_high)
 
@@ -1266,7 +1579,7 @@ adjacency_matrix_high <- CAMaggregated_high[[1]]
 diag(adjacency_matrix_high) <- 0
 
 
-graph_object <-
+#graph_object <-
   graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
 # graph_object <- simplify(graph = graph_object)
 # graph_object
@@ -1277,6 +1590,12 @@ graph_object <-
 # library("leiden")
 # ?leiden
 
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_high, file = "adjacency_matrix_high.csv")
+setwd("..")
+
+
 for(i in seq(.1, 2, by = .1)){
   print(i)
   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
@@ -1284,9 +1603,9 @@ for(i in seq(.1, 2, by = .1)){
 }
 
 
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.38)
 
 for (i in sort(unique(partition))) {
   cat(
@@ -1323,16 +1642,9 @@ plot(
 
 
 
+## Leiden Algorithm - low
 
-
-
-
-
-
-
-## Leiden Algorithm - low conspiracy
-
-### aggregate CAMs
+### aggregate CAMs | not necessary?
 
 ```{r}
 sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
@@ -1376,74 +1688,191 @@ rm(sel_ids_low, i)
 ```
 
 
-### Leiden algorithm
+### Leiden algorithm (split)
+split by valence
 
 ```{r}
-adjacency_matrix_low <- CAMaggregated_low[[1]]
+sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
+tmp_nodes <- CAMfiles_low[[1]]
 
-graph_object_low <-
-  graph_from_adjacency_matrix(adjacency_matrix_low, mode = "directed")
-# graph_object_low
-# plot(graph_object_low, vertex.color = "grey75")
-
-adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object_low) # not needed
-
-partition_low <- leiden(adjacency_matrix_low, resolution_parameter = 1)
-table(partition_low)
+# %>% filter(CAMfiles_low[[1]][["text_summarized"]] %in% tmp_list_low_split$Words)
+# [CAMfiles_low[[1]][["text_summarized"]] %in% tmp_list_low_split$Words,]
 
 
-for (i in unique(partition_low)) {
+CAMaggregated_low <-
+  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_low)
+
+
+
+adjacency_matrix_low_split <- CAMaggregated_low[[1]]
+
+diag(adjacency_matrix_low_split) <- 0
+
+
+
+# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
+rows_to_keep <- which(rowSums(adjacency_matrix_low) > 3)
+adjacency_matrix_low <- adjacency_matrix_low[rows_to_keep, rows_to_keep]
+rm(rows_to_keep)
+
+
+
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix_low_split, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_low_split, file = "adjacency_matrix_low_split.csv")
+setwd("..")
+
+for(i in seq(.1, 2, by = .1)){
+  print(i)
+  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+  print(table(partition))
+}
+
+
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
+
+for (i in sort(unique(partition))) {
   cat(
-    "\nfor partion_low",
+    "\nfor partion",
     i,
     "the following words have been found:\n",
-    rownames(adjacency_matrix_low)[partition_low == i],
+    rownames(adjacency_matrix_low)[partition == i],
     "\n"
   )
 }
-rm(i)
 
-node.cols_low <- brewer.pal(max(c(3, partition_low)), "Pastel1")[partition_low]
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
 # plot(graph_object, vertex.color = node.cols)
 
 
 plot(
-  graph_object_low,
+  graph_object,
   edge.arrow.size = 0,
   layout = layout_nicely,
   vertex.frame.color = "black",
   asp = .5,
   margin = -0.1,
   vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
-    5,
+    1,
   vertex.label.cex = .9,
   edge.weight = 2,
-  vertex.color = node.cols_low
+  vertex.color = node.cols
 )
-
-rm(node.cols_low)
-
 ```
 
 
+### Leiden algorithm (not split)
+
+```{r}
+
+sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
+tmp_nodes <- CAMfiles[[1]]
+tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
 
 
+CAMaggregated_low <-
+  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_low)
+
+
+CAMaggregated_low[[1]][1:5, 1:5]
+
+## check for symmetry
+all(colSums(CAMaggregated_low[[1]]) == rowSums(CAMaggregated_low[[1]]))
+all(colSums(CAMaggregated_low[[5]][[1]]) == rowSums(CAMaggregated_low[[5]][[1]]))
+
+
+adjacency_matrix_low <- CAMaggregated_low[[1]]
+
+diag(adjacency_matrix_low) <- 0
+
+
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix_low, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_low, file = "adjacency_matrix_low.csv")
+setwd("..")
+
+for(i in seq(.1, 2, by = .1)){
+  print(i)
+  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+  print(table(partition))
+}
+
+
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.35)
+
+for (i in sort(unique(partition))) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_low)[partition == i],
+    "\n"
+  )
+}
+
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
+    20,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
+```
+
+
+#.
 # Leiden algorithm with pruning (Gibson and Mucha, 2022)
 
-Community detection based on the Leiden algorithm, similar to Louvain.
-Repeatedly run with a host of different gamma and omega parameters.
-The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning) to keep only stable and modularity-optimal partitions.
-
-Konzepte durch Kategorien ersetzen
-mit aggregierten CAMs vs. mit individuellen
-
-Datenaufbereitung: 
-Algo selbst: 
-https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd 
-
-Doku: 
-https://modularitypruning.readthedocs.io/en/latest/index.html
-
+## Preparation
 
 ```{python}
 import numpy as np
@@ -1461,13 +1890,91 @@ import matplotlib.pyplot as plt
 import os
 import python_helpers  # our local helper scripts
 from python_helpers import print_partition
-import cairocffi
+#import cairocffi
 
 #import subprocess
 #import sys
 #
 #subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
 
+```
+
+
+Community detection based on the Leiden algorithm, similar to Louvain.
+Repeatedly run with a host of different gamma and omega parameters.
+The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning) to keep only stable and modularity-optimal partitions.
+
+Algo selbst: 
+https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd 
+
+Doku: 
+https://modularitypruning.readthedocs.io/en/latest/index.html
+
+
+## high (split)
+
+```{python}
+np.set_printoptions(threshold=np.inf)
+
+with open("outputs/adjacency_matrix_high_split.csv", "r") as f:
+    names = f.readline()[3:-1]
+    
+names = names.split('""')
+# names[0] = names[1][1:-2]     # strip the first "
+# names[-1] = names[-1][:-3]  + '"' # strip the last \n
+
+names = dict(enumerate(names))
+
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high_split.csv", "rb"), delimiter=" ", skiprows=1)
+
+print(adj_matrix)
+
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
+
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
+
+gamma_range = (0, 2)
+# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+leiden_gammas = np.linspace(*gamma_range, 2000)
+# TODO: how to set a seed??
+
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
+
+
+
+# # plot gamma estimates and domains of optimality
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif')
+# plot_estimates(gamma_estimates)
+# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+# plt.xlabel(r"gamma", fontsize=14)
+# plt.ylabel("Number of communities", fontsize=14)
+# plt.show()
+
+
+```
+
+
+## high (not split)
+
+```{python}
 np.set_printoptions(threshold=np.inf)
 
 with open("outputs/adjacency_matrix_high.csv", "r") as f:
@@ -1514,20 +2021,216 @@ for stable_part in stable_parts:
 
 
 
-# plot gamma estimates and domains of optimality
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plot_estimates(gamma_estimates)
-plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
-plt.xlabel(r"gamma", fontsize=14)
-plt.ylabel("Number of communities", fontsize=14)
-plt.show()
+# # plot gamma estimates and domains of optimality
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif')
+# plot_estimates(gamma_estimates)
+# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+# plt.xlabel(r"gamma", fontsize=14)
+# plt.ylabel("Number of communities", fontsize=14)
+# plt.show()
 
 
 ```
 
 
+## low (split)
 
+```{python}
+np.set_printoptions(threshold=np.inf)
+
+with open("outputs/adjacency_matrix_low_split.csv", "r") as f:
+    names = f.readline()
+    
+names = names.split('" "')
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
+
+names = dict(enumerate(names))
+
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low_split.csv", "rb"), delimiter=" ", skiprows=1)
+
+print(adj_matrix)
+
+
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
+
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
+
+gamma_range = (0, 2)
+# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+leiden_gammas = np.linspace(*gamma_range, 2000)
+# TODO: how to set a seed??
+
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
+
+
+
+# # plot gamma estimates and domains of optimality
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif')
+# plot_estimates(gamma_estimates)
+# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+# plt.xlabel(r"gamma", fontsize=14)
+# plt.ylabel("Number of communities", fontsize=14)
+# plt.show()
+
+
+```
+
+## low (not split)
+
+```{python}
+np.set_printoptions(threshold=np.inf)
+
+with open("outputs/adjacency_matrix_low.csv", "r") as f:
+    names = f.readline()
+    
+names = names.split('" "')
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
+
+names = dict(enumerate(names))
+
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low.csv", "rb"), delimiter=" ", skiprows=1)
+
+print(adj_matrix)
+
+
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
+
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
+
+gamma_range = (0, 2)
+# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+leiden_gammas = np.linspace(*gamma_range, 2000)
+# TODO: how to set a seed??
+
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
+
+
+
+# # plot gamma estimates and domains of optimality
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif')
+# plot_estimates(gamma_estimates)
+# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+# plt.xlabel(r"gamma", fontsize=14)
+# plt.ylabel("Number of communities", fontsize=14)
+# plt.show()
+
+
+```
+
+#.
+# CliquePercolation Tests
+
+# high
+
+Tutorial: <https://cran.r-project.org/web/packages/CliquePercolation/vignettes/CliquePercolation.html>
+
+Informative paper: \
+Lange, J., (2021). CliquePercolation: An R Package for conducting and visualizing results of the clique percolation network community detection algorithm. Journal of Open Source Software, 6(62), 3210, <https://doi.org/10.21105/joss.03210>
+
+-   *k*-cliques = fully connected networks with *k* nodes. The smallest possible k would be *k* = 3. Otherwise, the cliques would be only edges.
+-   *I* = For weighted networks, the algorithm has just one intermediate additional step. Specifically, after identifying the k-cliques, they are considered further only if their Intensity exceeds a specified threshold I. The Intensity of a k-clique is defined as the geometric mean of the edge weights.
+
+```{r cp}
+
+library(CliquePercolation)
+
+library(qgraph)
+
+W <- adjacency_matrix_high # Some kind of matrix (adjacency or weight matrix that is symmetric)
+W <- qgraph::qgraph(W, theme = "colorblind", layout = "spring", cut = 0.4) # Just for visualization 
+
+### To run the clique percolation algorithm for weighted networks, we initially need to optimize k and I.
+
+thresholds <- cpThreshold(W, method = "weighted", k.range = c(3,4),
+                          I.range = c(seq(0.40, 0.01, by = -0.005)),
+                          threshold = c("largest.components.ratio","chi")) # This function may need lots of time to run
+
+##################### Supplementary Analysis: Permutation Test #####################
+
+### Lange (2021): A permutation test, which repeatedly randomly shuffles the edges in the network and recalculates entropy can point out which entropy values are higher than already expected by chance.
+
+threshold <- cpThreshold(W,
+  method = "weighted",
+  k.range = c(3, 4),
+  I.range = seq(0.3, 0.09,-0.01),
+  threshold = "entropy"
+)
+
+thresholds.permute <- cpPermuteEntropy(W, cpThreshold.object = threshold, seed = 4186)
+
+# -> returning the combinations of k and I that are more surprising than chance
+
+########################################## 
+
+### Run the clique percolation method.
+
+###### Additionally, we enter the optimal k and I values determined via cpThreshold. 
+
+cpk3I.35 <- cpAlgorithm(W, k = 3, method = "weighted", I = 0.35)
+cpk4I.27 <- cpAlgorithm(W, k = 4, method = "weighted", I = 0.27)
+
+### Using summary, it is possible to get more detailed information about the communities, shared nodes, and isolated nodes.
+
+summary(cpk3I.35)
+
+### To look at the community size distribution.
+
+cpCommunitySizeDistribution(cpk3I.35$list.of.communities.numbers)
+
+### To actually test whether the distribution for k=3 fits a power-law (i.e., are k=3 and I=.35  the optimal parameters for clique percolation?)
+
+fit_pl_k3I.35 <- cpCommunitySizeDistribution(cpk3I.35$list.of.communities.numbers, test.power.law = TRUE)
+
+### Plotting the solution of the clique percolation algorithm in another network, such that a node represents a community, and the edges between nodes represent the number of nodes that two communities share (i.e., the community graph).
+
+commnetwork <- cpCommunityGraph(cpk3I.35$list.of.communities.numbers,
+                                node.size.method = "proportional",
+                                max.node.size = 20,
+                                theme = "colorblind", layout = "spring", repulsion = 0.4)
+
+```
+
+
+#.
 # analyze data 
 
 ## descriptives 
