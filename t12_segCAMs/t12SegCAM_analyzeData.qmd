@@ -243,7 +243,7 @@ if(!all(CAMfiles_high[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PI
   # vroom::vroom_write(x =  CAMfiles_high[[3]], file = "CAM_merged_high.txt")
 }
 
-saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
+# saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
 rm(tmp_ids)
 
 setwd("..")
@@ -280,7 +280,7 @@ if(!all(CAMfiles_low[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
   # vroom::vroom_write(x =  CAMfiles_low[[3]], file = "CAM_merged_low.txt")
 }
 
-saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
+# saveRDS(CAMfiles_low, file = "CAMfiles_low.RDS")
 rm(tmp_ids)
 
 setwd("..")
@@ -1327,6 +1327,7 @@ CAMwordlist_overall$mean_valence.o <- rowMeans(CAMwordlist_overall[, c("mean_val
 rm(CAMwordlist_high, CAMwordlist_low)
 ```
 
+
 ##### Specific categories
 
 Differences in main concept "climate change".
@@ -1411,64 +1412,56 @@ cor.test(CAMwordlist_overall$percent_diff, CAMwordlist_overall$mean_valence_diff
 
 
 #.
-## Leiden Algorithm - high
+# Leiden with pruning
 
-### aggregate CAMs | not necessary?
+Community detection based on the Leiden algorithm, similar to Louvain.
+Repeatedly run with a host of different gamma and omega parameters.
+The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning) to keep only stable and modularity-optimal partitions.
 
-```{r}
-sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
-CAMaggregated_high <-
-  aggregate_CAMs(dat_merged = CAMfiles[[3]],
-                 dat_nodes = CAMfiles[[1]],
-                 ids_CAMs = sel_ids_high)
+Algo selbst: 
+https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd 
 
-
-CAMaggregated_high[[1]][1:5, 1:5]
-
-## check for symmetry
-all(colSums(CAMaggregated_high[[1]]) == rowSums(CAMaggregated_high[[1]]))
-all(colSums(CAMaggregated_high[[5]][[1]]) == rowSums(CAMaggregated_high[[5]][[1]]))
+Doku: 
+https://modularitypruning.readthedocs.io/en/latest/index.html
 
 
-## test first concept of first CAM
-# colnames(CAMaggregated_high[[5]][[1]])[1]
-# colnames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
-# rownames(CAMaggregated_high[[5]][[1]])[CAMaggregated_high[[5]][[1]][1, ] >= 1]
+## Preparation
 
-# plot(
-#   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
-#   edge.arrow.size = .7,
-#   layout = layout_nicely,
-#   vertex.frame.color = "black",
-#   asp = .5,
-#   margin = -0.1,
-#   vertex.size = 10,
-#   vertex.label.cex = .9,
-#   main = networkIndicators$CAM_ID[i]
-# )
+```{python}
+import numpy as np
+import igraph as ig
+from modularitypruning import prune_to_stable_partitions
+from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas
+from modularitypruning.champ_utilities import CHAMP_3D
+from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
+from modularitypruning.plotting import plot_2d_domains_with_estimates
+from modularitypruning.plotting import plot_estimates
+from modularitypruning.champ_utilities import CHAMP_2D
+from modularitypruning.parameter_estimation_utilities import ranges_to_gamma_estimates
+from modularitypruning.plotting import plot_estimates
+import matplotlib.pyplot as plt
+import os
+import python_helpers  # our local helper scripts
+from python_helpers import print_partition
 
+#import cairocffi
 
-
-## adjacency matrix (Aij = 1 when nodes i and j are connected and Aij = 0 otherwise)
-CAMaggregated_onlyOnes_high <- CAMaggregated_high[[5]]
-for(i in 1:length(CAMaggregated_onlyOnes_high)){
-  CAMaggregated_onlyOnes_high[[i]][CAMaggregated_onlyOnes_high[[i]] >= 1] <- 1
-}
-
-rm(sel_ids_high, i)
+#import subprocess
+#import sys
+#
+#subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
 
 ```
 
+## high
 
-### Leiden algorithm (split)
+### split
 split by valence
 
+#### Create adjacency matrix
 ```{r}
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
 tmp_nodes <- CAMfiles_high[[1]]
-
-# %>% filter(CAMfiles_high[[1]][["text_summarized"]] %in% tmp_list_high_split$Words)
-# [CAMfiles_high[[1]][["text_summarized"]] %in% tmp_list_high_split$Words,]
 
 
 CAMaggregated_high <-
@@ -1491,8 +1484,7 @@ rm(rows_to_keep)
 
 
 
-graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix_high_split, mode = "undirected")
+graph_object <- graph_from_adjacency_matrix(adjacency_matrix_high_split, mode = "undirected")
 # graph_object <- simplify(graph = graph_object)
 # graph_object
 # plot(graph_object, vertex.color = "grey75")
@@ -1504,19 +1496,85 @@ graph_object <-
 
 # save as .csv
 setwd("outputs")
-write.csv(adjacency_matrix_high_split, file = "adjacency_matrix_high_split.csv")
+write.csv(adjacency_matrix_high_split, file = "adjacency_matrix_high_split.csv", row.names = FALSE)
 setwd("..")
 
-for(i in seq(.1, 2, by = .1)){
-  print(i)
-  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
-  print(table(partition))
-}
+# for(i in seq(.1, 2, by = .1)){
+#   print(i)
+#   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+#   print(table(partition))
+# }
+
+rm(sel_ids_high)
+```
 
 
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
+#### Compute most robust gamma
+
+```{python}
+np.set_printoptions(threshold=np.inf)
+
+with open("outputs/adjacency_matrix_high_split.csv", "r") as f:
+    names = f.readline()
+    
+names = names.split(",")
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
+
+names = dict(enumerate(names))
+
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high_split.csv", "rb"), delimiter=",", skiprows=1)
+
+print(adj_matrix)
+
+
+# remove self-loops
+np.fill_diagonal(adj_matrix, 0)
+
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
+
+gamma_range = (0, 2)
+# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+leiden_gammas = np.linspace(*gamma_range, 2000)
+# TODO: how to set a seed??
+
+partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
+
+# TODO: how to set a seed??
+
+# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
+stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
+
+# run CHAMP to obtain the dominant partitions along with their regions of optimality
+ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
+
+# append gamma estimate for each dominant partition onto the CHAMP domains
+gamma_estimates = ranges_to_gamma_estimates(G, ranges)
+
+# get some infos about our partitions
+for stable_part in stable_parts:
+    print_partition(stable_part, partitions, names, gamma_estimates)
+    print("\n\n")
+
+
+# # plot gamma estimates and domains of optimality
+# plt.rc('text', usetex=True)
+# plt.rc('font', family='serif')
+# plot_estimates(gamma_estimates)
+# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
+# plt.xlabel(r"gamma", fontsize=14)
+# plt.ylabel("Number of communities", fontsize=14)
+# plt.show()
+
+
+```
+
+
+#### Print partitions
+
+```{r}
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.301275459001395) # enter gamma as resolution_parameter
+
 
 for (i in sort(unique(partition))) {
   cat(
@@ -1527,8 +1585,6 @@ for (i in sort(unique(partition))) {
     "\n"
   )
 }
-
-
 
 
 library("RColorBrewer")
@@ -1552,7 +1608,9 @@ plot(
 ```
 
 
-### Leiden algorithm (not split)
+### not split
+
+#### Create adjacency matrix
 
 ```{r}
 sel_ids_high <- unique(CAMfiles_high[[1]]$participantCAM)
@@ -1579,8 +1637,15 @@ adjacency_matrix_high <- CAMaggregated_high[[1]]
 diag(adjacency_matrix_high) <- 0
 
 
-#graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
+
+# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
+rows_to_keep <- which(rowSums(adjacency_matrix_high) > 3)
+adjacency_matrix_high <- adjacency_matrix_high[rows_to_keep, rows_to_keep]
+rm(rows_to_keep)
+
+
+
+graph_object <- graph_from_adjacency_matrix(adjacency_matrix_high, mode = "undirected")
 # graph_object <- simplify(graph = graph_object)
 # graph_object
 # plot(graph_object, vertex.color = "grey75")
@@ -1592,342 +1657,36 @@ diag(adjacency_matrix_high) <- 0
 
 # save as .csv
 setwd("outputs")
-write.csv(adjacency_matrix_high, file = "adjacency_matrix_high.csv")
+write.csv(adjacency_matrix_high, file = "adjacency_matrix_high.csv", row.names = FALSE)
 setwd("..")
 
-
-for(i in seq(.1, 2, by = .1)){
-  print(i)
-  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
-  print(table(partition))
-}
-
-
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.38)
-
-for (i in sort(unique(partition))) {
-  cat(
-    "\nfor partion",
-    i,
-    "the following words have been found:\n",
-    rownames(adjacency_matrix_high)[partition == i],
-    "\n"
-  )
-}
-
-
-
-
-library("RColorBrewer")
-node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
-# plot(graph_object, vertex.color = node.cols)
-
-
-plot(
-  graph_object,
-  edge.arrow.size = 0,
-  layout = layout_nicely,
-  vertex.frame.color = "black",
-  asp = .5,
-  margin = -0.1,
-  vertex.size = diag(CAMaggregated_high[[1]]) / max(diag(CAMaggregated_high[[1]])) *
-    20,
-  vertex.label.cex = .9,
-  edge.weight = 2,
-  vertex.color = node.cols
-)
+# 
+# for(i in seq(.1, 2, by = .1)){
+#   print(i)
+#   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+#   print(table(partition))
+# }
 ```
 
 
-
-## Leiden Algorithm - low
-
-### aggregate CAMs | not necessary?
-
-```{r}
-sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
-CAMaggregated_low <-
-  aggregate_CAMs(dat_merged = CAMfiles[[3]],
-                 dat_nodes = CAMfiles[[1]],
-                 ids_CAMs = sel_ids_low)
-
-
-## check for symmetry
-all(colSums(CAMaggregated_low[[5]][[1]]) == rowSums(CAMaggregated_low[[5]][[1]]))
-
-
-## test first concept of first CAM
-colnames(CAMaggregated_low[[5]][[1]])[1]
-colnames(CAMaggregated_low[[5]][[1]])[CAMaggregated_low[[5]][[1]][1, ] >= 1]
-rownames(CAMaggregated_low[[5]][[1]])[CAMaggregated_low[[5]][[1]][1, ] >= 1]
-
-# plot(
-#   make_ego_graph( CAMdrawn[[1]], order = 1, 1)[[1]],
-#   edge.arrow.size = .7,
-#   layout = layout_nicely,
-#   vertex.frame.color = "black",
-#   asp = .5,
-#   margin = -0.1,
-#   vertex.size = 10,
-#   vertex.label.cex = .9,
-#   main = networkIndicators$CAM_ID[i]
-# )
-
-
-
-## adjacency matrix (Aij = 1 when nodes i and j are connected and Aij = 0 otherwise)
-CAMaggregated_onlyOnes_low <- CAMaggregated_low[[5]]
-for(i in 1:length(CAMaggregated_onlyOnes_low)){
-  CAMaggregated_onlyOnes_low[[i]][CAMaggregated_onlyOnes_low[[i]] >= 1] <- 1
-}
-
-rm(sel_ids_low, i)
-
-```
-
-
-### Leiden algorithm (split)
-split by valence
-
-```{r}
-sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
-tmp_nodes <- CAMfiles_low[[1]]
-
-# %>% filter(CAMfiles_low[[1]][["text_summarized"]] %in% tmp_list_low_split$Words)
-# [CAMfiles_low[[1]][["text_summarized"]] %in% tmp_list_low_split$Words,]
-
-
-CAMaggregated_low <-
-  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
-                 dat_nodes = tmp_nodes,
-                 ids_CAMs = sel_ids_low)
-
-
-
-adjacency_matrix_low_split <- CAMaggregated_low[[1]]
-
-diag(adjacency_matrix_low_split) <- 0
-
-
-
-# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
-rows_to_keep <- which(rowSums(adjacency_matrix_low) > 3)
-adjacency_matrix_low <- adjacency_matrix_low[rows_to_keep, rows_to_keep]
-rm(rows_to_keep)
-
-
-
-graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix_low_split, mode = "undirected")
-# graph_object <- simplify(graph = graph_object)
-# graph_object
-# plot(graph_object, vertex.color = "grey75")
-
-# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
-
-# library("leiden")
-# ?leiden
-
-# save as .csv
-setwd("outputs")
-write.csv(adjacency_matrix_low_split, file = "adjacency_matrix_low_split.csv")
-setwd("..")
-
-for(i in seq(.1, 2, by = .1)){
-  print(i)
-  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
-  print(table(partition))
-}
-
-
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1)
-
-for (i in sort(unique(partition))) {
-  cat(
-    "\nfor partion",
-    i,
-    "the following words have been found:\n",
-    rownames(adjacency_matrix_low)[partition == i],
-    "\n"
-  )
-}
-
-
-
-
-library("RColorBrewer")
-node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
-# plot(graph_object, vertex.color = node.cols)
-
-
-plot(
-  graph_object,
-  edge.arrow.size = 0,
-  layout = layout_nicely,
-  vertex.frame.color = "black",
-  asp = .5,
-  margin = -0.1,
-  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
-    1,
-  vertex.label.cex = .9,
-  edge.weight = 2,
-  vertex.color = node.cols
-)
-```
-
-
-### Leiden algorithm (not split)
-
-```{r}
-
-sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
-tmp_nodes <- CAMfiles[[1]]
-tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
-                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
-
-
-CAMaggregated_low <-
-  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
-                 dat_nodes = tmp_nodes,
-                 ids_CAMs = sel_ids_low)
-
-
-CAMaggregated_low[[1]][1:5, 1:5]
-
-## check for symmetry
-all(colSums(CAMaggregated_low[[1]]) == rowSums(CAMaggregated_low[[1]]))
-all(colSums(CAMaggregated_low[[5]][[1]]) == rowSums(CAMaggregated_low[[5]][[1]]))
-
-
-adjacency_matrix_low <- CAMaggregated_low[[1]]
-
-diag(adjacency_matrix_low) <- 0
-
-
-graph_object <-
-  graph_from_adjacency_matrix(adjacency_matrix_low, mode = "undirected")
-# graph_object <- simplify(graph = graph_object)
-# graph_object
-# plot(graph_object, vertex.color = "grey75")
-
-# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
-
-# library("leiden")
-# ?leiden
-
-# save as .csv
-setwd("outputs")
-write.csv(adjacency_matrix_low, file = "adjacency_matrix_low.csv")
-setwd("..")
-
-for(i in seq(.1, 2, by = .1)){
-  print(i)
-  partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
-  print(table(partition))
-}
-
-
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
-# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.35)
-
-for (i in sort(unique(partition))) {
-  cat(
-    "\nfor partion",
-    i,
-    "the following words have been found:\n",
-    rownames(adjacency_matrix_low)[partition == i],
-    "\n"
-  )
-}
-
-
-
-
-library("RColorBrewer")
-node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
-# plot(graph_object, vertex.color = node.cols)
-
-
-plot(
-  graph_object,
-  edge.arrow.size = 0,
-  layout = layout_nicely,
-  vertex.frame.color = "black",
-  asp = .5,
-  margin = -0.1,
-  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
-    20,
-  vertex.label.cex = .9,
-  edge.weight = 2,
-  vertex.color = node.cols
-)
-```
-
-
-#.
-# Leiden algorithm with pruning (Gibson and Mucha, 2022)
-
-## Preparation
-
-```{python}
-import numpy as np
-import igraph as ig
-from modularitypruning import prune_to_stable_partitions
-from modularitypruning.leiden_utilities import repeated_parallel_leiden_from_gammas
-from modularitypruning.champ_utilities import CHAMP_3D
-from modularitypruning.parameter_estimation_utilities import domains_to_gamma_omega_estimates
-from modularitypruning.plotting import plot_2d_domains_with_estimates
-from modularitypruning.plotting import plot_estimates
-from modularitypruning.champ_utilities import CHAMP_2D
-from modularitypruning.parameter_estimation_utilities import ranges_to_gamma_estimates
-from modularitypruning.plotting import plot_estimates
-import matplotlib.pyplot as plt
-import os
-import python_helpers  # our local helper scripts
-from python_helpers import print_partition
-#import cairocffi
-
-#import subprocess
-#import sys
-#
-#subprocess.check_call([sys.executable, "-m", "pip", "install", "modularitypruning"])
-
-```
-
-
-Community detection based on the Leiden algorithm, similar to Louvain.
-Repeatedly run with a host of different gamma and omega parameters.
-The partitions are then pruned with ModularityPruning (http://github.com/ragibson/ModularityPruning) to keep only stable and modularity-optimal partitions.
-
-Algo selbst: 
-https://github.com/soelderer/livmats-basal-attributes-analysis/blob/julius/partII_CAMs/02_partII_CAMs.qmd 
-
-Doku: 
-https://modularitypruning.readthedocs.io/en/latest/index.html
-
-
-## high (split)
+#### Compute most robust gamma
 
 ```{python}
 np.set_printoptions(threshold=np.inf)
 
-with open("outputs/adjacency_matrix_high_split.csv", "r") as f:
-    names = f.readline()[3:-1]
+with open("outputs/adjacency_matrix_high.csv", "r") as f:
+    names = f.readline()
     
-names = names.split('""')
-# names[0] = names[1][1:-2]     # strip the first "
-# names[-1] = names[-1][:-3]  + '"' # strip the last \n
+names = names.split(",")
+names[0] = names[0][1:]     # strip the first "
+names[-1] = names[-1][:-2]  # strip the last \n
 
 names = dict(enumerate(names))
 
-adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high_split.csv", "rb"), delimiter=" ", skiprows=1)
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high.csv", "rb"), delimiter=",", skiprows=1)
 
 print(adj_matrix)
+
 
 # remove self-loops
 np.fill_diagonal(adj_matrix, 0)
@@ -1972,69 +1731,101 @@ for stable_part in stable_parts:
 ```
 
 
-## high (not split)
+#### Print partitions
 
-```{python}
-np.set_printoptions(threshold=np.inf)
+```{r}
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
+# partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.0181890843352919)
 
-with open("outputs/adjacency_matrix_high.csv", "r") as f:
-    names = f.readline()
-    
-names = names.split('" "')
-names[0] = names[0][1:]     # strip the first "
-names[-1] = names[-1][:-2]  # strip the last \n
-
-names = dict(enumerate(names))
-
-adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_high.csv", "rb"), delimiter=" ", skiprows=1)
-
-print(adj_matrix)
-
-
-# remove self-loops
-np.fill_diagonal(adj_matrix, 0)
-
-G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
-
-gamma_range = (0, 2)
-# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
-leiden_gammas = np.linspace(*gamma_range, 2000)
-# TODO: how to set a seed??
-
-partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
-
-# TODO: how to set a seed??
-
-# prune to the stable partitions from (gamma=0, omega=0) to (gamma=2, omega=2)
-stable_parts = prune_to_stable_partitions(G, partitions, *gamma_range)
-
-# run CHAMP to obtain the dominant partitions along with their regions of optimality
-ranges = CHAMP_2D(G, partitions, gamma_0=0.0, gamma_f=2.0)
-
-# append gamma estimate for each dominant partition onto the CHAMP domains
-gamma_estimates = ranges_to_gamma_estimates(G, ranges)
-
-# get some infos about our partitions
-for stable_part in stable_parts:
-    print_partition(stable_part, partitions, names, gamma_estimates)
-    print("\n\n")
+for (i in sort(unique(partition))) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_high)[partition == i],
+    "\n"
+  )
+}
 
 
-
-# # plot gamma estimates and domains of optimality
-# plt.rc('text', usetex=True)
-# plt.rc('font', family='serif')
-# plot_estimates(gamma_estimates)
-# plt.title(r"CHAMP Domains of Optimality and gamma Estimates", fontsize=14)
-# plt.xlabel(r"gamma", fontsize=14)
-# plt.ylabel("Number of communities", fontsize=14)
-# plt.show()
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
 
 
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_high[[1]]) / max(diag(CAMaggregated_high[[1]])) *
+    20,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
 ```
 
 
-## low (split)
+## low
+
+### split
+
+#### Create adjacency matrix
+
+```{r}
+sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
+tmp_nodes <- CAMfiles_low[[1]]
+
+
+CAMaggregated_low <-
+  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_low)
+
+
+
+adjacency_matrix_low_split <- CAMaggregated_low[[1]]
+
+diag(adjacency_matrix_low_split) <- 0
+
+
+
+# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
+rows_to_keep <- which(rowSums(adjacency_matrix_low_split) > 3)
+adjacency_matrix_low_split <- adjacency_matrix_low_split[rows_to_keep, rows_to_keep]
+rm(rows_to_keep)
+
+
+
+graph_object <-
+  graph_from_adjacency_matrix(adjacency_matrix_low_split, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_low_split, file = "adjacency_matrix_low_split.csv", row.names = FALSE)
+setwd("..")
+
+# for(i in seq(.1, 2, by = .1)){
+#   print(i)
+#   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+#   print(table(partition))
+# }
+```
+
+
+#### Compute most robust gamma
 
 ```{python}
 np.set_printoptions(threshold=np.inf)
@@ -2042,13 +1833,13 @@ np.set_printoptions(threshold=np.inf)
 with open("outputs/adjacency_matrix_low_split.csv", "r") as f:
     names = f.readline()
     
-names = names.split('" "')
+names = names.split(",")
 names[0] = names[0][1:]     # strip the first "
 names[-1] = names[-1][:-2]  # strip the last \n
 
 names = dict(enumerate(names))
 
-adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low_split.csv", "rb"), delimiter=" ", skiprows=1)
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low_split.csv", "rb"), delimiter=",", skiprows=1)
 
 print(adj_matrix)
 
@@ -2056,7 +1847,7 @@ print(adj_matrix)
 # remove self-loops
 np.fill_diagonal(adj_matrix, 0)
 
-G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
 
 gamma_range = (0, 2)
 # leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
@@ -2095,7 +1886,107 @@ for stable_part in stable_parts:
 
 ```
 
-## low (not split)
+
+#### Print partitions
+
+```{r}
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.3295363184489188) # enter gamma as resolution_parameter
+
+for (i in sort(unique(partition))) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_low_split)[partition == i],
+    "\n"
+  )
+}
+
+
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
+    1,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
+```
+
+
+### not split
+
+#### Create adjacency matrix
+
+```{r}
+sel_ids_low <- unique(CAMfiles_low[[1]]$participantCAM)
+tmp_nodes <- CAMfiles[[1]]
+tmp_nodes$text_summarized <- str_remove_all(string = tmp_nodes$text_summarized,
+                           pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+
+
+CAMaggregated_low <-
+  aggregate_CAMs(dat_merged = CAMfiles_low[[3]],
+                 dat_nodes = tmp_nodes,
+                 ids_CAMs = sel_ids_low)
+
+
+CAMaggregated_low[[1]][1:5, 1:5]
+
+## check for symmetry
+all(colSums(CAMaggregated_low[[1]]) == rowSums(CAMaggregated_low[[1]]))
+all(colSums(CAMaggregated_low[[5]][[1]]) == rowSums(CAMaggregated_low[[5]][[1]]))
+
+
+adjacency_matrix_low <- CAMaggregated_low[[1]]
+
+diag(adjacency_matrix_low) <- 0
+
+
+
+# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
+rows_to_keep <- which(rowSums(adjacency_matrix_low_split) > 3)
+adjacency_matrix_low_split <- adjacency_matrix_low_split[rows_to_keep, rows_to_keep]
+rm(rows_to_keep)
+
+
+
+graph_object <- graph_from_adjacency_matrix(adjacency_matrix_low, mode = "undirected")
+# graph_object <- simplify(graph = graph_object)
+# graph_object
+# plot(graph_object, vertex.color = "grey75")
+
+# adjacency_matrix_low <- igraph::as_adjacency_matrix(graph_object) # not needed
+
+# library("leiden")
+# ?leiden
+
+# save as .csv
+setwd("outputs")
+write.csv(adjacency_matrix_low, file = "adjacency_matrix_low.csv", row.names = FALSE)
+setwd("..")
+
+# for(i in seq(.1, 2, by = .1)){
+#   print(i)
+#   partition <- leiden::leiden(object = graph_object, resolution_parameter = i)
+#   print(table(partition))
+# }
+```
+
+
+#### Compute most robust gamma
 
 ```{python}
 np.set_printoptions(threshold=np.inf)
@@ -2103,13 +1994,13 @@ np.set_printoptions(threshold=np.inf)
 with open("outputs/adjacency_matrix_low.csv", "r") as f:
     names = f.readline()
     
-names = names.split('" "')
+names = names.split(",")
 names[0] = names[0][1:]     # strip the first "
 names[-1] = names[-1][:-2]  # strip the last \n
 
 names = dict(enumerate(names))
 
-adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low.csv", "rb"), delimiter=" ", skiprows=1)
+adj_matrix = np.loadtxt(open("outputs/adjacency_matrix_low.csv", "rb"), delimiter=",", skiprows=1)
 
 print(adj_matrix)
 
@@ -2117,7 +2008,7 @@ print(adj_matrix)
 # remove self-loops
 np.fill_diagonal(adj_matrix, 0)
 
-G = ig.Graph.Adjacency(matrix=adj_matrix, mode="directed")
+G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
 
 gamma_range = (0, 2)
 # leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
@@ -2156,10 +2047,48 @@ for stable_part in stable_parts:
 
 ```
 
+
+#### Print partitions
+
+```{r}
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 0.9470849494275032) # enter gamma as resolution_parameter
+
+for (i in sort(unique(partition))) {
+  cat(
+    "\nfor partion",
+    i,
+    "the following words have been found:\n",
+    rownames(adjacency_matrix_low)[partition == i],
+    "\n"
+  )
+}
+
+
+library("RColorBrewer")
+node.cols <- brewer.pal(max(c(3, partition)), "Pastel1")[partition]
+# plot(graph_object, vertex.color = node.cols)
+
+
+plot(
+  graph_object,
+  edge.arrow.size = 0,
+  layout = layout_nicely,
+  vertex.frame.color = "black",
+  asp = .5,
+  margin = -0.1,
+  vertex.size = diag(CAMaggregated_low[[1]]) / max(diag(CAMaggregated_low[[1]])) *
+    20,
+  vertex.label.cex = .9,
+  edge.weight = 2,
+  vertex.color = node.cols
+)
+```
+
+
 #.
 # CliquePercolation Tests
 
-# high
+## high
 
 Tutorial: <https://cran.r-project.org/web/packages/CliquePercolation/vignettes/CliquePercolation.html>
 
@@ -2228,6 +2157,9 @@ commnetwork <- cpCommunityGraph(cpk3I.35$list.of.communities.numbers,
                                 theme = "colorblind", layout = "spring", repulsion = 0.4)
 
 ```
+
+## low
+
 
 
 #.
