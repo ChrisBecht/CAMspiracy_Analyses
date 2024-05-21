@@ -151,6 +151,114 @@ t12_questionnaireCAMs$mean_PolicyItems_Germany26[t12_questionnaireCAMs$country.y
 ## stepwise LMs
 
 
+### for X
+
+```{r}
+subset_data_Lara <- t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$country.y), ]
+subset_data_Lara <- t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$assortativity_valence_macro), ]
+
+
+cor.plot(r = cor(subset_data_Lara[, str_subset(string = colnames(subset_data_Lara), pattern = "_macro")]))
+
+# mean_valence_normed_macro
+# meanDistance_directed_macro
+# diameter_unweighted_directed_macro
+# reciprocity_macro
+
+full.modelPolicy <- lm(mean_BiosphericValues ~ mean_valence_macro+density_macro+transitivity_macro+centr_degree_macro+centr_clo_macro+centr_betw_macro+centr_eigen_macro+meanDistance_undirected_macro+diameter_weighted_undirected_macro+diameter_unweighted_undirected_macro+num_nodes_macro+num_nodes_pos_macro+num_nodes_neg_macro+num_nodes_neut_macro+num_nodes_ambi_macro+num_edges_macro+num_edges_solid_macro+num_edges_dashed_macro+num_edges_invaliddashed_macro+meanWeightEdges_macro+assortativity_valence_macro+assortativityDegree_macro+degreetot_micro_ClimateChange+valence_micro_ClimateChange+centr_clo_micro_ClimateChange+transitivity_micro_ClimateChange, data = subset_data_Lara)
+summary(full.modelPolicy)
+
+
+
+full.modelPolicy <- lm(mean_PolicyItems ~ num_nodes_ambi_macro, data = subset_data_Lara)
+summary(full.modelPolicy)
+
+
+stargazer::stargazer(full.modelPolicy, type = "html", out = "regressionPolicy.html")
+
+
+
+##############
+full.modelPolicy <- lm(mean_CET ~ mean_valence_macro+density_macro+transitivity_macro+centr_degree_macro+centr_clo_macro+centr_betw_macro+centr_eigen_macro+meanDistance_undirected_macro+diameter_weighted_undirected_macro+diameter_unweighted_undirected_macro+num_nodes_macro+num_nodes_pos_macro+num_nodes_neg_macro+num_nodes_neut_macro+num_nodes_ambi_macro+num_edges_macro+num_edges_solid_macro+num_edges_dashed_macro+num_edges_invaliddashed_macro+meanWeightEdges_macro+assortativity_valence_macro+assortativityDegree_macro+degreetot_micro_ClimateChange+valence_micro_ClimateChange+centr_clo_micro_ClimateChange+transitivity_micro_ClimateChange, data = subset_data_Lara)
+summary(full.modelPolicy)
+
+
+
+full.modelPolicy <- lm(mean_PolicyItems ~ num_nodes_ambi_macro, data = subset_data_Lara)
+summary(full.modelPolicy)
+
+
+#############
+# Stepwise regression model
+# help(stepwise)
+step.modelPolicy <- stepAIC(object = full.modelPolicy, direction = "both",
+                      trace = TRUE)
+summary(step.modelPolicy)
+
+
+##Linear Regression Modell Biospheric
+#Fit the full model
+
+
+subset_data_Lara <- readRDS("~/Uni/Bachelorarbeit/Daten/subset_data_Lara.rds")
+full.modelBio <- lm(mean_BiosphericValues ~ mean_valence_macro+mean_valence_normed_macro+density_macro+transitivity_macro+centr_degree_macro+centr_clo_macro+centr_betw_macro+centr_eigen_macro+meanDistance_directed_macro+meanDistance_undirected_macro+diameter_weighted_undirected_macro+diameter_unweighted_undirected_macro+diameter_unweighted_directed_macro+num_nodes_macro+num_nodes_pos_macro+num_nodes_neg_macro+num_nodes_neut_macro+num_nodes_ambi_macro+num_edges_macro+num_edges_solid_macro+num_edges_dashed_macro+num_edges_invaliddashed_macro+meanWeightEdges_macro+reciprocity_macro+assortativity_valence_macro+assortativityDegree_macro+degreetot_micro_ClimateChange+valence_micro_ClimateChange+centr_clo_micro_ClimateChange+transitivity_micro_ClimateChange, data = subset_data_Lara)
+summary(full.modelBio)
+
+
+stargazer::stargazer(full.modelBio, type = "html", out = "regressionBiospheric.html")
+
+
+# Stepwise regression model
+help(stepwise)
+step.modelBio <- stepAIC(object = full.modelBio, direction = "both",
+                      trace = TRUE)
+summary(step.modelBio)
+report(step.modelBio)
+
+##Linear Regression Model RPI
+
+#Bilde Variable
+subset_data_Lara$mean_RPI <- rowMeans(subset_data_Lara[c("probabilityClimate1", "probabilityClimate2", "Risk-1riskProb", "Risk-2riskProb")])
+
+full.modelRPI <- lm(mean_RPI~ mean_valence_macro+mean_valence_normed_macro+density_macro+transitivity_macro+centr_degree_macro+centr_clo_macro+centr_betw_macro+centr_eigen_macro+meanDistance_directed_macro+meanDistance_undirected_macro+diameter_weighted_undirected_macro+diameter_unweighted_undirected_macro+diameter_unweighted_directed_macro+num_nodes_macro+num_nodes_pos_macro+num_nodes_neg_macro+num_nodes_neut_macro+num_nodes_ambi_macro+num_edges_macro+num_edges_solid_macro+num_edges_dashed_macro+num_edges_invaliddashed_macro+meanWeightEdges_macro+reciprocity_macro+assortativity_valence_macro+assortativityDegree_macro+degreetot_micro_ClimateChange+valence_micro_ClimateChange+centr_clo_micro_ClimateChange+transitivity_micro_ClimateChange, data = subset_data_Lara)
+summary(full.modelRPI)
+
+
+stargazer::stargazer(full.modelRPI, type = "html", out = "regressionRPI.html")
+
+
+# Stepwise regression model
+
+help(stepwise)
+step.modelRPI <- stepAIC(object = full.modelRPI, direction = "both",
+                         trace = TRUE)
+summary(step.modelRPI)
+report(step.modelRPI)
+
+
+##Linear Regression Model CET
+#Fit the full model
+subset_data_Lara <- readRDS("~/Uni/Bachelorarbeit/Daten/subset_data_Lara.rds")
+full.modelCET <- lm(mean_CET ~ mean_valence_macro+mean_valence_normed_macro+density_macro+transitivity_macro+centr_degree_macro+centr_clo_macro+centr_betw_macro+centr_eigen_macro+meanDistance_directed_macro+meanDistance_undirected_macro+diameter_weighted_undirected_macro+diameter_unweighted_undirected_macro+diameter_unweighted_directed_macro+num_nodes_macro+num_nodes_pos_macro+num_nodes_neg_macro+num_nodes_neut_macro+num_nodes_ambi_macro+num_edges_macro+num_edges_solid_macro+num_edges_dashed_macro+num_edges_invaliddashed_macro+meanWeightEdges_macro+reciprocity_macro+assortativity_valence_macro+assortativityDegree_macro+degreetot_micro_ClimateChange+valence_micro_ClimateChange+centr_clo_micro_ClimateChange+transitivity_micro_ClimateChange, data = subset_data_Lara)
+summary(full.modelCET)
+
+
+stargazer::stargazer(full.modelCET, type = "html", out = "regressionBiospheric.html")
+
+
+# Stepwise regression model
+help(stepwise)
+step.modelCET <- stepAIC(object = full.modelCET, direction = "both",
+                         trace = TRUE)
+summary(step.modelCET)
+report(step.modelCET)
+
+
+
+```
+
+
+
 ### for mean_BiosphericValues
 
 
@@ -208,7 +316,7 @@ summary(birthwt.step)
 
 
 ```{r}
-?swiss
+# ?swiss
 full.model <- lm(Fertility ~., data = swiss)
 summary(full.model)
 

@@ -110,7 +110,7 @@ create_wordlist <- function(dat_nodes = CAMfiles[[1]],
   # head(freq_terms)
   # dim(freq_terms)
 
-  freq_terms = dat_nodes %>% select(text) %>% dplyr::count(text)
+  freq_terms = dat_nodes %>% dplyr::select(text) %>% dplyr::count(text)
   colnames(freq_terms) <- c("Words", "all")
   freq_terms <- as.data.frame(freq_terms)
 
