@@ -193,7 +193,7 @@ step.model <- stepAIC(object = full.model, direction = "both",
                       trace = TRUE)
 summary(step.model)
 
-
+report::report(x = step.model)
 
 ### GLM
 example(birthwt)
