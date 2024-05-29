@@ -88,6 +88,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#compute-mean-variables-for-multi-dimensional-solutions" id="toc-compute-mean-variables-for-multi-dimensional-solutions" class="nav-link" data-scroll-target="#compute-mean-variables-for-multi-dimensional-solutions">compute mean variables for multi-dimensional solutions</a></li>
   <li><a href="#stepwise-lms" id="toc-stepwise-lms" class="nav-link" data-scroll-target="#stepwise-lms">stepwise LMs</a>
   <ul class="collapse">
+  <li><a href="#for-x" id="toc-for-x" class="nav-link" data-scroll-target="#for-x">for X</a></li>
   <li><a href="#for-mean_biosphericvalues" id="toc-for-mean_biosphericvalues" class="nav-link" data-scroll-target="#for-mean_biosphericvalues">for mean_BiosphericValues</a></li>
   </ul></li>
   <li><a href="#policy-scale" id="toc-policy-scale" class="nav-link" data-scroll-target="#policy-scale">policy scale</a></li>
@@ -144,7 +145,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>       <span class="st">'stargazer'</span>, <span class="st">'psych'</span>, <span class="st">'jtools'</span>, <span class="st">'DT'</span>, <span class="st">'ggstatsplot'</span>, </span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>       <span class="st">'lavaan'</span>, <span class="st">'igraph'</span>,</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>       <span class="st">'regsem'</span>, <span class="st">'MplusAutomation'</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">'MASS'</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">'MASS'</span>, <span class="st">'report'</span>)</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Rcmdr</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
@@ -459,16 +460,287 @@ Germany     USA
 </section>
 <section id="stepwise-lms" class="level2">
 <h2 class="anchored" data-anchor-id="stepwise-lms">stepwise LMs</h2>
+<section id="for-x" class="level3">
+<h3 class="anchored" data-anchor-id="for-x">for X</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>subset_data_Lara <span class="ot">&lt;-</span> t12_questionnaireCAMs[<span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y), ]</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>subset_data_Lara <span class="ot">&lt;-</span> t12_questionnaireCAMs[<span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>assortativity_valence_macro), ]</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cor.plot</span>(<span class="at">r =</span> <span class="fu">cor</span>(subset_data_Lara[, <span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(subset_data_Lara), <span class="at">pattern =</span> <span class="st">"_macro"</span>)]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in cor(subset_data_Lara[, str_subset(string =
+colnames(subset_data_Lara), : Standardabweichung ist Null</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># mean_valence_normed_macro</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co"># meanDistance_directed_macro</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="co"># diameter_unweighted_directed_macro</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co"># reciprocity_macro</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>full.modelPolicy <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_BiosphericValues <span class="sc">~</span> mean_valence_macro<span class="sc">+</span>density_macro<span class="sc">+</span>transitivity_macro<span class="sc">+</span>centr_degree_macro<span class="sc">+</span>centr_clo_macro<span class="sc">+</span>centr_betw_macro<span class="sc">+</span>centr_eigen_macro<span class="sc">+</span>meanDistance_undirected_macro<span class="sc">+</span>diameter_weighted_undirected_macro<span class="sc">+</span>diameter_unweighted_undirected_macro<span class="sc">+</span>num_nodes_macro<span class="sc">+</span>num_nodes_pos_macro<span class="sc">+</span>num_nodes_neg_macro<span class="sc">+</span>num_nodes_neut_macro<span class="sc">+</span>num_nodes_ambi_macro<span class="sc">+</span>num_edges_macro<span class="sc">+</span>num_edges_solid_macro<span class="sc">+</span>num_edges_dashed_macro<span class="sc">+</span>num_edges_invaliddashed_macro<span class="sc">+</span>meanWeightEdges_macro<span class="sc">+</span>assortativity_valence_macro<span class="sc">+</span>assortativityDegree_macro<span class="sc">+</span>degreetot_micro_ClimateChange<span class="sc">+</span>valence_micro_ClimateChange<span class="sc">+</span>centr_clo_micro_ClimateChange<span class="sc">+</span>transitivity_micro_ClimateChange, <span class="at">data =</span> subset_data_Lara)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_BiosphericValues ~ mean_valence_macro + density_macro + 
+    transitivity_macro + centr_degree_macro + centr_clo_macro + 
+    centr_betw_macro + centr_eigen_macro + meanDistance_undirected_macro + 
+    diameter_weighted_undirected_macro + diameter_unweighted_undirected_macro + 
+    num_nodes_macro + num_nodes_pos_macro + num_nodes_neg_macro + 
+    num_nodes_neut_macro + num_nodes_ambi_macro + num_edges_macro + 
+    num_edges_solid_macro + num_edges_dashed_macro + num_edges_invaliddashed_macro + 
+    meanWeightEdges_macro + assortativity_valence_macro + assortativityDegree_macro + 
+    degreetot_micro_ClimateChange + valence_micro_ClimateChange + 
+    centr_clo_micro_ClimateChange + transitivity_micro_ClimateChange, 
+    data = subset_data_Lara)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.6039 -0.6280  0.0586  0.8953  2.4792 
+
+Coefficients: (2 not defined because of singularities)
+                                      Estimate Std. Error t value Pr(&gt;|t|)  
+(Intercept)                           6.286620   7.686575   0.818   0.4155  
+mean_valence_macro                    0.501990   0.620478   0.809   0.4206  
+density_macro                         4.169581  12.894789   0.323   0.7472  
+transitivity_macro                   -0.060004   2.493272  -0.024   0.9809  
+centr_degree_macro                   -3.858293   3.908407  -0.987   0.3261  
+centr_clo_macro                      -3.166385   4.474096  -0.708   0.4809  
+centr_betw_macro                     -1.107585   2.648785  -0.418   0.6768  
+centr_eigen_macro                     3.460318   3.998750   0.865   0.3891  
+meanDistance_undirected_macro        -0.487464   0.405916  -1.201   0.2329  
+diameter_weighted_undirected_macro   -0.001154   0.133527  -0.009   0.9931  
+diameter_unweighted_undirected_macro  0.101966   0.269342   0.379   0.7059  
+num_nodes_macro                      -0.153030   0.355477  -0.430   0.6678  
+num_nodes_pos_macro                   0.256749   0.176787   1.452   0.1498  
+num_nodes_neg_macro                   0.300383   0.152700   1.967   0.0522 .
+num_nodes_neut_macro                  0.156179   0.164608   0.949   0.3452  
+num_nodes_ambi_macro                        NA         NA      NA       NA  
+num_edges_macro                      -0.123134   0.153000  -0.805   0.4230  
+num_edges_solid_macro                 0.067202   0.069760   0.963   0.3379  
+num_edges_dashed_macro                      NA         NA      NA       NA  
+num_edges_invaliddashed_macro         0.039242   0.098255   0.399   0.6905  
+meanWeightEdges_macro                 0.869097   0.855873   1.015   0.3126  
+assortativity_valence_macro          -0.700171   0.520678  -1.345   0.1820  
+assortativityDegree_macro            -2.029661   1.264036  -1.606   0.1118  
+degreetot_micro_ClimateChange         0.315913   0.234474   1.347   0.1812  
+valence_micro_ClimateChange          -0.303597   0.129820  -2.339   0.0215 *
+centr_clo_micro_ClimateChange        -1.303460   4.617148  -0.282   0.7783  
+transitivity_micro_ClimateChange      0.711906   1.946739   0.366   0.7154  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.467 on 92 degrees of freedom
+Multiple R-squared:  0.237, Adjusted R-squared:  0.03797 
+F-statistic: 1.191 on 24 and 92 DF,  p-value: 0.2715</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>full.modelPolicy <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_PolicyItems <span class="sc">~</span> num_nodes_ambi_macro, <span class="at">data =</span> subset_data_Lara)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_PolicyItems ~ num_nodes_ambi_macro, data = subset_data_Lara)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.4057 -1.0657  0.2542  1.2542  2.5943 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)           4.37079    0.17787  24.573   &lt;2e-16 ***
+num_nodes_ambi_macro  0.03495    0.08990   0.389    0.698    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.465 on 115 degrees of freedom
+Multiple R-squared:  0.001312,  Adjusted R-squared:  -0.007372 
+F-statistic: 0.1511 on 1 and 115 DF,  p-value: 0.6982</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>stargazer<span class="sc">::</span><span class="fu">stargazer</span>(full.modelPolicy, <span class="at">type =</span> <span class="st">"html"</span>, <span class="at">out =</span> <span class="st">"regressionPolicy.html"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+&lt;table style="text-align:center"&gt;&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;em&gt;Dependent variable:&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td colspan="1" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;mean_PolicyItems&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;num_nodes_ambi_macro&lt;/td&gt;&lt;td&gt;0.035&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.090)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Constant&lt;/td&gt;&lt;td&gt;4.371&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.178)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;Observations&lt;/td&gt;&lt;td&gt;117&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;0.001&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Adjusted R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;-0.007&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Residual Std. Error&lt;/td&gt;&lt;td&gt;1.465 (df = 115)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;F Statistic&lt;/td&gt;&lt;td&gt;0.151 (df = 1; 115)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;em&gt;Note:&lt;/em&gt;&lt;/td&gt;&lt;td style="text-align:right"&gt;&lt;sup&gt;*&lt;/sup&gt;p&lt;0.1; &lt;sup&gt;**&lt;/sup&gt;p&lt;0.05; &lt;sup&gt;***&lt;/sup&gt;p&lt;0.01&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="do">##############</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>full.modelPolicy <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_CET <span class="sc">~</span> mean_valence_macro<span class="sc">+</span>density_macro<span class="sc">+</span>transitivity_macro<span class="sc">+</span>centr_degree_macro<span class="sc">+</span>centr_clo_macro<span class="sc">+</span>centr_betw_macro<span class="sc">+</span>centr_eigen_macro<span class="sc">+</span>meanDistance_undirected_macro<span class="sc">+</span>diameter_weighted_undirected_macro<span class="sc">+</span>diameter_unweighted_undirected_macro<span class="sc">+</span>num_nodes_macro<span class="sc">+</span>num_nodes_pos_macro<span class="sc">+</span>num_nodes_neg_macro<span class="sc">+</span>num_nodes_neut_macro<span class="sc">+</span>num_nodes_ambi_macro<span class="sc">+</span>num_edges_macro<span class="sc">+</span>num_edges_solid_macro<span class="sc">+</span>num_edges_dashed_macro<span class="sc">+</span>num_edges_invaliddashed_macro<span class="sc">+</span>meanWeightEdges_macro<span class="sc">+</span>assortativity_valence_macro<span class="sc">+</span>assortativityDegree_macro<span class="sc">+</span>degreetot_micro_ClimateChange<span class="sc">+</span>valence_micro_ClimateChange<span class="sc">+</span>centr_clo_micro_ClimateChange<span class="sc">+</span>transitivity_micro_ClimateChange, <span class="at">data =</span> subset_data_Lara)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_CET ~ mean_valence_macro + density_macro + 
+    transitivity_macro + centr_degree_macro + centr_clo_macro + 
+    centr_betw_macro + centr_eigen_macro + meanDistance_undirected_macro + 
+    diameter_weighted_undirected_macro + diameter_unweighted_undirected_macro + 
+    num_nodes_macro + num_nodes_pos_macro + num_nodes_neg_macro + 
+    num_nodes_neut_macro + num_nodes_ambi_macro + num_edges_macro + 
+    num_edges_solid_macro + num_edges_dashed_macro + num_edges_invaliddashed_macro + 
+    meanWeightEdges_macro + assortativity_valence_macro + assortativityDegree_macro + 
+    degreetot_micro_ClimateChange + valence_micro_ClimateChange + 
+    centr_clo_micro_ClimateChange + transitivity_micro_ClimateChange, 
+    data = subset_data_Lara)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.64871 -0.20243  0.05674  0.24184  0.46332 
+
+Coefficients: (2 not defined because of singularities)
+                                       Estimate Std. Error t value Pr(&gt;|t|)  
+(Intercept)                          -0.8585666  1.6788862  -0.511   0.6103  
+mean_valence_macro                   -0.1336758  0.1355235  -0.986   0.3265  
+density_macro                         5.5335095  2.8164537   1.965   0.0525 .
+transitivity_macro                   -0.0200481  0.5445755  -0.037   0.9707  
+centr_degree_macro                    0.6688294  0.8536664   0.783   0.4354  
+centr_clo_macro                       0.3900732  0.9772230   0.399   0.6907  
+centr_betw_macro                      0.3100581  0.5785422   0.536   0.5933  
+centr_eigen_macro                    -0.2705747  0.8733988  -0.310   0.7574  
+meanDistance_undirected_macro         0.0133535  0.0886593   0.151   0.8806  
+diameter_weighted_undirected_macro    0.0327463  0.0291646   1.123   0.2644  
+diameter_unweighted_undirected_macro -0.0308367  0.0588291  -0.524   0.6014  
+num_nodes_macro                       0.1338161  0.0776426   1.723   0.0882 .
+num_nodes_pos_macro                  -0.0007107  0.0386134  -0.018   0.9854  
+num_nodes_neg_macro                  -0.0224142  0.0333524  -0.672   0.5032  
+num_nodes_neut_macro                  0.0126960  0.0359534   0.353   0.7248  
+num_nodes_ambi_macro                         NA         NA      NA       NA  
+num_edges_macro                      -0.0432078  0.0334180  -1.293   0.1993  
+num_edges_solid_macro                -0.0007274  0.0152367  -0.048   0.9620  
+num_edges_dashed_macro                       NA         NA      NA       NA  
+num_edges_invaliddashed_macro         0.0122763  0.0214606   0.572   0.5687  
+meanWeightEdges_macro                -0.1900873  0.1869380  -1.017   0.3119  
+assortativity_valence_macro           0.1927950  0.1137255   1.695   0.0934 .
+assortativityDegree_macro             0.4525658  0.2760882   1.639   0.1046  
+degreetot_micro_ClimateChange        -0.0596342  0.0512133  -1.164   0.2473  
+valence_micro_ClimateChange           0.0451171  0.0283551   1.591   0.1150  
+centr_clo_micro_ClimateChange        -0.3500701  1.0084681  -0.347   0.7293  
+transitivity_micro_ClimateChange     -0.5443612  0.4252029  -1.280   0.2037  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.3203 on 92 degrees of freedom
+Multiple R-squared:  0.2516,    Adjusted R-squared:  0.05636 
+F-statistic: 1.289 on 24 and 92 DF,  p-value: 0.1947</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>full.modelPolicy <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_PolicyItems <span class="sc">~</span> num_nodes_ambi_macro, <span class="at">data =</span> subset_data_Lara)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_PolicyItems ~ num_nodes_ambi_macro, data = subset_data_Lara)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.4057 -1.0657  0.2542  1.2542  2.5943 
+
+Coefficients:
+                     Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)           4.37079    0.17787  24.573   &lt;2e-16 ***
+num_nodes_ambi_macro  0.03495    0.08990   0.389    0.698    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.465 on 115 degrees of freedom
+Multiple R-squared:  0.001312,  Adjusted R-squared:  -0.007372 
+F-statistic: 0.1511 on 1 and 115 DF,  p-value: 0.6982</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="do">#############</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Stepwise regression model</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="co"># help(stepwise)</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>step.modelPolicy <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> full.modelPolicy, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=91.4
+mean_PolicyItems ~ num_nodes_ambi_macro
+
+                       Df Sum of Sq    RSS    AIC
+- num_nodes_ambi_macro  1    0.3245 247.28 89.555
+&lt;none&gt;                              246.95 91.401
+
+Step:  AIC=89.55
+mean_PolicyItems ~ 1
+
+                       Df Sum of Sq    RSS    AIC
+&lt;none&gt;                              247.28 89.555
++ num_nodes_ambi_macro  1    0.3245 246.95 91.401</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_PolicyItems ~ 1, data = subset_data_Lara)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.4156 -1.0406  0.2094  1.2094  2.5844 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)    4.416      0.135   32.71   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.46 on 116 degrees of freedom</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = mean_PolicyItems ~ 1, data = subset_data_Lara)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-3.4156 -1.0406  0.2094  1.2094  2.5844 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)    4.416      0.135   32.71   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 1.46 on 116 degrees of freedom</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">report</span>(step.modelPolicy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>We fitted a constant (intercept-only) linear model (estimated using OLS) to
+predict mean_PolicyItems (formula: mean_PolicyItems ~ 1). The model's intercept
+is at 4.42 (95% CI [4.15, 4.68], t(116) = 32.71, p &lt; .001).
+
+Standardized parameters were obtained by fitting the model on a standardized
+version of the dataset. 95% Confidence Intervals (CIs) and p-values were
+computed using a Wald t-distribution approximation.</code></pre>
+</div>
+</div>
+</section>
 <section id="for-mean_biosphericvalues" class="level3">
 <h3 class="anchored" data-anchor-id="for-mean_biosphericvalues">for mean_BiosphericValues</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>dat_Germany <span class="ot">&lt;-</span> t12_questionnaireCAMs[t12_questionnaireCAMs<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"Germany"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y ), ]</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>dat_USA <span class="ot">&lt;-</span> t12_questionnaireCAMs[t12_questionnaireCAMs<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"USA"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y ), ]</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_BiosphericValues <span class="sc">~</span> mean_valence_macro <span class="sc">+</span> density_macro <span class="sc">+</span> transitivity_macro, <span class="at">data =</span> t12_questionnaireCAMs)</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>dat_Germany <span class="ot">&lt;-</span> t12_questionnaireCAMs[t12_questionnaireCAMs<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"Germany"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y ), ]</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>dat_USA <span class="ot">&lt;-</span> t12_questionnaireCAMs[t12_questionnaireCAMs<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"USA"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(t12_questionnaireCAMs<span class="sc">$</span>country.y ), ]</span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(mean_BiosphericValues <span class="sc">~</span> mean_valence_macro <span class="sc">+</span> density_macro <span class="sc">+</span> transitivity_macro, <span class="at">data =</span> t12_questionnaireCAMs)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -493,7 +765,7 @@ Residual standard error: 1.508 on 117 degrees of freedom
 Multiple R-squared:  0.006291,  Adjusted R-squared:  -0.01919 
 F-statistic: 0.2469 on 3 and 117 DF,  p-value: 0.8634</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>report<span class="sc">::</span><span class="fu">report</span>(<span class="at">x =</span> full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>report<span class="sc">::</span><span class="fu">report</span>(<span class="at">x =</span> full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>We fitted a linear model (estimated using OLS) to predict mean_BiosphericValues
 with mean_valence_macro, density_macro and transitivity_macro (formula:
@@ -518,56 +790,56 @@ Standardized parameters were obtained by fitting the model on a standardized
 version of the dataset. 95% Confidence Intervals (CIs) and p-values were
 computed using a Wald t-distribution approximation.</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="do">### eine Skala:</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_BiosphericValues"</span>    </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="do">### eine Skala:</span></span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_BiosphericValues"</span>    </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "mean_BiosphericValues"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_CET"</span>  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_CET"</span>  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "mean_CET"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_PolicyItems"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="st">"mean_PolicyItems"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "mean_PolicyItems"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>t12_questionnaireCAMs<span class="sc">$</span>mean_RPI <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>( t12_questionnaireCAMs<span class="sc">$</span>mean_BiosphericValues <span class="sc">~</span> t12_questionnaireCAMs<span class="sc">$</span>classes_conspiracy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>t12_questionnaireCAMs<span class="sc">$</span>mean_RPI <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a><span class="fu">boxplot</span>( t12_questionnaireCAMs<span class="sc">$</span>mean_BiosphericValues <span class="sc">~</span> t12_questionnaireCAMs<span class="sc">$</span>classes_conspiracy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_BiosphericValues, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_BiosphericValues, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.136476</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_CET, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_CET, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] -0.07024131</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_PolicyItems, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_PolicyItems, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.1953151</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_RPI, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(t12_questionnaireCAMs<span class="sc">$</span>mean_RPI, t12_questionnaireCAMs<span class="sc">$</span>num_nodes_macro, <span class="at">use =</span> <span class="st">"pairwise"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] NA</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># stargazer::stargazer(full.model, type = "html", out = "regression.html")</span></span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Stepwise regression model</span></span>
-<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="fu">help</span>(stepwise)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="co"># stargazer::stargazer(full.model, type = "html", out = "regression.html")</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Stepwise regression model</span></span>
+<span id="cb72-5"><a href="#cb72-5" aria-hidden="true" tabindex="-1"></a><span class="fu">help</span>(stepwise)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Keine Dokumentation für 'stepwise' in angegebenen Paketen und Bibliotheken:
 Sie können '??stepwise' versuchen</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>step.model <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> full.model, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>step.model <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> full.model, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Start:  AIC=103.42
 mean_BiosphericValues ~ mean_valence_macro + density_macro + 
@@ -606,7 +878,7 @@ mean_BiosphericValues ~ 1
 + density_macro       1   1.36955 266.54  99.559
 + mean_valence_macro  1   0.21443 267.70 100.082</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -625,7 +897,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Residual standard error: 1.494 on 120 degrees of freedom
   (477 Beobachtungen als fehlend gelöscht)</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>report<span class="sc">::</span><span class="fu">report</span>(<span class="at">x =</span> step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>report<span class="sc">::</span><span class="fu">report</span>(<span class="at">x =</span> step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>We fitted a constant (intercept-only) linear model (estimated using OLS) to
 predict mean_BiosphericValues (formula: mean_BiosphericValues ~ 1). The model's
@@ -634,247 +906,6 @@ intercept is at 7.24 (95% CI [6.97, 7.50], t(120) = 53.27, p &lt; .001).
 Standardized parameters were obtained by fitting the model on a standardized
 version of the dataset. 95% Confidence Intervals (CIs) and p-values were
 computed using a Wald t-distribution approximation.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="do">### GLM</span></span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="fu">example</span>(birthwt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-brthwt&gt; bwt &lt;- with(birthwt, {
-brthwt+ race &lt;- factor(race, labels = c("white", "black", "other"))
-brthwt+ ptd &lt;- factor(ptl &gt; 0)
-brthwt+ ftv &lt;- factor(ftv)
-brthwt+ levels(ftv)[-(1:2)] &lt;- "2+"
-brthwt+ data.frame(low = factor(low), age, lwt, race, smoke = (smoke &gt; 0),
-brthwt+            ptd, ht = (ht &gt; 0), ui = (ui &gt; 0), ftv)
-brthwt+ })
-
-brthwt&gt; options(contrasts = c("contr.treatment", "contr.poly"))
-
-brthwt&gt; glm(low ~ ., binomial, bwt)
-
-Call:  glm(formula = low ~ ., family = binomial, data = bwt)
-
-Coefficients:
-(Intercept)          age          lwt    raceblack    raceother    smokeTRUE  
-    0.82302     -0.03723     -0.01565      1.19241      0.74068      0.75553  
-    ptdTRUE       htTRUE       uiTRUE         ftv1        ftv2+  
-    1.34376      1.91317      0.68020     -0.43638      0.17901  
-
-Degrees of Freedom: 188 Total (i.e. Null);  178 Residual
-Null Deviance:      234.7 
-Residual Deviance: 195.5    AIC: 217.5</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>birthwt.glm <span class="ot">&lt;-</span> <span class="fu">glm</span>(low <span class="sc">~</span> ., <span class="at">family =</span> binomial, <span class="at">data =</span> bwt)</span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>birthwt.step <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> birthwt.glm, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Start:  AIC=217.48
-low ~ age + lwt + race + smoke + ptd + ht + ui + ftv
-
-        Df Deviance    AIC
-- ftv    2   196.83 214.83
-- age    1   196.42 216.42
-&lt;none&gt;       195.48 217.48
-- ui     1   197.59 217.59
-- smoke  1   198.67 218.67
-- race   2   201.23 219.23
-- lwt    1   200.95 220.95
-- ht     1   202.93 222.93
-- ptd    1   203.58 223.58
-
-Step:  AIC=214.83
-low ~ age + lwt + race + smoke + ptd + ht + ui
-
-        Df Deviance    AIC
-- age    1   197.85 213.85
-&lt;none&gt;       196.83 214.83
-- ui     1   199.15 215.15
-- race   2   203.24 217.24
-- smoke  1   201.25 217.25
-+ ftv    2   195.48 217.48
-- lwt    1   201.83 217.83
-- ptd    1   203.95 219.95
-- ht     1   204.01 220.01
-
-Step:  AIC=213.85
-low ~ lwt + race + smoke + ptd + ht + ui
-
-        Df Deviance    AIC
-&lt;none&gt;       197.85 213.85
-- ui     1   200.48 214.48
-+ age    1   196.83 214.83
-+ ftv    2   196.42 216.42
-- smoke  1   202.57 216.57
-- race   2   205.47 217.47
-- lwt    1   203.82 217.82
-- ptd    1   204.22 218.22
-- ht     1   205.16 219.16</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>birthwt.step<span class="sc">$</span>anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Stepwise Model Path 
-Analysis of Deviance Table
-
-Initial Model:
-low ~ age + lwt + race + smoke + ptd + ht + ui + ftv
-
-Final Model:
-low ~ lwt + race + smoke + ptd + ht + ui
-
-
-   Step Df Deviance Resid. Df Resid. Dev      AIC
-1                         178   195.4755 217.4755
-2 - ftv  2 1.358185       180   196.8337 214.8337
-3 - age  1 1.017866       181   197.8516 213.8516</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(birthwt.step)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-glm(formula = low ~ lwt + race + smoke + ptd + ht + ui, family = binomial, 
-    data = bwt)
-
-Coefficients:
-             Estimate Std. Error z value Pr(&gt;|z|)   
-(Intercept) -0.125326   0.967561  -0.130  0.89694   
-lwt         -0.015918   0.006954  -2.289  0.02207 * 
-raceblack    1.300856   0.528484   2.461  0.01384 * 
-raceother    0.854414   0.440907   1.938  0.05264 . 
-smokeTRUE    0.866582   0.404469   2.143  0.03215 * 
-ptdTRUE      1.128857   0.450388   2.506  0.01220 * 
-htTRUE       1.866895   0.707373   2.639  0.00831 **
-uiTRUE       0.750649   0.458815   1.636  0.10183   
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-(Dispersion parameter for binomial family taken to be 1)
-
-    Null deviance: 234.67  on 188  degrees of freedom
-Residual deviance: 197.85  on 181  degrees of freedom
-AIC: 213.85
-
-Number of Fisher Scoring iterations: 4</code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>?swiss</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>starte den http Server für die Hilfe fertig</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(Fertility <span class="sc">~</span>., <span class="at">data =</span> swiss)</span>
-<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = Fertility ~ ., data = swiss)
-
-Residuals:
-     Min       1Q   Median       3Q      Max 
--15.2743  -5.2617   0.5032   4.1198  15.3213 
-
-Coefficients:
-                 Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)      66.91518   10.70604   6.250 1.91e-07 ***
-Agriculture      -0.17211    0.07030  -2.448  0.01873 *  
-Examination      -0.25801    0.25388  -1.016  0.31546    
-Education        -0.87094    0.18303  -4.758 2.43e-05 ***
-Catholic          0.10412    0.03526   2.953  0.00519 ** 
-Infant.Mortality  1.07705    0.38172   2.822  0.00734 ** 
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 7.165 on 41 degrees of freedom
-Multiple R-squared:  0.7067,    Adjusted R-squared:  0.671 
-F-statistic: 19.76 on 5 and 41 DF,  p-value: 5.594e-10</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>stargazer<span class="sc">::</span><span class="fu">stargazer</span>(full.model, <span class="at">type =</span> <span class="st">"html"</span>, <span class="at">out =</span> <span class="st">"regression.html"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-&lt;table style="text-align:center"&gt;&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;em&gt;Dependent variable:&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td colspan="1" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;Fertility&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;Agriculture&lt;/td&gt;&lt;td&gt;-0.172&lt;sup&gt;**&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.070)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Examination&lt;/td&gt;&lt;td&gt;-0.258&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.254)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Education&lt;/td&gt;&lt;td&gt;-0.871&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.183)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Catholic&lt;/td&gt;&lt;td&gt;0.104&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.035)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Infant.Mortality&lt;/td&gt;&lt;td&gt;1.077&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.382)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Constant&lt;/td&gt;&lt;td&gt;66.915&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(10.706)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;Observations&lt;/td&gt;&lt;td&gt;47&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;0.707&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Adjusted R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;0.671&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;Residual Std. Error&lt;/td&gt;&lt;td&gt;7.165 (df = 41)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td style="text-align:left"&gt;F Statistic&lt;/td&gt;&lt;td&gt;19.761&lt;sup&gt;***&lt;/sup&gt; (df = 5; 41)&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;em&gt;Note:&lt;/em&gt;&lt;/td&gt;&lt;td style="text-align:right"&gt;&lt;sup&gt;*&lt;/sup&gt;p&lt;0.1; &lt;sup&gt;**&lt;/sup&gt;p&lt;0.05; &lt;sup&gt;***&lt;/sup&gt;p&lt;0.01&lt;/td&gt;&lt;/tr&gt;
-&lt;/table&gt;</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stepwise regression model</span></span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a><span class="fu">help</span>(stepwise)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Keine Dokumentation für 'stepwise' in angegebenen Paketen und Bibliotheken:
-Sie können '??stepwise' versuchen</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>step.model <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> full.model, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Start:  AIC=190.69
-Fertility ~ Agriculture + Examination + Education + Catholic + 
-    Infant.Mortality
-
-                   Df Sum of Sq    RSS    AIC
-- Examination       1     53.03 2158.1 189.86
-&lt;none&gt;                          2105.0 190.69
-- Agriculture       1    307.72 2412.8 195.10
-- Infant.Mortality  1    408.75 2513.8 197.03
-- Catholic          1    447.71 2552.8 197.75
-- Education         1   1162.56 3267.6 209.36
-
-Step:  AIC=189.86
-Fertility ~ Agriculture + Education + Catholic + Infant.Mortality
-
-                   Df Sum of Sq    RSS    AIC
-&lt;none&gt;                          2158.1 189.86
-+ Examination       1     53.03 2105.0 190.69
-- Agriculture       1    264.18 2422.2 193.29
-- Infant.Mortality  1    409.81 2567.9 196.03
-- Catholic          1    956.57 3114.6 205.10
-- Education         1   2249.97 4408.0 221.43</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = Fertility ~ Agriculture + Education + Catholic + 
-    Infant.Mortality, data = swiss)
-
-Residuals:
-     Min       1Q   Median       3Q      Max 
--14.6765  -6.0522   0.7514   3.1664  16.1422 
-
-Coefficients:
-                 Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)      62.10131    9.60489   6.466 8.49e-08 ***
-Agriculture      -0.15462    0.06819  -2.267  0.02857 *  
-Education        -0.98026    0.14814  -6.617 5.14e-08 ***
-Catholic          0.12467    0.02889   4.315 9.50e-05 ***
-Infant.Mortality  1.07844    0.38187   2.824  0.00722 ** 
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 7.168 on 42 degrees of freedom
-Multiple R-squared:  0.6993,    Adjusted R-squared:  0.6707 
-F-statistic: 24.42 on 4 and 42 DF,  p-value: 1.717e-10</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="do">### GLM</span></span>
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="fu">example</span>(birthwt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -997,47 +1028,285 @@ AIC: 213.85
 Number of Fisher Scoring iterations: 4</code></pre>
 </div>
 </div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ?swiss</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>full.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(Fertility <span class="sc">~</span>., <span class="at">data =</span> swiss)</span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(full.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Fertility ~ ., data = swiss)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-15.2743  -5.2617   0.5032   4.1198  15.3213 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)      66.91518   10.70604   6.250 1.91e-07 ***
+Agriculture      -0.17211    0.07030  -2.448  0.01873 *  
+Examination      -0.25801    0.25388  -1.016  0.31546    
+Education        -0.87094    0.18303  -4.758 2.43e-05 ***
+Catholic          0.10412    0.03526   2.953  0.00519 ** 
+Infant.Mortality  1.07705    0.38172   2.822  0.00734 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 7.165 on 41 degrees of freedom
+Multiple R-squared:  0.7067,    Adjusted R-squared:  0.671 
+F-statistic: 19.76 on 5 and 41 DF,  p-value: 5.594e-10</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a>stargazer<span class="sc">::</span><span class="fu">stargazer</span>(full.model, <span class="at">type =</span> <span class="st">"html"</span>, <span class="at">out =</span> <span class="st">"regression.html"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+&lt;table style="text-align:center"&gt;&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;em&gt;Dependent variable:&lt;/em&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td colspan="1" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;Fertility&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;Agriculture&lt;/td&gt;&lt;td&gt;-0.172&lt;sup&gt;**&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.070)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Examination&lt;/td&gt;&lt;td&gt;-0.258&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.254)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Education&lt;/td&gt;&lt;td&gt;-0.871&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.183)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Catholic&lt;/td&gt;&lt;td&gt;0.104&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.035)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Infant.Mortality&lt;/td&gt;&lt;td&gt;1.077&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(0.382)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Constant&lt;/td&gt;&lt;td&gt;66.915&lt;sup&gt;***&lt;/sup&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;(10.706)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;Observations&lt;/td&gt;&lt;td&gt;47&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;0.707&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Adjusted R&lt;sup&gt;2&lt;/sup&gt;&lt;/td&gt;&lt;td&gt;0.671&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;Residual Std. Error&lt;/td&gt;&lt;td&gt;7.165 (df = 41)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td style="text-align:left"&gt;F Statistic&lt;/td&gt;&lt;td&gt;19.761&lt;sup&gt;***&lt;/sup&gt; (df = 5; 41)&lt;/td&gt;&lt;/tr&gt;
+&lt;tr&gt;&lt;td colspan="2" style="border-bottom: 1px solid black"&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style="text-align:left"&gt;&lt;em&gt;Note:&lt;/em&gt;&lt;/td&gt;&lt;td style="text-align:right"&gt;&lt;sup&gt;*&lt;/sup&gt;p&lt;0.1; &lt;sup&gt;**&lt;/sup&gt;p&lt;0.05; &lt;sup&gt;***&lt;/sup&gt;p&lt;0.01&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stepwise regression model</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a><span class="fu">help</span>(stepwise)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Keine Dokumentation für 'stepwise' in angegebenen Paketen und Bibliotheken:
+Sie können '??stepwise' versuchen</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a>step.model <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> full.model, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=190.69
+Fertility ~ Agriculture + Examination + Education + Catholic + 
+    Infant.Mortality
+
+                   Df Sum of Sq    RSS    AIC
+- Examination       1     53.03 2158.1 189.86
+&lt;none&gt;                          2105.0 190.69
+- Agriculture       1    307.72 2412.8 195.10
+- Infant.Mortality  1    408.75 2513.8 197.03
+- Catholic          1    447.71 2552.8 197.75
+- Education         1   1162.56 3267.6 209.36
+
+Step:  AIC=189.86
+Fertility ~ Agriculture + Education + Catholic + Infant.Mortality
+
+                   Df Sum of Sq    RSS    AIC
+&lt;none&gt;                          2158.1 189.86
++ Examination       1     53.03 2105.0 190.69
+- Agriculture       1    264.18 2422.2 193.29
+- Infant.Mortality  1    409.81 2567.9 196.03
+- Catholic          1    956.57 3114.6 205.10
+- Education         1   2249.97 4408.0 221.43</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(step.model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = Fertility ~ Agriculture + Education + Catholic + 
+    Infant.Mortality, data = swiss)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-14.6765  -6.0522   0.7514   3.1664  16.1422 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)      62.10131    9.60489   6.466 8.49e-08 ***
+Agriculture      -0.15462    0.06819  -2.267  0.02857 *  
+Education        -0.98026    0.14814  -6.617 5.14e-08 ***
+Catholic          0.12467    0.02889   4.315 9.50e-05 ***
+Infant.Mortality  1.07844    0.38187   2.824  0.00722 ** 
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 7.168 on 42 degrees of freedom
+Multiple R-squared:  0.6993,    Adjusted R-squared:  0.6707 
+F-statistic: 24.42 on 4 and 42 DF,  p-value: 1.717e-10</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="do">### GLM</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="fu">example</span>(birthwt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+brthwt&gt; bwt &lt;- with(birthwt, {
+brthwt+ race &lt;- factor(race, labels = c("white", "black", "other"))
+brthwt+ ptd &lt;- factor(ptl &gt; 0)
+brthwt+ ftv &lt;- factor(ftv)
+brthwt+ levels(ftv)[-(1:2)] &lt;- "2+"
+brthwt+ data.frame(low = factor(low), age, lwt, race, smoke = (smoke &gt; 0),
+brthwt+            ptd, ht = (ht &gt; 0), ui = (ui &gt; 0), ftv)
+brthwt+ })
+
+brthwt&gt; options(contrasts = c("contr.treatment", "contr.poly"))
+
+brthwt&gt; glm(low ~ ., binomial, bwt)
+
+Call:  glm(formula = low ~ ., family = binomial, data = bwt)
+
+Coefficients:
+(Intercept)          age          lwt    raceblack    raceother    smokeTRUE  
+    0.82302     -0.03723     -0.01565      1.19241      0.74068      0.75553  
+    ptdTRUE       htTRUE       uiTRUE         ftv1        ftv2+  
+    1.34376      1.91317      0.68020     -0.43638      0.17901  
+
+Degrees of Freedom: 188 Total (i.e. Null);  178 Residual
+Null Deviance:      234.7 
+Residual Deviance: 195.5    AIC: 217.5</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>birthwt.glm <span class="ot">&lt;-</span> <span class="fu">glm</span>(low <span class="sc">~</span> ., <span class="at">family =</span> binomial, <span class="at">data =</span> bwt)</span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>birthwt.step <span class="ot">&lt;-</span> <span class="fu">stepAIC</span>(<span class="at">object =</span> birthwt.glm, <span class="at">direction =</span> <span class="st">"both"</span>,</span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">trace =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Start:  AIC=217.48
+low ~ age + lwt + race + smoke + ptd + ht + ui + ftv
+
+        Df Deviance    AIC
+- ftv    2   196.83 214.83
+- age    1   196.42 216.42
+&lt;none&gt;       195.48 217.48
+- ui     1   197.59 217.59
+- smoke  1   198.67 218.67
+- race   2   201.23 219.23
+- lwt    1   200.95 220.95
+- ht     1   202.93 222.93
+- ptd    1   203.58 223.58
+
+Step:  AIC=214.83
+low ~ age + lwt + race + smoke + ptd + ht + ui
+
+        Df Deviance    AIC
+- age    1   197.85 213.85
+&lt;none&gt;       196.83 214.83
+- ui     1   199.15 215.15
+- race   2   203.24 217.24
+- smoke  1   201.25 217.25
++ ftv    2   195.48 217.48
+- lwt    1   201.83 217.83
+- ptd    1   203.95 219.95
+- ht     1   204.01 220.01
+
+Step:  AIC=213.85
+low ~ lwt + race + smoke + ptd + ht + ui
+
+        Df Deviance    AIC
+&lt;none&gt;       197.85 213.85
+- ui     1   200.48 214.48
++ age    1   196.83 214.83
++ ftv    2   196.42 216.42
+- smoke  1   202.57 216.57
+- race   2   205.47 217.47
+- lwt    1   203.82 217.82
+- ptd    1   204.22 218.22
+- ht     1   205.16 219.16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>birthwt.step<span class="sc">$</span>anova</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Stepwise Model Path 
+Analysis of Deviance Table
+
+Initial Model:
+low ~ age + lwt + race + smoke + ptd + ht + ui + ftv
+
+Final Model:
+low ~ lwt + race + smoke + ptd + ht + ui
+
+
+   Step Df Deviance Resid. Df Resid. Dev      AIC
+1                         178   195.4755 217.4755
+2 - ftv  2 1.358185       180   196.8337 214.8337
+3 - age  1 1.017866       181   197.8516 213.8516</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(birthwt.step)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = low ~ lwt + race + smoke + ptd + ht + ui, family = binomial, 
+    data = bwt)
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)   
+(Intercept) -0.125326   0.967561  -0.130  0.89694   
+lwt         -0.015918   0.006954  -2.289  0.02207 * 
+raceblack    1.300856   0.528484   2.461  0.01384 * 
+raceother    0.854414   0.440907   1.938  0.05264 . 
+smokeTRUE    0.866582   0.404469   2.143  0.03215 * 
+ptdTRUE      1.128857   0.450388   2.506  0.01220 * 
+htTRUE       1.866895   0.707373   2.639  0.00831 **
+uiTRUE       0.750649   0.458815   1.636  0.10183   
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 234.67  on 188  degrees of freedom
+Residual deviance: 197.85  on 181  degrees of freedom
+AIC: 213.85
+
+Number of Fisher Scoring iterations: 4</code></pre>
+</div>
+</div>
 </section>
 </section>
 <section id="policy-scale" class="level2">
 <h2 class="anchored" data-anchor-id="policy-scale">policy scale</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>regEx <span class="ot">&lt;-</span> <span class="st">"^policyItems"</span></span>
-<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>nameScale <span class="ot">&lt;-</span> <span class="st">"Policy Scale"</span></span>
-<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>nameVariable <span class="ot">&lt;-</span> <span class="st">"mean_PolicyItems"</span></span>
-<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a><span class="do">### number of items</span></span>
-<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">str_detect</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a>regEx <span class="ot">&lt;-</span> <span class="st">"^policyItems"</span></span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>nameScale <span class="ot">&lt;-</span> <span class="st">"Policy Scale"</span></span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a>nameVariable <span class="ot">&lt;-</span> <span class="st">"mean_PolicyItems"</span></span>
+<span id="cb106-4"><a href="#cb106-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb106-5"><a href="#cb106-5" aria-hidden="true" tabindex="-1"></a><span class="do">### number of items</span></span>
+<span id="cb106-6"><a href="#cb106-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">str_detect</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 8</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="do">### only keep values with no missing values</span></span>
-<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> t12_questionnaireCAMs[, <span class="fu">c</span>(<span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx), <span class="st">"country.y"</span>)]</span>
-<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a><span class="co"># tmp_dat &lt;- tmp_dat[!is.na(tmp_dat$country.y), ]</span></span>
-<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> tmp_dat[tmp_dat<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"Germany"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(tmp_dat<span class="sc">$</span>country.y), ]</span>
-<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"analyes for country/ies:</span><span class="sc">\n</span><span class="st">"</span>, <span class="fu">unique</span>(tmp_dat<span class="sc">$</span>country.y), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="do">### only keep values with no missing values</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> t12_questionnaireCAMs[, <span class="fu">c</span>(<span class="fu">str_subset</span>(<span class="at">string =</span> <span class="fu">colnames</span>(t12_questionnaireCAMs), <span class="at">pattern =</span> regEx), <span class="st">"country.y"</span>)]</span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a><span class="co"># tmp_dat &lt;- tmp_dat[!is.na(tmp_dat$country.y), ]</span></span>
+<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>tmp_dat <span class="ot">&lt;-</span> tmp_dat[tmp_dat<span class="sc">$</span>country.y <span class="sc">==</span> <span class="st">"Germany"</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(tmp_dat<span class="sc">$</span>country.y), ]</span>
+<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"analyes for country/ies:</span><span class="sc">\n</span><span class="st">"</span>, <span class="fu">unique</span>(tmp_dat<span class="sc">$</span>country.y), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>analyes for country/ies:
  Germany </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="do">### get correlation plot, descriptives, EFA, CFA</span></span>
-<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">CFAstats</span>(<span class="at">dataset =</span> tmp_dat, <span class="at">regularExp =</span> regEx, <span class="at">labelLatent =</span> <span class="fu">str_remove</span>(<span class="at">string =</span> nameVariable, <span class="at">pattern =</span> <span class="st">"mean_"</span>), </span>
-<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">showPlots =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeEFA =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFA =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb92-6"><a href="#cb92-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFAMplus =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="do">### get correlation plot, descriptives, EFA, CFA</span></span>
+<span id="cb110-2"><a href="#cb110-2" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">CFAstats</span>(<span class="at">dataset =</span> tmp_dat, <span class="at">regularExp =</span> regEx, <span class="at">labelLatent =</span> <span class="fu">str_remove</span>(<span class="at">string =</span> nameVariable, <span class="at">pattern =</span> <span class="st">"mean_"</span>), </span>
+<span id="cb110-3"><a href="#cb110-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">showPlots =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb110-4"><a href="#cb110-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeEFA =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb110-5"><a href="#cb110-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFA =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb110-6"><a href="#cb110-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">computeCFAMplus =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-11-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-12-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1067,12 +1336,15 @@ policyItems-8              7    -1.22         0.52    0.00
 
 variables under investigation:  policyItems1 policyItems2 policyItems3 policyItems4 policyItems5 policyItems6 policyItems7 policyItems8 
 
-Cronbachs Alpha: 0.82 </code></pre>
+Cronbachs Alpha: 0.82 
+Error in if (any(lower &gt; upper)) stop("lower&gt;upper integration limits") : 
+  Fehlender Wert, wo TRUE/FALSE nötig ist
+[1] "use instead of polychoric correlations pearson correlations"</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-11-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-12-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1195,7 +1467,7 @@ Variances:
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-11-4.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="t12SegCAM_BachelorTheses_Lara_files/figure-html/unnamed-chunk-12-4.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1211,10 +1483,10 @@ CFA first 6 Modification Indices:
 21 policyItems1 ~~ policyItems5  4.638  0.344   0.344    0.482    0.482
 44 policyItems6 ~~ policyItems8  4.299 -0.624  -0.624   -0.252   -0.252</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">###</span><span class="co"> variable mean</span></span>
-<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a><span class="co"># questionnaireCAMs[[nameVariable]]  &lt;- questionnaireCAMs %&gt;%</span></span>
-<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(matches(regEx)) %&gt;%</span></span>
-<span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   rowMeans(na.rm = TRUE)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">###</span><span class="co"> variable mean</span></span>
+<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a><span class="co"># questionnaireCAMs[[nameVariable]]  &lt;- questionnaireCAMs %&gt;%</span></span>
+<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(matches(regEx)) %&gt;%</span></span>
+<span id="cb114-4"><a href="#cb114-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   rowMeans(na.rm = TRUE)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>

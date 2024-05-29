@@ -566,6 +566,8 @@ for(p in affectiveImagery$PROLIFIC_PID){
 
 ### overwrite approximate matching
 
+Zwischenschritt vor Übersetzung - grobe Zusammenfassung
+
 ```{r}
 setwd("data_BA_Magdalena")
 
@@ -655,6 +657,8 @@ dat_out %>%
 
 
 ## clean affective imagery after translation
+
+NOT DONE
 
 use approximate matching for English and German (not run automatically!):
 
