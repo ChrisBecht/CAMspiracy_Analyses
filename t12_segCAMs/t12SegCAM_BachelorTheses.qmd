@@ -37,7 +37,8 @@ require(pacman)
 p_load('tidyverse', 'jsonlite', 'magrittr', 'xlsx',
        'stargazer', 'psych', 'jtools', 'DT', 'ggstatsplot', 
        'lavaan', 'igraph',
-       'regsem', 'MplusAutomation')
+       'regsem', 'MplusAutomation', 'MASS', 'report',
+       'readxl')
 
 
 # load data
@@ -104,6 +105,78 @@ tmp <- CFAstats(dataset = tmp_dat, regularExp = regEx, labelLatent = str_remove(
 #   rowMeans(na.rm = TRUE)
 ```
 
+## stepwise LMs
+
+prepare data
+
+```{r}
+subset_data_Lara <- t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$country.y), ]
+subset_data_Lara <- t12_questionnaireCAMs[!is.na(t12_questionnaireCAMs$assortativity_valence_macro), ]
+```
+
+check correlation of network indicators:
+
+```{r}
+cor.plot(r = cor(subset_data_Lara[, str_subset(string = colnames(subset_data_Lara), pattern = "_macro")]))
+```
+
+
+remove single variables
+
+```{r}
+subset_data_Lara$mean_valence_normed_macro <- NULL
+subset_data_Lara$meanDistance_directed_macro <- NULL
+subset_data_Lara$diameter_unweighted_directed_macro <- NULL
+subset_data_Lara$reciprocity_macro <- NULL
+```
+
+check again correlation of network indicators:
+
+```{r}
+cor.plot(r = cor(subset_data_Lara[, str_subset(string = colnames(subset_data_Lara), pattern = "_macro")]))
+```
+
+
+just copy & paste the formula:
+
+```{r}
+cat(paste0(str_subset(string = colnames(subset_data_Lara), pattern = "_macro"), collapse = " + "))
+```
+
+
+
+### for biospheric values
+
+applying the variable "mean_BiosphericValues"
+
+```{r}
+#| results: asis
+
+
+full.BiosphericValues <- lm(mean_BiosphericValues ~ mean_valence_macro + density_macro + transitivity_macro + centr_degree_macro + centr_clo_macro + centr_betw_macro + centr_eigen_macro + meanDistance_undirected_macro + diameter_weighted_undirected_macro + diameter_unweighted_undirected_macro + num_nodes_macro + num_nodes_pos_macro + num_nodes_neg_macro + num_nodes_neut_macro + num_nodes_ambi_macro + num_edges_macro + num_edges_solid_macro + num_edges_dashed_macro + num_edges_invaliddashed_macro + meanWeightEdges_macro + assortativity_valence_macro + assortativityDegree_macro, data = subset_data_Lara)
+summary(full.BiosphericValues)
+
+
+# Stepwise regression model
+# help(stepwise)
+step.BiosphericValues <- MASS::stepAIC(object = full.BiosphericValues, direction = "both",
+                      trace = TRUE)
+summary(step.BiosphericValues)
+
+setwd("outputs/BA_Lara")
+stargazer::stargazer(step.BiosphericValues, type = "html", out = "regressionBiosphericValues.html")
+
+report::report(step.BiosphericValues)
+
+out <- summary(step.BiosphericValues)
+out$coefficients <- round(x = out$coefficients, digits = 2)
+data.frame(DV = "mean_BiosphericValues", est = out$coefficients[ , 1], se = out$coefficients[ , 2], pvalue = out$coefficients[ , 4])
+# ignore the first coefficient - only intercept
+paste0(out$coefficients[ , 1], " (", out$coefficients[ , 2], ")")
+```
+
+
+
 
 # Amelies BA
 
@@ -138,9 +211,53 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
 }
 ```
 
+### aggregate CAMs
+
+```{r}
+sel_ids <- unique(CAMfiles_Germany[[1]]$participantCAM)
+
+tmp_nodes <- CAMfiles_Germany[[1]]
+
+tmp_nodes$text_summarized <- str_remove(string = tmp_nodes$text_summarized, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+tmp_nodes$text_summarized <- str_trim(string = tmp_nodes$text_summarized)
 
 
-## split into CAMs from Germany
+CAMaggregated_Germany <- aggregate_CAMs(dat_merged = CAMfiles_Germany[[3]], dat_nodes = tmp_nodes,
+                                ids_CAMs = sel_ids)
+
+g = CAMaggregated_Germany[[2]]
+g2 = simplify(CAMaggregated_Germany[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated_Germany[[1]]) / max(diag(CAMaggregated_Germany[[1]]))*20)
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight / 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+sort(diag(CAMaggregated_Germany[[1]]) / length(sel_ids) * 100)
+
+
+### > plot multiple times because of random layout
+for(i in 1:5){
+plot(g2, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=diag(CAMaggregated_Germany[[1]]) / max(diag(CAMaggregated_Germany[[1]]))*7,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(g2)$weight/5))
+}
+```
+
+
+
+
+## split into CAMs from USA
 
 
 ```{r}
@@ -171,7 +288,97 @@ if(!all(CAMfiles_USA[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PID
 }
 ```
 
+### aggregate CAMs
+
+```{r}
+sel_ids <- unique(CAMfiles_USA[[1]]$participantCAM)
+
+tmp_nodes <- CAMfiles_USA[[1]]
+
+tmp_nodes$text_summarized <- str_remove(string = tmp_nodes$text_summarized, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+tmp_nodes$text_summarized <- str_trim(string = tmp_nodes$text_summarized)
+
+
+CAMaggregated_USA <- aggregate_CAMs(dat_merged = CAMfiles_USA[[3]], dat_nodes = tmp_nodes,
+                                ids_CAMs = sel_ids)
+
+g = CAMaggregated_USA[[2]]
+g2 = simplify(CAMaggregated_USA[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated_USA[[1]]) / max(diag(CAMaggregated_USA[[1]]))*20)
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight / 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+
+sort(diag(CAMaggregated_USA[[1]]) / length(sel_ids) * 100)
+
+
+### > plot multiple times because of random layout
+for(i in 1:5){
+plot(g2, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=diag(CAMaggregated_USA[[1]]) / max(diag(CAMaggregated_USA[[1]]))*7,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(g2)$weight/5))
+}
+```
+
+
 # Magdalenas BA
+
+## aggregate CAMs
+
+```{r}
+sel_ids <- unique(CAMfiles[[1]]$participantCAM)
+
+tmp_nodes <- CAMfiles[[1]]
+
+tmp_nodes$text_summarized <- str_remove(string = tmp_nodes$text_summarized, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+tmp_nodes$text_summarized <- str_trim(string = tmp_nodes$text_summarized)
+
+
+CAMaggregated <- aggregate_CAMs(dat_merged = CAMfiles[[3]], dat_nodes = tmp_nodes,
+                                ids_CAMs = sel_ids)
+
+g = CAMaggregated[[2]]
+g2 = simplify(CAMaggregated[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*20)
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight / 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+
+sort(diag(CAMaggregated[[1]]) / length(sel_ids) * 100)
+
+
+### > plot multiple times because of random layout
+for(i in 1:5){
+plot(g2, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=diag(CAMaggregated[[1]]) / max(diag(CAMaggregated[[1]]))*7,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(g2)$weight/5))
+}
+```
+
 
 ## get the first 8 concepts drawn in CAMs
 
@@ -214,6 +421,8 @@ write.csv2(x = affectiveImagery_CAMs, file = "affectiveImagery_CAMs.csv")
 ## save as R object
 saveRDS(affectiveImagery_CAMs, file = "affectiveImagery_CAMs.rds")
 ```
+
+
 
 ## clean affective imagery
 
@@ -357,6 +566,8 @@ for(p in affectiveImagery$PROLIFIC_PID){
 
 ### overwrite approximate matching
 
+Zwischenschritt vor Übersetzung - grobe Zusammenfassung
+
 ```{r}
 setwd("data_BA_Magdalena")
 
@@ -446,6 +657,8 @@ dat_out %>%
 
 
 ## clean affective imagery after translation
+
+NOT DONE
 
 use approximate matching for English and German (not run automatically!):
 
@@ -590,3 +803,121 @@ wb <- loadWorkbook("ratingsAffimgCAMs.xlsx")
 sheets <- getSheets(wb)
 length(sheets)
 ```
+
+
+
+
+## read tables for ratings
+
+
+```{r}
+setwd("data_BA_Magdalena")
+
+# Path to your Excel file
+file_path <- "ratingsAffimgCAMs_rated.xlsx"
+
+# List all sheet names
+sheet_names <- excel_sheets(file_path)
+
+# Read all sheets into a list of data frames
+list_of_data_frames <- lapply(sheet_names, function(sheet) read_excel(file_path, sheet = sheet))
+length(list_of_data_frames)
+
+
+ 
+for(i in 1:length(list_of_data_frames)){
+  if(i == 1){
+    combined_ratings <- list_of_data_frames[[i]]
+  }else{
+    combined_ratings <- rbind(combined_ratings, list_of_data_frames[[i]])
+  }
+}
+
+
+sum(is.na(combined_ratings$Rating_Magdalena))
+unique(combined_ratings$PROLIFIC_PID[is.na(combined_ratings$Rating_Magdalena)])
+
+vec_overalp <- c()
+for(i in 1:length(unique(combined_ratings$PROLIFIC_PID))){
+  tmp_ratings <- combined_ratings[combined_ratings$PROLIFIC_PID == unique(combined_ratings$PROLIFIC_PID)[i], ]
+
+ vec_overalp[i] <- sum(tmp_ratings$Rating_Magdalena[tmp_ratings$type == "Affective Imagery"]) / sum(tmp_ratings$type == "Affective Imagery") * 100
+}
+
+summary(vec_overalp)
+```
+
+## read affective imagery with coding
+
+
+```{r}
+setwd("data_BA_Magdalena")
+
+AIT_coded <- xlsx::read.xlsx2(file = "AffectiveImagery_coded.xlsx", sheetIndex = 1)
+AIT_coded[AIT_coded$PROLIFIC_PID == "",]
+AIT_coded <- AIT_coded[AIT_coded$PROLIFIC_PID != "",]
+
+## remove suffix
+CAMs_all <- CAMfiles[[1]]
+
+CAMs_all$text_summarized <- str_remove(string = CAMs_all$text_summarized, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+CAMs_all$text_summarized <- str_trim(string = CAMs_all$text_summarized)
+
+
+for(i in 1:length(unique(CAMs_all$participantCAM))){
+  tmp_AIT <- AIT_coded[AIT_coded$PROLIFIC_PID == unique(CAMs_all$participantCAM)[i], ]
+  tmp_CAM <- CAMs_all[CAMs_all$participantCAM == unique(CAMs_all$participantCAM)[i], ]
+  
+  table(tmp_AIT$codedWords)
+  table(tmp_CAM$text_summarized)
+}
+```
+
+## create wordlists
+
+### for CAMs
+
+```{r}
+CAMwordlist <- create_wordlist(
+  dat_nodes =  CAMfiles[[1]],
+  dat_merged =  CAMfiles[[3]],
+  order = "frequency",
+  splitByValence = FALSE,
+  comments = TRUE,
+  raterSubsetWords = NULL,
+  rater = FALSE
+)
+
+
+DT::datatable(data = CAMwordlist)
+```
+
+
+### for AIT
+
+```{r}
+AIT_coded$valence <- as.numeric(AIT_coded$valence)
+AIT_coded$valence[is.na(AIT_coded$valence)] <- 4 # !!!
+
+
+freq_terms = AIT_coded %>% dplyr::select(codedWords) %>% dplyr::count(codedWords)
+colnames(freq_terms) <- c("Words", "all")
+freq_terms <- as.data.frame(freq_terms)
+
+freq_terms <- freq_terms[order(freq_terms$all, decreasing = TRUE),]
+
+freq_terms$mean_valence <- NA
+freq_terms$sd_valence <- NA
+
+
+for(i in 1:nrow(freq_terms)){
+  freq_terms$mean_valence[i] <- mean(AIT_coded$valence[AIT_coded$codedWords == freq_terms$Words[i]])
+  freq_terms$sd_valence[i] <- sd(AIT_coded$valence[AIT_coded$codedWords == freq_terms$Words[i]])
+}
+
+
+DT::datatable(data = freq_terms)
+```
+
+
+

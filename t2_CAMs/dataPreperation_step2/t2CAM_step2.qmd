@@ -185,6 +185,8 @@ for(i in 1:nrow(dat_overwrite)){
 
 ## save overwritten nodes files
 vroom::vroom_write(x =  CAMfiles[[1]], file = "CAM_nodes_clean.txt")
+vroom::vroom_write(x =  CAMfiles[[2]], file = "CAM_connectors_clean.txt")
+vroom::vroom_write(x =  CAMfiles[[3]], file = "CAM_merged_clean.txt")
 ```
 the fixed data set has been uploaded to the CAM-App
 

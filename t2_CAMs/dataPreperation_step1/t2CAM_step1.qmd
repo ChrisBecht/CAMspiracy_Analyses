@@ -315,6 +315,7 @@ vec_ques <- c("PROLIFIC_PID",
                 tmp_numeric,
                 "education",
               "lrscale", "rlgdgr",
+              "ans1",
                 "feedback_critic",
                 "country")
 
@@ -322,6 +323,7 @@ vec_notNumeric = c("PROLIFIC_PID",
                    "education",
                    "lrscale", "rlgdgr",
                    "feedback_critic",
+                   "ans1",
                    "country")
 
 questionnaire_postCAM_Germany <- questionnairetype(dataset = dat_postCAM_Germany, 
@@ -525,12 +527,14 @@ vec_ques <- c("PROLIFIC_PID",
                 tmp_numeric,
                 "education",
               "lrscale", "rlgdgr",
+              "ans1",
                 "feedback_critic",
                 "country")
 
 vec_notNumeric = c("PROLIFIC_PID",
                    "education",
                    "lrscale", "rlgdgr",
+                   "ans1",
                    "feedback_critic",
                    "country")
 
@@ -1168,6 +1172,7 @@ for(i in 1:length(raw_CAM_USA)){
 
 ## merge data 
 
+
 ```{r}
 dim(questionnaire_Germany)
 dim(questionnaire_USA)
@@ -1196,7 +1201,7 @@ tmp_dat <- questionnaire_CAM_USA[, c("PROLIFIC_PID", "ID")]
 write.xlsx2(x = tmp_dat, file = "outputs/PROLIFIC_PIDs_USA_Participated.xlsx")
 
 
-colnames(questionnaire_CAM_Germany)[76:79] <- colnames(questionnaire_CAM_USA)[76:79]
+colnames(questionnaire_CAM_Germany)[77:80] <- colnames(questionnaire_CAM_USA)[77:80]
 
 if(all(colnames(questionnaire_CAM_Germany) == colnames(questionnaire_CAM_USA))){
   print("questionnaires, CAM data sets can be merged!")
