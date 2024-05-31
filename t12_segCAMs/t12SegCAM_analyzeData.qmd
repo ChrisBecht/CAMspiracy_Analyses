@@ -25,7 +25,7 @@ consider_Protocol <- TRUE
 #| warning: false
 
 # sets the directory of location of this script as the current directory
-# setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 
 ### load R packages
 require(pacman)
@@ -214,9 +214,9 @@ if(!all(CAMfiles_Germany[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC
 
 ## classes_conspiracy: 3 = high, 1 = low conspiracy
 
+```{r}
 ### CAMs from high conspir belief
 
-```{r}
 setwd("outputs")
 if(!file.exists("CAMs_high")){
   dir.create("CAMs_high")
@@ -246,15 +246,9 @@ if(!all(CAMfiles_high[[1]]$participantCAM %in% t12_questionnaireCAMs$PROLIFIC_PI
 # saveRDS(CAMfiles_high, file = "CAMfiles_high.RDS")
 rm(tmp_ids)
 
-setwd("..")
-
-```
-
 
 ### CAMs from low conspir belief
 
-```{r}
-setwd("outputs")
 if(!file.exists("CAMs_low")){
   dir.create("CAMs_low")
 }
@@ -1138,7 +1132,66 @@ netIndicators_table
 
 ## Concepts (Word lists)
 
-### concepts -> categories
+### concepts -> categories (split)
+
+```{r}
+setwd("outputs")
+
+# overall
+nodes <- CAMfiles[[1]]
+
+## Text in different columns
+nodes_summarized_overall_split <- nodes[, c("text_summarized", "text")] %>%
+  group_by(text_summarized) %>%
+  mutate(row_num = row_number()) %>%
+  spread(key = row_num, value = text) %>%
+  rename_with(~paste("element", .), -text_summarized) %>%
+  ungroup() %>%
+  select(text_summarized, everything())
+
+# Text in the same column
+# nodes_summarized2_split <- nodes[, c("text_summarized", "text")] %>%
+#   group_by(text_summarized) %>%
+#   summarise(text = paste(text, collapse = ", ")) %>%
+#   ungroup()
+
+write.xlsx(nodes_summarized_overall_split, file = "nodes_summarized_overall_split.xlsx")
+
+# high
+nodes <- CAMfiles_high[[1]]
+
+## Text in different columns
+nodes_summarized_high_split <- nodes[, c("text_summarized", "text")] %>%
+  group_by(text_summarized) %>%
+  mutate(row_num = row_number()) %>%
+  spread(key = row_num, value = text) %>%
+  rename_with(~paste("element", .), -text_summarized) %>%
+  ungroup() %>%
+  select(text_summarized, everything())
+
+write.xlsx(nodes_summarized_high_split, file = "nodes_summarized_high_split.xlsx")
+
+# low
+nodes <- CAMfiles_low[[1]]
+
+## Text in different columns
+nodes_summarized_low_split <- nodes[, c("text_summarized", "text")] %>%
+  group_by(text_summarized) %>%
+  mutate(row_num = row_number()) %>%
+  spread(key = row_num, value = text) %>%
+  rename_with(~paste("element", .), -text_summarized) %>%
+  ungroup() %>%
+  select(text_summarized, everything())
+
+
+write.xlsx(nodes_summarized_low_split, file = "nodes_summarized_low_split.xlsx")
+setwd("..")
+
+rm(nodes)
+```
+
+
+### concepts -> categories 
 
 ```{r}
 nodes <- CAMfiles[[1]]
@@ -1167,9 +1220,9 @@ rm(nodes)
 ```
 
 
-### Split by valence | not necessary
+### split
 
-#### Preparation high & low (split)
+#### Preparation high & low
 
 ```{r}
 # Word list high
@@ -1215,7 +1268,8 @@ rm(tmp_text)
 
 ```
 
-#### Concept Comparisons (split)
+
+#### Concept Comparisons 
 
 ```{r}
 
@@ -1244,9 +1298,9 @@ CAMwordlist_overall_split
 
 
 
-### Not split by valence
+### not split
 
-#### Preparation
+#### Preparation high & low
 
 ```{r}
 # Word list high
@@ -1295,8 +1349,6 @@ rm(tmp_text, dat_nodes)
 
 #### Concept Comparisons
 
-##### Wordlists
-
 ```{r}
 
 # setwd("outputs/CAMwordlists")
@@ -1313,6 +1365,9 @@ CAMwordlist_overall <- merge(CAMwordlist_high[c(1:7, length(CAMwordlist_high))],
 # concepts "positive values" and "weather" exist only in CAMwordlist_high
 
 # raw_diff: difference in frequency of mentions
+CAMwordlist_overall$raw_diff <- abs(CAMwordlist_overall$raw.x - CAMwordlist_overall$raw.y)
+
+# percent_diff: difference in percentage
 CAMwordlist_overall$percent_diff <- abs(CAMwordlist_overall$percent.x - CAMwordlist_overall$percent.y)
 
 # mean_valence_diff: difference of mean valence
@@ -1323,8 +1378,6 @@ CAMwordlist_overall$percent.o <- rowMeans(CAMwordlist_overall[, c("percent.x", "
 CAMwordlist_overall$mean_valence.o <- rowMeans(CAMwordlist_overall[, c("mean_valence.x", "mean_valence.y")])
 
 # write.xlsx(CAMwordlist_overall, file = "CAMwordlist_overall.xlsx")
-
-rm(CAMwordlist_high, CAMwordlist_low)
 ```
 
 
@@ -1453,6 +1506,7 @@ from python_helpers import print_partition
 
 ```
 
+
 ## high
 
 ### split
@@ -1477,8 +1531,9 @@ diag(adjacency_matrix_high_split) <- 0
 
 
 
-# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
-rows_to_keep <- which(rowSums(adjacency_matrix_high_split) > 3)
+# Cutoff: Use only concepts that are connected with other concepts at least 5 times. 
+# rows_to_keep <- which(rowSums(adjacency_matrix_high_split) > 4)
+rows_to_keep <- as.character(CAMwordlist_high_split$Words[CAMwordlist_high_split$raw > 4])
 adjacency_matrix_high_split <- adjacency_matrix_high_split[rows_to_keep, rows_to_keep]
 rm(rows_to_keep)
 
@@ -1534,8 +1589,8 @@ np.fill_diagonal(adj_matrix, 0)
 G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
 
 gamma_range = (0, 2)
-# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
-leiden_gammas = np.linspace(*gamma_range, 2000)
+leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+# leiden_gammas = np.linspace(*gamma_range, 2000)
 # TODO: how to set a seed??
 
 partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
@@ -1573,7 +1628,7 @@ for stable_part in stable_parts:
 #### Print partitions
 
 ```{r}
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.301275459001395) # enter gamma as resolution_parameter
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.135706822267914) # enter gamma as resolution_parameter
 
 
 for (i in sort(unique(partition))) {
@@ -1607,6 +1662,41 @@ plot(
 )
 ```
 
+#### Save final partition solution
+
+```{r}
+#| label: save solution Leiden algorithm
+h = 1
+for (i in sort(unique(partition))) {
+  if(h == 1){
+    part_high_split <- data.frame(partition = i, words = rownames(adjacency_matrix_high_split)[partition == i])
+  }else{
+    part_high_split <- rbind(part_high_split, 
+                     data.frame(partition = i, words = rownames(adjacency_matrix_high_split)[partition == i]))
+  }
+  
+  h = h + 1
+}
+
+
+
+part_high_split$mean_valence <- NA
+part_high_split$sd_valence <- NA
+for(i in 1:nrow(part_high_split)){
+  part_high_split$mean_valence[i] <- CAMwordlist_high_split$mean_valence[CAMwordlist_high_split$Words == part_high_split$words[i]]
+  part_high_split$sd_valence[i] <- CAMwordlist_high_split$sd_valence[CAMwordlist_high_split$Words == part_high_split$words[i]]
+}
+
+part_high_split$words <- str_replace_all(string = part_high_split$words, pattern = " {2,6}", replacement = " ")
+part_high_split
+
+# setwd("outputs")
+# write.xlsx(x = part_high_split, file = "part_high_split.xlsx")
+# saveRDS(part_high_split, file = "part_high_split.rds")
+# setwd("..")
+
+```
+
 
 ### not split
 
@@ -1638,8 +1728,8 @@ diag(adjacency_matrix_high) <- 0
 
 
 
-# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
-rows_to_keep <- which(rowSums(adjacency_matrix_high) > 3)
+# Cutoff: Use only concepts that are connected with other concepts at least 5 times. 
+rows_to_keep <- as.character(CAMwordlist_high$Words[CAMwordlist_high$raw > 4])
 adjacency_matrix_high <- adjacency_matrix_high[rows_to_keep, rows_to_keep]
 rm(rows_to_keep)
 
@@ -1694,8 +1784,8 @@ np.fill_diagonal(adj_matrix, 0)
 G = ig.Graph.Adjacency(matrix=adj_matrix, mode="undirected")
 
 gamma_range = (0, 2)
-# leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
-leiden_gammas = np.linspace(*gamma_range, 2000)
+leiden_gammas = np.linspace(*gamma_range, 10 ** 5)   # 100k runs of Leiden algorithm
+# leiden_gammas = np.linspace(*gamma_range, 2000)
 # TODO: how to set a seed??
 
 partitions = repeated_parallel_leiden_from_gammas(G, leiden_gammas)
@@ -1736,7 +1826,7 @@ for stable_part in stable_parts:
 ```{r}
 # partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.27)
 # partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.37)
-partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.0181890843352919)
+partition <- leiden::leiden(object = graph_object, resolution_parameter = 1.0501528004323497)
 
 for (i in sort(unique(partition))) {
   cat(
@@ -1770,6 +1860,42 @@ plot(
 ```
 
 
+#### Save final partition solution
+
+```{r}
+#| label: save solution Leiden algorithm
+h = 1
+for (i in sort(unique(partition))) {
+  if(h == 1){
+    part_high <- data.frame(partition = i, words = rownames(adjacency_matrix_high)[partition == i])
+  }else{
+    part_high <- rbind(part_high, 
+                     data.frame(partition = i, words = rownames(adjacency_matrix_high)[partition == i]))
+  }
+  
+  h = h + 1
+}
+
+
+
+part_high$mean_valence <- NA
+part_high$sd_valence <- NA
+for(i in 1:nrow(part_high)){
+  part_high$mean_valence[i] <- CAMwordlist_high$mean_valence[CAMwordlist_high$Words == part_high$words[i]]
+  part_high$sd_valence[i] <- CAMwordlist_high$sd_valence[CAMwordlist_high$Words == part_high$words[i]]
+}
+
+part_high$words <- str_replace_all(string = part_high$words, pattern = " {2,6}", replacement = " ")
+
+
+# setwd("outputs")
+# write.xlsx(x = part_high, file = "part_high.xlsx")
+# saveRDS(part_high, file = "part_high.rds")
+# setwd("..")
+
+```
+
+
 ## low
 
 ### split
@@ -1794,8 +1920,9 @@ diag(adjacency_matrix_low_split) <- 0
 
 
 
-# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
-rows_to_keep <- which(rowSums(adjacency_matrix_low_split) > 3)
+# Cutoff: Use only concepts that are connected with other concepts at least 5 times. 
+# rows_to_keep <- which(rowSums(adjacency_matrix_low_split) > 3)
+rows_to_keep <- as.character(CAMwordlist_low_split$Words[CAMwordlist_low_split$raw > 4])
 adjacency_matrix_low_split <- adjacency_matrix_low_split[rows_to_keep, rows_to_keep]
 rm(rows_to_keep)
 
@@ -1926,6 +2053,43 @@ plot(
 ```
 
 
+#### Save final partition solution
+
+```{r}
+#| label: save solution Leiden algorithm
+h = 1
+for (i in sort(unique(partition))) {
+  if(h == 1){
+    part_low_split <- data.frame(partition = i, words = rownames(adjacency_matrix_low_split)[partition == i])
+  }else{
+    part_low_split <- rbind(part_low_split, 
+                     data.frame(partition = i, words = rownames(adjacency_matrix_low_split)[partition == i]))
+  }
+  
+  h = h + 1
+}
+
+
+
+part_low_split$mean_valence <- NA
+part_low_split$sd_valence <- NA
+for(i in 1:nrow(part_low_split)){
+  part_low_split$mean_valence[i] <- CAMwordlist_low_split$mean_valence[CAMwordlist_low_split$Words == part_low_split$words[i]]
+  part_low_split$sd_valence[i] <- CAMwordlist_low_split$sd_valence[CAMwordlist_low_split$Words == part_low_split$words[i]]
+}
+
+part_low_split$words <- str_replace_all(string = part_low_split$words, pattern = " {2,6}", replacement = " ")
+
+
+# setwd("outputs")
+# write.xlsx(x = part_low_split, file = "part_low_split.xlsx")
+# saveRDS(part_low_split, file = "part_low_split.rds")
+# setwd("..")
+
+```
+
+
+
 ### not split
 
 #### Create adjacency matrix
@@ -1956,9 +2120,10 @@ diag(adjacency_matrix_low) <- 0
 
 
 
-# Cutoff: Use only concepts that are connected with other concepts at least 4 times. 
-rows_to_keep <- which(rowSums(adjacency_matrix_low_split) > 3)
-adjacency_matrix_low_split <- adjacency_matrix_low_split[rows_to_keep, rows_to_keep]
+# Cutoff: Use only concepts that are connected with other concepts at least 5 times. 
+# rows_to_keep <- which(rowSums(adjacency_matrix_low) > 3)
+rows_to_keep <- as.character(CAMwordlist_low$Words[CAMwordlist_low$raw > 4])
+adjacency_matrix_low <- adjacency_matrix_low[rows_to_keep, rows_to_keep]
 rm(rows_to_keep)
 
 
@@ -2083,6 +2248,71 @@ plot(
   vertex.color = node.cols
 )
 ```
+
+
+#### Save final partition solution
+
+```{r}
+#| label: save solution Leiden algorithm
+h = 1
+for (i in sort(unique(partition))) {
+  if(h == 1){
+    part_low <- data.frame(partition = i, words = rownames(adjacency_matrix_low)[partition == i])
+  }else{
+    part_low <- rbind(part_low, 
+                     data.frame(partition = i, words = rownames(adjacency_matrix_low)[partition == i]))
+  }
+  
+  h = h + 1
+}
+
+
+
+part_low$mean_valence <- NA
+part_low$sd_valence <- NA
+for(i in 1:nrow(part_low)){
+  part_low$mean_valence[i] <- CAMwordlist_high_slowvalence[CAMwordlist_low$Words == part_low$words[i]]
+  part_low$sd_valence[i] <- CAMwordlist_high_slowlence[CAMwordlist_low$Words == part_low$words[i]]
+}
+
+part_low$words <- str_replace_all(string = part_low$words, pattern = " {2,6}", replacement = " ")
+
+
+# setwd("outputs")
+# write.xlsx(x = part_low, file = "part_low.xlsx")
+# saveRDS(part_low, file = "part_low.rds")
+# setwd("..")
+
+```
+
+
+#.
+# Analyse partition data
+
+```{r}
+sum_part_high_split <- part_high_split %>%
+  group_by(partition) %>%
+  summarise(
+    Words = paste(words, collapse = ", "),
+    M = mean(mean_valence),
+    SD = mean(sd_valence)
+  )
+
+sum_part_low_split <- part_low_split %>%
+  group_by(partition) %>%
+  summarise(
+    Words = paste(words, collapse = ", "),
+    M = mean(mean_valence),
+    SD = mean(sd_valence)
+  )
+
+# setwd("outputs/leiden_partitions")
+# write.xlsx(sum_part_high_split, file = "sum_part_high_split.xlsx")
+# write.xlsx(sum_part_low_split, file = "sum_part_low_split.xlsx")
+# setwd("../..")
+
+```
+
 
 
 #.
