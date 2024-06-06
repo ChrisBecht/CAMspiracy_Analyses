@@ -16,7 +16,7 @@ format:
 
 ```{r}
 ## global variables: 
-
+getBigTable = FALSE
 
 ```
 
@@ -736,7 +736,8 @@ saveRDS(applyApproximate, file = "applyApproximate_translated.rds")
 ## get tables for ratings
 
 ```{r}
-### save data set
+if(getBigTable){
+  ### save data set
 setwd("outputs/BA_Magdalena")
 if(!file.exists("savedWordlists_combined")){
   dir.create("savedWordlists_combined")
@@ -790,6 +791,7 @@ for(i in 1:length(unique(CAMfiles[[1]]$participantCAM))){
   
       write.xlsx2(x = tmp_dat, file=paste0(unique(tmp_concepts$PROLIFIC_PID), ".xlsx"), sheetName=unique(tmp_concepts$PROLIFIC_PID), row.names=FALSE)
 
+}
 }
 ```
 ```{r}
@@ -872,6 +874,21 @@ for(i in 1:length(unique(CAMs_all$participantCAM))){
   table(tmp_CAM$text_summarized)
 }
 ```
+## fix AIT
+
+```{r}
+setwd("data_BA_Magdalena")
+
+AIT_coded_fixed <- xlsx::read.xlsx2(file = "AffectiveImagery_coded_fixed.xlsx", sheetIndex = 1)
+# AIT_coded[AIT_coded$PROLIFIC_PID == "",]
+# AIT_coded <- AIT_coded[AIT_coded$PROLIFIC_PID != "",]
+
+AIT_coded_fixed$fixedWords <- str_trim(string = AIT_coded_fixed$fixedWords, side = "both")
+sort(table(AIT_coded_fixed$fixedWords))
+```
+
+
+
 
 ## create wordlists
 
@@ -890,17 +907,23 @@ CAMwordlist <- create_wordlist(
 
 
 DT::datatable(data = CAMwordlist)
+
+setwd("outputs/BA_Magdalena/aggregated")
+write.xlsx2(x = CAMwordlist, file = "CAMwordlist.xlsx")
 ```
 
 
 ### for AIT
 
+
+
 ```{r}
-AIT_coded$valence <- as.numeric(AIT_coded$valence)
-AIT_coded$valence[is.na(AIT_coded$valence)] <- 4 # !!!
+AIT_coded_fixed$valence <- as.numeric(AIT_coded_fixed$valence)
+AIT_coded_fixed$valence[is.na(AIT_coded_fixed$valence)] <- 4 # !!!
 
+AIT_coded_fixed$fixedWords <- str_trim(string = AIT_coded_fixed$fixedWords, side = "both")
 
-freq_terms = AIT_coded %>% dplyr::select(codedWords) %>% dplyr::count(codedWords)
+freq_terms = AIT_coded_fixed %>% dplyr::select(fixedWords) %>% dplyr::count(fixedWords)
 colnames(freq_terms) <- c("Words", "all")
 freq_terms <- as.data.frame(freq_terms)
 
@@ -911,13 +934,179 @@ freq_terms$sd_valence <- NA
 
 
 for(i in 1:nrow(freq_terms)){
-  freq_terms$mean_valence[i] <- mean(AIT_coded$valence[AIT_coded$codedWords == freq_terms$Words[i]])
-  freq_terms$sd_valence[i] <- sd(AIT_coded$valence[AIT_coded$codedWords == freq_terms$Words[i]])
+  freq_terms$mean_valence[i] <- mean(AIT_coded_fixed$valence[AIT_coded_fixed$fixedWords == freq_terms$Words[i]])
+  freq_terms$sd_valence[i] <- sd(AIT_coded_fixed$valence[AIT_coded_fixed$fixedWords == freq_terms$Words[i]])
+  
+  if(is.na( freq_terms$mean_valence[i])){
+    print(i)
+  }
 }
 
 
 DT::datatable(data = freq_terms)
+
+
+setwd("outputs/BA_Magdalena/aggregated")
+write.xlsx2(x = freq_terms, file = "AITwordlist.xlsx")
 ```
 
 
+## aggregate data
 
+
+### aggregate AIT
+
+get function:
+
+```{r}
+# word_sequences = sample_data
+# window_length = 2
+# Define the function to create a semantic network
+create_semantic_network <- function(word_sequences, window_length = 2, verbose = FALSE) {
+  # Initialize an empty graph
+  g <- make_empty_graph(n = 0, directed = FALSE)
+  
+  # Loop through each sequence of words
+  for (sequence in word_sequences) {
+    if(verbose){
+      cat("\n\n current sequence of words:\n", sequence, "\n, whereby the central word currently is:\n")
+    }
+
+    sequence_length <- length(sequence)
+    
+    # Loop through each word in the sequence
+    for (i in 1:sequence_length) {
+      # Determine the bounds of the window
+      window_start <- max(1, i - window_length)
+      window_end <- min(sequence_length, i + window_length)
+      
+      # Get the central word
+      central_word <- sequence[i]
+      
+      if(verbose){
+        cat("\n", central_word, "\n, with the neighboring words:\n")
+      }
+      # Loop through each word in the window
+      for (j in window_start:window_end) {
+        if (i != j) { # Avoid self-loops
+          # Get the neighboring word
+          neighbor_word <- sequence[j]
+          
+          if(verbose){
+            cat(neighbor_word, "\n")
+          }
+
+          
+          # Add both words to the graph if not already present
+          if (!central_word %in% V(g)$name) {
+            g <- add_vertices(g, 1, name = central_word)
+          }
+          if (!neighbor_word %in% V(g)$name) {
+            g <- add_vertices(g, 1, name = neighbor_word)
+          }
+          
+          # Add an edge between the central word and the neighboring word
+          g <- add_edges(g, sort(c(central_word, neighbor_word)))
+         }
+      }
+    }
+  }
+  
+  # Simplify the graph to remove multiple edges and loops
+  # g <- simplify(g)
+  
+  return(g)
+}
+
+
+```
+
+apply function:
+
+```{r}
+AIT_coded_fixed_subset <- AIT_coded_fixed[AIT_coded_fixed$PROLIFIC_PID %in% unique(CAMfiles[[1]]$participantCAM),]
+
+list_AIT <- list()
+for(p in unique(AIT_coded_fixed_subset$PROLIFIC_PID)){
+  tmp_vec <- AIT_coded_fixed_subset[AIT_coded_fixed_subset$PROLIFIC_PID == p, c("fixedWords")]
+  list_AIT[[p]] <- tmp_vec
+}
+
+
+# Create the network
+network <- create_semantic_network(word_sequences = list_AIT, window_length = 2)
+
+# Plot the network
+plot(network)
+
+degree(graph = network)
+adjacency_matrix <- get.adjacency(network)
+
+network_weighted <- graph.adjacency(get.adjacency(network),weighted=TRUE)
+network_weighted <- simplify(graph = network_weighted)
+# edge.attributes(graph = network_weighted)
+
+
+rownames(adjacency_matrix)[!rownames(adjacency_matrix) %in% freq_terms$Words]
+
+freq_terms_sorted <- freq_terms[freq_terms$Words %in%  rownames(adjacency_matrix), ]
+freq_terms_sorted <- freq_terms_sorted[order(match(freq_terms_sorted$Words, rownames(adjacency_matrix))), ]
+
+V(network_weighted)$color <- "yellow"
+
+
+V(network_weighted)$color[freq_terms_sorted$mean_valence <= 3.5] <- "red"
+V(network_weighted)$color[freq_terms_sorted$mean_valence >= 4.5] <- "green"
+
+for(i in 1:5){
+plot(network_weighted, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=freq_terms_sorted$all / max(freq_terms_sorted$all)*7,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(network_weighted)$weight/5))
+}
+```
+
+
+### aggregate CAMs
+
+```{r}
+sel_ids <- unique(CAMfiles[[1]]$participantCAM)
+
+tmp_nodes <- CAMfiles[[1]]
+
+tmp_nodes$text_summarized <- str_remove(string = tmp_nodes$text_summarized, pattern = "_positive$|_negative$|_neutral$|_ambivalent$")
+tmp_nodes$text_summarized <- str_trim(string = tmp_nodes$text_summarized)
+
+
+CAMaggregated_Germany <- aggregate_CAMs(dat_merged = CAMfiles[[3]], dat_nodes = tmp_nodes,
+                                ids_CAMs = sel_ids)
+
+g = CAMaggregated_Germany[[2]]
+g2 = simplify(CAMaggregated_Germany[[2]])
+# plot(g2, edge.arrow.size=0.01,
+#      vertex.size=diag(CAMaggregated_Germany[[1]]) / max(diag(CAMaggregated_Germany[[1]]))*20)
+
+E(g2)$weight = sapply(E(g2), function(e) {
+  length(all_shortest_paths(g, from=ends(g2, e)[1], to=ends(g2, e)[2])$res) } )
+E(g2)$weight = E(g2)$weight / 2
+# E(g2)$weight[E(g2)$weight == 1] <- NA
+
+V(g2)$color[V(g2)$value <= .5 & V(g2)$value >= -.5] <- "yellow"
+
+V(g2)$shape <- NA
+V(g2)$shape <- ifelse(test = V(g2)$color == "yellow", yes = "square", no = "circle")
+
+
+sort(diag(CAMaggregated_Germany[[1]]) / length(sel_ids) * 100)
+
+
+### > plot multiple times because of random layout
+for(i in 1:5){
+plot(g2, edge.arrow.size = 0,
+     layout=layout_nicely, vertex.frame.color="black", asp = .5, margin = -0.1,
+     vertex.size=diag(CAMaggregated_Germany[[1]]) / max(diag(CAMaggregated_Germany[[1]]))*7,
+     vertex.label.cex = .9, 
+     edge.weight=2, edge.width=(E(g2)$weight/5))
+}
+```
